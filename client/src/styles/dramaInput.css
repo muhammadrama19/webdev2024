@@ -1,0 +1,70 @@
+.drama-input-form {
+    display: flex;
+    gap: 20px; /* Kurangi gap antar kolom */
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-left, .form-center, .form-right {
+    width: 33.33%;
+    display: flex;
+    flex-direction: column;
+    gap: 0px; /* Kurangi gap antar komponen */
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Kurangi gap antar elemen form */
+  }
+  
+  .form-group-submit
+{
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+
+  
+  /* Media query untuk tablet dan mobile */
+  @media screen and (max-width: 1024px) {
+    .drama-input-form {
+      flex-direction: column;
+      width: 100%;
+    }
+  
+    .form-left, .form-center, .form-right {
+      width: 100%;
+    }
+  
+    .form-group-submit {
+      flex-direction: column;
+      gap: 10px;
+    }
+  }
+  
+  @media screen and (max-width: 768px) {
+    .camera-icon {
+      width: 100%;
+      height: 200px;
+    }
+  
+    .file-input-container {
+      width: 100%;
+    }
+  
+    .form-left, .form-center, .form-right {
+      gap: 12px;
+    }
+  
+    .form-group {
+      gap: 6px;
+    }
+  }
+  

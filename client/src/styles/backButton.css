@@ -1,0 +1,33 @@
+.back-button {
+    padding: 10px 20px;
+    background-color: #686463;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    align-self: flex-end;
+  }
+  
+  .back-button:hover {
+    background-color: #565453;
+  }
+  
+  /* Responsif untuk tablet */
+  @media screen and (max-width: 1024px) {
+    .back-button {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+  }
+  
+  /* Responsif untuk mobile */
+  @media screen and (max-width: 768px) {
+    .back-button {
+      padding: 6px 12px;
+      font-size: 12px;
+      width: 100%;
+      margin-bottom: 10px; /* Tambahkan margin bawah untuk memberi jarak antara tombol */
+    }
+  }
+  

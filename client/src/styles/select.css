@@ -1,0 +1,30 @@
+.select-group {
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  .select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  
+  /* Responsif untuk tablet */
+  @media screen and (max-width: 1024px) {
+    .select {
+      font-size: 15px;
+      padding: 9px;
+    }
+  }
+  
+  /* Responsif untuk mobile */
+  @media screen and (max-width: 768px) {
+    .select {
+      font-size: 14px;
+      padding: 8px;
+    }
+  }
+  

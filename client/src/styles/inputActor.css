@@ -1,0 +1,105 @@
+.input-actor-group {
+    margin-bottom: 20px;
+    width: 100%;
+    margin-top: -23px;
+  }
+
+.autocomplete-wrapper {
+  position: relative;
+}
+
+.no-actors-selected {
+  color: #999;
+  font-size: 14px;
+  margin-top: 5px;
+  padding: 45px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  text-align: center;
+}
+
+
+.actors-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Membuat 2 kolom */
+  gap: 10px;
+  max-height: 100px; /* Sesuaikan tinggi maksimum untuk satu baris */
+  overflow-y: auto; /* Tambahkan scroll untuk overflow vertikal */
+  overflow-x: hidden; /* Pastikan tidak ada scroll horizontal */
+  margin-bottom: 15px;
+}
+ 
+.actor-display {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  max-width: 100%; /* Tentukan lebar maksimum */
+}
+
+.actor-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
+.actor-checkbox {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  max-width: 120px; /* Tentukan lebar maksimum yang sesuai */
+  white-space: nowrap; /* Mencegah teks terpotong ke baris berikutnya */
+  overflow: hidden; /* Sembunyikan teks yang keluar dari batas */
+  text-overflow: ellipsis; /* Tambahkan "..." pada teks yang terlalu panjang */
+  padding-right: 10px; /* Tambahkan padding untuk menghindari teks tertutup scrollbar */
+}
+  
+.actor-checkbox label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1; /* Mengizinkan teks menggunakan ruang yang tersedia */
+  padding-right: 10px; /* Tambahkan padding untuk menghindari teks tertutup scrollbar */
+}
+
+.actor-checkbox input[type="checkbox"] {
+  margin-right: 5px; /* Atau Anda bisa mengatur margin checkbox */
+}
+
+
+.actor-search-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  
+}
+
+/* Responsif untuk tablet */
+@media screen and (max-width: 1024px) {
+  .actors-checkbox-group {
+    gap: 8px;
+  }
+
+  .actor-checkbox {
+    font-size: 13px;
+  }
+}
+
+/* Responsif untuk mobile */
+@media screen and (max-width: 768px) {
+  .actors-checkbox-group {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .actor-checkbox {
+    font-size: 12px;
+  }
+}
+  

@@ -1,0 +1,41 @@
+.checkbox-group {
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  .checkbox-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .checkbox-group label {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  /* Responsif untuk tablet */
+  @media screen and (max-width: 1024px) {
+    .checkbox-options {
+      gap: 8px;
+    }
+  
+    .checkbox-group label {
+      font-size: 13px;
+    }
+  }
+  
+  /* Responsif untuk mobile */
+  @media screen and (max-width: 768px) {
+    .checkbox-options {
+      flex-direction: column;
+      gap: 6px;
+    }
+  
+    .checkbox-group label {
+      font-size: 12px;
+    }
+  }
+  

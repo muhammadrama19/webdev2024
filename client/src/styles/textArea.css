@@ -1,0 +1,30 @@
+.textarea-group {
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  .textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+  
+  /* Responsif untuk tablet */
+  @media screen and (max-width: 1024px) {
+    .textarea {
+      font-size: 15px;
+      padding: 9px;
+    }
+  }
+  
+  /* Responsif untuk mobile */
+  @media screen and (max-width: 768px) {
+    .textarea {
+      font-size: 14px;
+      padding: 8px;
+    }
+  }
+  
