@@ -1,15 +1,16 @@
 import React from 'react';
-import './actorCard.scss'; // Import the custom SCSS file
+import { Card, Image } from 'react-bootstrap';
+import './actorCard.scss';
 
 const ActorCard = ({ imageSrc, name, role }) => {
   return (
-    <div className="actor-card">
-      <img src={imageSrc} alt={name} className="actor-image" />
-      <div className="actor-info">
-        <h6>{name}</h6>
-        <p>{role}</p>
-      </div>
-    </div>
+    <Card className="actor-card">
+      <Image src={imageSrc} alt={name} roundedCircle className="actor-image" />
+      <Card.Body className="actor-info">
+        <Card.Title as="h6">{name}</Card.Title>
+        <Card.Text>{role}</Card.Text>
+      </Card.Body>
+    </Card>
   );
 };
 

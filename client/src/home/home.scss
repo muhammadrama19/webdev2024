@@ -1,93 +1,41 @@
 .home {
-    background-color: var(--main-color);
-    color: white;
-    display: flex;
-    flex-direction: column; /* Stays in column direction for overall layout */
-  }
-  
-  .dropdown-container {
-    display: flex;
-    align-items: center;
-    grid-template-columns: repeat(3, 1fr); // 3 columns with equal width
-    gap: 20px;
-    padding-left: 50px;
-    padding-right: 50px;
-    flex-wrap: wrap;  // Allows items to wrap into multiple lines on smaller screens
-  
-    .label-filter {
-      font-size: 24px;
-      font-weight: bold;
-      color: white;
-      grid-column: span 3;
-      // margin-top: 45px;
-      margin-right: 20px;
-    }
-  
-    select {
-      padding: 5px 10px;
-      background-color: transparent;
-      border: 1px solid white;
-      color: white;
-      border-radius: 4px;
-      font-size: 14px;
-      cursor: pointer;
-  
-      &:hover {
-        border-color: #ccc;
-      }
-    }
-  
-    @media (max-width: 768px) {
-      padding-left: 20px;
-      padding-right: 20px;
-      gap: 20px; 
-      justify-content: center;
-  
-      .label-filter {
-        margin-top: 10px;
-        grid-column: span 2; 
-        margin-top: 20px;
-        margin-right: 0; // Adjust the margin to make better use of space
-        width: 100%; // Make the label take full width
-      }
-      
-      
-    }
-  }
-  
+  background-color: var(--main-color);
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
 
-  .card-container {
-    display: flex;
-    // grid-template-columns: repeat(5, 1fr); // 5 columns by default for large screens
-    flex-wrap: wrap; // Allows items to wrap into multiple lines on smaller screens
-    gap: 10px; // Adjust the gap value as per your requirement
-    padding: 25px;
-    justify-content: center; // Center the grid items horizontally
-    align-items: center; // Center the grid items vertically
-  
-    @media (max-width: 1200px) {
-      grid-template-columns: repeat(4, 1fr); // 4 columns for slightly smaller screens
-    }
-  
-    @media (max-width: 992px) {
-      grid-template-columns: repeat(3, 1fr); // 3 columns for medium screens
-    }
-  
-    @media (max-width: 768px) {
-      grid-template-columns: repeat(2, 1fr); // 2 columns for small screens like tablets
-      padding: 10px;
-      margin: 6px;
-      gap: 6px; // Adjust the gap value as per your requirement
-      justify-content: center; // Re-center items in this layout
-    }
-  
-    @media (max-width: 576px) {
-      grid-template-columns: 1fr; // 1 column for very small screens like mobile phones
-      padding: 10px;
-      margin: 6px;
-      gap: 6px; // Adjust the gap value as per your requirement
-      justify-content: center; // Re-center items in this layout
+.dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 50px;
+  padding-right: 50px;
+  flex-wrap: wrap;
+
+  .label-filter {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin-right: 20px;
+    margin-top: 45px;
+    // border-top: 1px solid var(--primary-color);
+
+  }
+
+  select {
+    padding: 5px 10px;
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover {
+      border-color: #ccc;
     }
   }
-  
-  
+
+}
+

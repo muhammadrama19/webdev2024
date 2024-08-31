@@ -1,0 +1,31 @@
+.glass-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  padding: 10px;
+  color: #fff;
+  font-size: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  ::placeholder {
+    color: rgba(255, 255, 255, 0.9); 
+  }
+}
+
+.input-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+@media (max-width: 576px) {
+  .glass-input {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  .input-label {
+    font-size: 0.8rem;
+  }
+}

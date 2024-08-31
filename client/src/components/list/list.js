@@ -28,13 +28,13 @@ const List = () => {  // Rename 'list' to 'List'
   }
 
   return (
-    <div className='list'>
-      <span className='listTitle'>Popular</span>
-      <div className="wrapper">
+    <div className='lists'>
+      <span className='listsTitle'>Popular</span>
+      <div className="wrapperList">
         <ArrowBackIosIcon className='sliderArrow back' 
         onClick={() => handleClick("left")}
         style={{display: !isMoved && "none"}} />
-        <div className="customContainer" ref={listRef}>
+        <div className="customContainerList" ref={listRef}>
           <ListItem />
           <ListItem />
           <ListItem />
