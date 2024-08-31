@@ -1,0 +1,181 @@
+.navbar {
+  color: white;
+  font-size: 14px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 999;
+  background: linear-gradient(to top, transparent 0%, rgb(0, 0, 0, 0.3) 50%);
+
+  &.scrolled {
+    background-color: var(--main-color);
+  }
+
+  .container {
+    padding: 0px 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+
+    .left {
+      display: flex;
+      align-items: center;
+      .logo-brand {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 2vw;
+        color: var(--primary-color);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        font-family: "Poppins", sans-serif;
+
+        span {
+          margin-right: 20px;
+          cursor: pointer;
+          font-weight: bold;
+          font-size: 16px;
+
+          &:hover {
+            color: var(--primary-color);
+            transition: all ease-in;
+          }
+        }
+
+        .country {
+          display: flex;
+          align-items: center;
+          position: relative;
+
+          span {
+            margin-right: 5px;
+          }
+
+          .icon {
+            margin-left: 0;
+          }
+
+          .options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: black;
+            color: white;
+            z-index: 100;
+            min-width: 120px;
+
+            span {
+              display: block;
+              padding: 5px 10px;
+              cursor: pointer;
+
+              &:hover {
+                background-color: black !important;
+                font-weight: bold;
+              }
+            }
+          }
+
+          &:hover .options {
+            display: block;
+          }
+        }
+      }
+    }
+
+    .right {
+      display: flex;
+      align-items: center;
+
+      .icon {
+        margin: 0px 15px;
+        cursor: pointer;
+      }
+
+      .hamburger {
+        display: none;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 250px;
+    height: 100%;
+    background-color: var(--main-color);
+    color: white;
+    z-index: 1000;
+    padding: 20px;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+
+    &.active {
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+    }
+
+    span {
+      margin-bottom: 20px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .country {
+      margin-top: 20px;
+      .icon {
+        margin-left: 10px;
+      }
+
+      .options {
+        display: none;
+        position: static;
+        background-color: transparent;
+        span {
+          display: block;
+          padding: 5px 0;
+          cursor: pointer;
+          &:hover {
+            background-color: transparent !important;
+            font-weight: bold;
+          }
+        }
+      }
+
+      &:hover .options {
+        display: block;
+      }
+    }
+  }
+
+  @media screen and (max-width: 960px) {
+    .logo-brand {
+      font-size: 5vw;
+      color: var(--primary-color);
+      font-family: Poppins, sans-serif;
+    }
+
+    .container {
+      padding: 0 20px;
+      .left {
+        .nav-links {
+          display: none;
+        }
+
+      }
+
+      .right {
+        .hamburger {
+          display: block;
+        }
+      }
+    }
+  }
+}

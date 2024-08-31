@@ -1,0 +1,21 @@
+:root{
+    --main-color: #121829;
+    --primary-color: #7B6EF6;
+    --secondary-color: #1EA5FC;
+    --tertary-color: #B66DFF;
+    --succes-color:#05CE91;
+    --warning-color: #FF6161;
+    font-family: 'Poppins', sans-serif;
+}
+
+@mixin tablet {
+    @media(min-width: 768px){
+        @content;
+    }
+}
+
+@mixin mobile {
+    @media(max-width: 480px){
+        @content;
+    }
+}

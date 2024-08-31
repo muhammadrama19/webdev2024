@@ -1,0 +1,10 @@
+.movieDetail{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 5px;
+    flex-direction: column;
+    flex-wrap: wrap;
+    background-color: var(--main-color);
+
+}
