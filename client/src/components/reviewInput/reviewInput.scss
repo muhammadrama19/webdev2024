@@ -1,0 +1,67 @@
+.review-input-modal {
+  .modal-content {
+    background-color: var(--main-color);
+    color: white;
+    border-radius: 8px;
+  }
+
+  .review-input-container {
+    position: relative;
+    padding: 20px;
+
+    .movie-image {
+      width: 100px;
+      border-radius: 8px;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+
+      &:hover {
+        color: var(--warning-color);
+      }
+    }
+
+    .rating-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 15px;
+
+      .rating {
+        display: flex;
+
+        .filled {
+          color: gold;
+        }
+
+        .unfilled {
+          color: #ccc;
+        }
+      }
+
+      .like {
+        cursor: pointer;
+        color: white;
+
+        .liked {
+          color: var(--warning-color);
+        }
+      }
+    }
+
+    .save-button {
+      margin-top: 15px;
+      width: 100%;
+      // background-color: var(--success-color) !important; 
+      border: none;
+    }
+  }
+}

@@ -1,20 +1,20 @@
-.list{
+.list {
     width: 100%;
     margin-top: 10px;
-    .listTitle{
+    .listTitle {
         color: white;
         font-size: 20px;
         font-weight: 500;
-        margin-left: 50px;
-
+        margin-left: 0%;
     }
-    .wrapper{
+    .wrapper {
         position: relative;
         overflow: hidden;
-        .sliderArrow{
+        border-top: 1px solid var(--primary-color);
+        .sliderArrow {
             width: 50px;
             height: 100%;
-            background-color: rgba(22,22,22,0.5);
+            background-color: var(--main-color);
             color: white;
             position: absolute;
             z-index: 99;
@@ -23,22 +23,21 @@
             margin: auto;
             cursor: pointer;
 
-            &.back{
+            &.back {
                 left: 0;
             }
 
-            &.forward{
+            &.forward {
                 right: 0;
             }
-
-            }
-        }
-        .customContainer{
-            margin-left: 50px;
-            display: flex;
-            margin-top: 10px;
-            width: max-content;
-            transform: translateX(0px);
-            transition: all 1s ease;         
         }
     }
+    .customContainer {
+        display: flex;
+        margin-top: 10px;
+        transition: all 1s ease;
+        width: max-content;
+    }
+}
+
+

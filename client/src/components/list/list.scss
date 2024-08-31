@@ -1,14 +1,14 @@
-.list{
+.lists{
     width: 100%;
     margin-top: 10px;
-    .listTitle{
+    .listsTitle{
         color: white;
         font-size: 20px;
         font-weight: 500;
         margin-left: 50px;
 
     }
-    .wrapper{
+    .wrapperList{
         position: relative;
         overflow: hidden;
         .sliderArrow{
@@ -33,7 +33,7 @@
 
             }
         }
-        .customContainer{
+        .customContainerList{
             margin-left: 50px;
             display: flex;
             margin-top: 10px;

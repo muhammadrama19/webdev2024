@@ -1,11 +1,10 @@
-import React from 'react';
 import { Card, Row, Col, Badge } from 'react-bootstrap';
 import './movieCardDetail.scss'; // Assuming you want to customize the styling
 
 const MovieCardDetail = ({ title, rating, metaScore, description, creators, genres, imageSrc }) => {
   return (
-    <Card className="movie-card-detail p-3 my-3">
-      <Row className="g-3">
+    <Card className="movie-card-detail">
+      <Row>
         <Col xs={12} md={4} lg={3} className="text-center">
           <Card.Img variant="top" src={imageSrc} className="movie-image" />
         </Col>

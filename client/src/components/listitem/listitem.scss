@@ -46,12 +46,13 @@
     }
   
     &:hover {
-      border: 3px solid white;
+      // border: 3px solid white;
       scale: 1.05; /* Slightly increase the size on hover */
       transform: all ease 0.3s;
+      // margin: 10px 10px;
   
       img {
-        height: 140px;
+        height: 100%;
       }
   
       .itemInfo {
