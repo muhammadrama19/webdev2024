@@ -1,0 +1,22 @@
+.dropdown-filter {
+  margin-bottom: 15px;
+
+  label {
+    display: block;
+    // margin-bottom: 5px;
+    color: #362C92;
+  }
+
+  select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    // border: 1px solid #ccc;
+    border: none;
+    background-color: var(--primary-color);
+    color:white;
+
+    
+
+  }
+}

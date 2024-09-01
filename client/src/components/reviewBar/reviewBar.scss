@@ -43,21 +43,21 @@
   
       // Individual styles for each icon when active
       &.watch-active .review-icon {
-        color: #3498db; // Blue for Watch
+        color: var(--primary-color); // Blue for Watch
       }
   
       &.like-active .review-icon {
-        color: #e74c3c; // Red for Like
+        color: -var(--warning-color); // Red for Like
       }
   
       &.watchlist-active .review-icon {
-        color: #2ecc71; // Green for Watchlist
+        color: -var(--succes-color)// Green for Watchlist
       }
     }
   
     .add-review-button {
       margin-top: 20px;
-      background-color: #2b2f36;
+      background-color: var(--primary-color);
       color: #b0b0b0;
       border: none;
       padding: 10px 20px;

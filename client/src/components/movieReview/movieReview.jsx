@@ -20,13 +20,6 @@ const MovieReview = () => {
       <Card className='movie-review'>
         <div className='titleSection'>
           Review
-          <Button 
-            variant="outline-light" 
-            className='addReviewButton' 
-            onClick={handleAddReviewClick}
-          >
-            Add Review
-          </Button>
         </div>
         <Row>
           <Col xs={12} md={12}>
@@ -74,12 +67,6 @@ const MovieReview = () => {
             />
           </Col>
         </Row>
-        {showReviewInput && (
-          <ReviewInput 
-            movieImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg" 
-            onClose={handleCloseReviewInput} 
-          />
-        )}
       </Card>
     </Container>
   );
