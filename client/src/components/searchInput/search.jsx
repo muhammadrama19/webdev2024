@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, FormControl, InputGroup, Col } from 'react-bootstrap';
+import DropdownFilter from '../dropdownfilter/dropdownFilter';
 import './search.scss';
 
 const SearchInput = () => {
@@ -7,13 +8,14 @@ const SearchInput = () => {
     <Form>
       <Form.Group>
         <InputGroup>
-          <Col xs={12}>
-            <Form.Label className="input-label">Label</Form.Label>
+          <Col xs={12} lg={12}>
+            <Form.Label className="input-label text-white-500">Search Movie</Form.Label>
             <FormControl
               type="text"
               placeholder="eg. Avenger"
               className="glass-input"
             />
+            
           </Col>
         </InputGroup>
       </Form.Group>
