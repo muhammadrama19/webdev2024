@@ -1,10 +1,14 @@
 :root{
-    --main-color: #121829;
+    --main-color: rgb(18, 24, 41);
     --primary-color: #7B6EF6;
     --secondary-color: #1EA5FC;
     --tertary-color: #B66DFF;
     --succes-color:#05CE91;
     --warning-color: #FF6161;
+    --primary-on-hover: #5A4AF4;
+    --primary-on-active: #7b6ef6;
+    --secondary-on-active: #4BB7FD;
+    --secondary-on-hover: #4BB7FD;
     font-family: 'Poppins', sans-serif;
     background-size: 100%;
 }
