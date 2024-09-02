@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Container, Row, Col } from 'react-bootstrap';
 
 import ReviewBar from '../components/reviewBar/reviewBar';
+import CoverDetail from "../components/coverdetail/coverDetail";
 
 const Detailmovie = () => {
   const [showReviewInput, setShowReviewInput] = useState(true);
@@ -18,6 +19,7 @@ const Detailmovie = () => {
 
   return (
     <div className="movieDetail">
+    <CoverDetail/>
       <Container fluid>
         <Row className="justify-content-center">
           <Col md={6}>

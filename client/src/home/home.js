@@ -19,7 +19,6 @@ const Home = () => {
       <Featured type="movie" />
       <List />
       <List />
-
       <Container fluid className="p-5">
         <SearchInput />
       </Container>
@@ -31,56 +30,56 @@ const Home = () => {
           </Col>
         </Row>
         <Row className="align-items-center" style={{ borderTop: '1px solid var(--primary-color)' }}>
-          <Col xs={6} sm={6} md={4} lg={3}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Year"
               options={["2020-2025", "2015-2020", "2010-2015", "2005-2010"]}
               onSelect={(option) => console.log(option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={3}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Type"
               options={["Series", "Movies"]}
               onSelect={(option) => console.log(option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={3}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Sort By"
               options={["Latest", "Oldest"]}
               onSelect={(option) => console.log(option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={3}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Genre"
               options={genres}
               onSelect={(option) => console.log(option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={3}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Status"
               options={status}
               onSelect={(option) => console.log(option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={3}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Availability"
               options={availability}
               onSelect={(option) => console.log(option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={3}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Award"
               options={awards}
               onSelect={(option) => console.log(option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={3}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Country"
               options={awards}

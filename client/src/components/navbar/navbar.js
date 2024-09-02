@@ -98,7 +98,10 @@ const Navbar = () => {
 
       {/* Sidebar Menu */}
       <div className={`sidebar ${sidebarVisible ? "active" : ""}`}>
-        <span className="logo-brand">Lalajo Euy!</span>
+      <div className="sidebar-header">
+          <span className="logo-brand">Lalajo Euy!</span>
+          <CloseIcon className="close-icon" onClick={toggleSidebar} />
+        </div>
         <span>Home</span>
         <span>Login</span>
         <span>Register</span>
