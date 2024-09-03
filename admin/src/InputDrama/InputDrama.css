@@ -1,0 +1,81 @@
+.drama-input-container {
+    padding: 20px;
+    background-color: var(--main-color);
+    border-radius: 8px;
+    height: 100vh;
+  }
+  
+  .image-upload-container {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .camera-icon {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    background-color: #fff;
+    border-radius: 8px;
+  }
+  
+  .file-input-container {
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+  .genres, .actors {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .genres .form-check, .actors .form-check {
+    margin-right: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .form-group-submit {
+    margin-top: 30px;
+  }
+  
+  /* Responsive styling */
+  @media (max-width: 768px) {
+    .image-upload-container {
+      margin-bottom: 30px;
+    }
+  
+    .drama-input-form .row {
+      flex-direction: column;
+    }
+  
+    .drama-input-form .col-md-4 {
+      margin-bottom: 20px;
+    }
+  
+    .form-group-submit {
+      display: flex;
+      justify-content: space-between;
+      flex-direction: column;
+    }
+  
+    .form-group-submit .back-button, .form-group-submit .submit-button {
+      margin-bottom: 10px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .camera-icon {
+      height: 150px;
+    }
+  
+    .form-group-submit .back-button, .form-group-submit .submit-button {
+      width: 100%;
+    }
+  
+    .form-group-submit .submit-button {
+      margin-top: 10px;
+    }
+  }
+  
