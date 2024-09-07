@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Table, Form, Button, Dropdown } from 'react-bootstrap';
-import "./ReviewManager.css"; // Import custom styles
+import { Container, Row, Col, Table, Button, Dropdown } from 'react-bootstrap';
+import "./ReviewManager.css";
 
 const ReviewManager = () => {
     const [reviews, setReviews] = useState([
@@ -38,38 +38,26 @@ const ReviewManager = () => {
     const [filter, setFilter] = useState("None");
     const [showCount, setShowCount] = useState(10);
 
-    const handleCheck = (id) => {
-        setReviews(
-            reviews.map((review) =>
-                review.id === id ? { ...review, isChecked: !review.isChecked } : review
-            )
-        );
+    const handleApproveReview = (id) => {
+        setReviews(reviews.map((review) =>
+            review.id === id ? { ...review, status: "Approved" } : review
+        ));
     };
 
-    const handleSelectAll = () => {
-        const allChecked = reviews.every((review) => review.isChecked);
-        setReviews(
-            reviews.map((review) => ({ ...review, isChecked: !allChecked }))
-        );
-    };
-
-    const handleApproveSelected = () => {
-        setReviews(
-            reviews.map((review) =>
-                review.isChecked ? { ...review, status: "Approved", isChecked: false } : review
-            )
-        );
-    };
-
-    const handleDeleteSelected = () => {
-        setReviews(reviews.filter((review) => !review.isChecked));
+    const handleDeleteReview = (id) => {
+        setReviews(reviews.filter((review) => review.id !== id));
     };
 
     const handleFilterChange = (selectedFilter) => setFilter(selectedFilter);
     const handleShowCountChange = (count) => setShowCount(count);
 
+    const filteredReviews = reviews.filter((review) => {
+        if (filter === "None") return true;
+        return review.status === filter;
+    });
+
     return (
-        <Container className="mt-5 custom-container">
+        <Container className="review-manager-container">
             {/* Filter Section */}
             <Row className="mb-3">
                 <Col md={3}>
@@ -113,24 +101,35 @@ const ReviewManager = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {reviews.map((review) => (
+                    {filteredReviews.slice(0, showCount).map((review) => (
                         <tr key={review.id} className={review.status === "Unapproved" ? "table-danger" : ""}>
                             <td>{review.username}</td>
                             <td>
-                            <div className="star-container">
-                                {"★".repeat(review.rate)}{"☆".repeat(5 - review.rate)}
-                            </div>
+                                <Container className="rate-container">
+                                    {"★".repeat(review.rate)}{"☆".repeat(5 - review.rate)}
+                                </Container>
                             </td>
                             <td>{review.drama}</td>
                             <td>{review.comments}</td>
                             <td>{review.status}</td>
                             <td>
-                            <Button variant="success" onClick={handleApproveSelected} className="me-2" size="sm">
-                                Approve
-                            </Button>
-                            <Button variant="danger" onClick={handleDeleteSelected} size="sm">
-                                Delete
-                            </Button>
+                                {review.status === "Unapproved" && (
+                                    <Button
+                                        variant="success"
+                                        className="me-2"
+                                        size="sm"
+                                        onClick={() => handleApproveReview(review.id)}
+                                    >
+                                        Approve
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => handleDeleteReview(review.id)}
+                                >
+                                    Delete
+                                </Button>
                             </td>
                         </tr>
                     ))}
