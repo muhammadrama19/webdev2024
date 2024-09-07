@@ -33,9 +33,9 @@ function Sidebar() {
                   <i className="bi bi-house fs-5 me-3"></i>
                   <span>Drama</span>
                 </Accordion.Header>
-                <Accordion.Body className="p-0">
+                <Accordion.Body className="p-0 ps-3" >
                   <ListGroup variant="flush">
-                    <ListGroup.Item className="py-2 px-3">
+                    <ListGroup.Item className="py-2 px-3 ">
                       <Nav.Link as={Link} to="/drama-input" className="submenu-item">
                         Input Drama
                       </Nav.Link>
@@ -86,13 +86,13 @@ function Sidebar() {
               </Nav.Link>
             </ListGroup.Item>
 
-            <Accordion defaultActiveKey="0" className="sidebar-accordion">
+            <Accordion className="sidebar-accordion">
               <Accordion.Item eventKey="0">
                 <Accordion.Header className="d-flex align-items-center">
                   <i className="bi bi-people fs-5 me-3"></i>
                   <span>Pengaturan</span>
                 </Accordion.Header>
-                <Accordion.Body className="p-0">
+                <Accordion.Body className="p-0 ps-3">
                   <ListGroup variant="flush">
                     <ListGroup.Item className="py-2 px-3">
                       <Nav.Link as={Link} to="/user-settings" className="submenu-item">

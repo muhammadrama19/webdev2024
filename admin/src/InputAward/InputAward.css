@@ -1,21 +1,7 @@
-/* Style the input form */
-.form-inline {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-}
-
-/* Table styles */
-.table {
-    margin-top: 20px;
-}
-
-.table td, .table th {
-    vertical-align: middle;
-}
-
-/* Custom input field styling */
-.form-control {
-    max-width: 200px;
-}
+.input-award-container {
+    padding: 20px;
+    height: 100vh;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
