@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Table, Form,Container, Modal, Button } from "react-bootstrap";
-import "../ListDrama/ListDrama.css"; // Make sure you have this CSS file
+import { Table, Form, Container, Modal, Button } from "react-bootstrap";
+import "../ListDrama/ListDrama.css"; // Pastikan file CSS sudah ada
 
 const ListDrama = () => {
   const [filterStatus, setFilterStatus] = useState("Unapproved");
@@ -42,13 +42,15 @@ const ListDrama = () => {
   };
 
   const handleDelete = (id) => {
-    setDramas(dramas.filter(drama => drama.id !== id));
+    setDramas(dramas.filter((drama) => drama.id !== id));
   };
 
   const handleSave = () => {
-    setDramas(dramas.map(drama =>
-      drama.id === editingDrama.id ? editingDrama : drama
-    ));
+    setDramas(
+      dramas.map((drama) =>
+        drama.id === editingDrama.id ? editingDrama : drama
+      )
+    );
     setEditingDrama(null);
     setShowModal(false);
   };
@@ -62,14 +64,13 @@ const ListDrama = () => {
 
   return (
     <Container className="list-drama-container">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div className="d-flex align-items-center">
-          <span className="me-2">Shows</span>
+      {/* Header dengan Select dan Search */}
+      <div className="list-drama-header d-flex justify-content-between align-items-center mb-3">
+        <div className="dropdown-toggle">
           <Form.Select
             value={showCount}
             onChange={(e) => setShowCount(e.target.value)}
             aria-label="Select show count"
-            style={{ width: "100px" }}
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -77,53 +78,55 @@ const ListDrama = () => {
             <option value={20}>20</option>
           </Form.Select>
         </div>
-        <div>
-          <Form.Control
-            type="text"
-            placeholder="Search"
-            className="search-input"
-          />
-        </div>
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Search"
+        />
       </div>
 
-      <Table striped bordered hover className="drama-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Drama</th>
-            <th>Actors</th>
-            <th>Genres</th>
-            <th>Synopsis</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dramas.slice(0, showCount).map((drama, index) => (
-            <tr key={drama.id}>
-              <td>{index + 1}</td>
-              <td>{drama.title}</td>
-              <td>{drama.actors}</td>
-              <td>{drama.genres}</td>
-              <td>{drama.synopsis}</td>
-              <td>
-                <Button
-                  className="btn btn-sm btn-primary me-2"
-                  onClick={() => handleEdit(drama)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => handleDelete(drama.id)}
-                >
-                  Delete
-                </Button>
-              </td>
+      {/* Wrapper untuk Tabel */}
+      <div className="drama-table-wrapper">
+        <Table striped bordered hover className="drama-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Drama</th>
+              <th>Actors</th>
+              <th>Genres</th>
+              <th>Synopsis</th>
+              <th>Action</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {dramas.slice(0, showCount).map((drama, index) => (
+              <tr key={drama.id}>
+                <td>{index + 1}</td>
+                <td>{drama.title}</td>
+                <td>{drama.actors}</td>
+                <td>{drama.genres}</td>
+                <td>{drama.synopsis}</td>
+                <td>
+                  <Button
+                    className="btn btn-sm btn-primary me-2"
+                    onClick={() => handleEdit(drama)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => handleDelete(drama.id)}
+                  >
+                    Delete
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
 
+      {/* Modal untuk Edit Drama */}
       {editingDrama && (
         <Modal show={showModal} onHide={() => setShowModal(false)} centered>
           <Modal.Header closeButton>
@@ -174,14 +177,17 @@ const ListDrama = () => {
             <Button
               variant="secondary"
               className="mt-2"
-              onClick={() => setShowModal(false)}>
+              onClick={() => setShowModal(false)}
+            >
               Cancel
             </Button>
             <Button
               type="submit"
               variant="primary"
               className="mt-2"
-              style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }} onClick={handleSave}>
+              style={{ backgroundColor: "#ff5722", borderColor: "#ff5722" }}
+              onClick={handleSave}
+            >
               Save Changes
             </Button>
           </Modal.Footer>

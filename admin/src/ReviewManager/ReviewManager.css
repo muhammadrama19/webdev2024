@@ -1,7 +1,71 @@
 .review-manager-container {
-    padding: 20px;
-    height: 100vh;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
+  padding: 20px;
+  height: 100%;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.review-manager-header {
+  position: sticky;
+  top: 0;
+  background-color: #f9f9f9;
+  z-index: 10;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.review-table-wrapper {
+  height: calc(100vh - 150px);
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.table {
+  width: 100%;
+  table-layout: auto;
+  word-wrap: break-word;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+  padding: 10px;
+  text-align: center;
+}
+
+.table th:nth-child(1),
+.table th:nth-child(2),
+.table th:nth-child(5),
+.table th:nth-child(6) {
+  width: 10%;
+}
+
+.table th:nth-child(3) {
+  width: 15%;
+}
+
+.table th:nth-child(4) {
+  width: 35%;
+}
+
+.table td:nth-child(4) {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 200px; /* Membatasi lebar kolom Comments */
+}
+
+.table td, .table th {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table-danger {
+  background-color: #f8d7da;
+}
+
+.rate-container {
+  text-align: center;
+}
+
