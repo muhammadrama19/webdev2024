@@ -1,49 +1,181 @@
-.App {
-  text-align: center;
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #1d2634;
+  color: #9e9ea4;
+  font-family: 'Montserrat', sans-serif;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.grid-container {
+  display: grid;
+  grid-template-columns: 250px 1fr 1fr 1fr;
+  grid-template-rows: 0.2fr 3fr;
+  grid-template-areas:
+    'sidebar header header header'
+    'sidebar main main main';
+  height: 100vh;
+  transition: all 0.3s ease;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Kondisi saat sidebar ditutup di desktop */
+.grid-container.sidebar-closed {
+  grid-template-columns: 0 1fr 1fr 1fr; /* Sidebar hidden */
 }
 
-:root{
-  --main-color: #ffffff;
-  --primary-color: #7B6EF6;
-  --secondary-color: #1EA5FC;
-  --tertary-color: #B66DFF;
-  --succes-color:#05CE91;
-  --warning-color: #FF6161;
-  font-family: 'Poppins', sans-serif;
-  background-size: 100%;
+.main-container {
+  grid-area: main;
+  overflow-y: auto;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.main-title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.main-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 20px;
+  margin: 15px 0;
+}
+
+.card {
   display: flex;
   flex-direction: column;
+  justify-content: space-around;
+  padding: 8px 15px;
+  border-radius: 5px;
+}
+
+.card:first-child {
+  background-color: #2962ff;
+}
+
+.card:nth-child(2) {
+  background-color: #ff6d00;
+}
+
+.card:nth-child(3) {
+  background-color: #2e7d32;
+}
+
+.card:nth-child(4) {
+  background-color: #d50000;
+}
+
+.card-inner {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  justify-content: space-between;
 }
 
-.App-link {
-  color: #61dafb;
+.card-inner > .card_icon {
+  font-size: 25px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 60px;
+  height: 300px;
+}
+
+
+/* --- RESPONSIVE --- */
+
+/* Medium <= 992px */
+@media screen and (max-width: 992px) {
+  /* .grid-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.2fr 3fr;
+    grid-template-areas:
+      'header'
+      'main';
+  } */
+
+  .grid-container {
+    grid-template-columns: 1fr; /* Pastikan konten tetap memenuhi lebar layar */
   }
-  to {
-    transform: rotate(360deg);
+
+  .grid-container.sidebar-closed {
+    grid-template-columns: 100% 1fr 1fr 1fr; /* Sidebar hidden */
+  }
+
+  #sidebar {
+    position: fixed; /* Fixed agar sidebar melayang */
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 250px;
+    z-index: 1000; /* Agar tampil di atas konten */
+    background-color: #263043;
+  }
+
+  .sidebar-open #sidebar {
+    display: block; /* Munculkan sidebar ketika tombol hamburger di klik */
+  }
+
+}
+
+/* Small <= 768px */
+@media screen and (max-width: 768px) {
+  /* Hanya modifikasi sidebar menjadi overlay pada mobile */
+  .grid-container {
+    grid-template-columns: 1fr; /* Pastikan konten tetap memenuhi lebar layar */
+  }
+
+  .grid-container.sidebar-closed {
+    grid-template-columns: 100% 1fr 1fr 1fr; /* Sidebar hidden */
+  }
+
+  #sidebar {
+    position: fixed; /* Fixed agar sidebar melayang */
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 250px;
+    z-index: 1000; /* Agar tampil di atas konten */
+    background-color: #263043;
+  }
+
+  .sidebar-open #sidebar {
+    display: block; /* Munculkan sidebar ketika tombol hamburger di klik */
+  }
+
+}
+
+/* Extra Small <= 576px */
+@media screen and (max-width: 576px) {
+  .grid-container {
+    grid-template-columns: 1fr; /* Pastikan konten tetap memenuhi lebar layar */
+  }
+
+  .grid-container.sidebar-closed {
+    grid-template-columns: 100% 1fr 1fr 1fr; /* Sidebar hidden */
+  }
+
+  #sidebar {
+    position: fixed; /* Fixed agar sidebar melayang */
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 250px;
+    z-index: 1000; /* Agar tampil di atas konten */
+    background-color: #263043;
+  }
+
+  .sidebar-open #sidebar {
+    display: block; /* Munculkan sidebar ketika tombol hamburger di klik */
+  }
+
+  .main-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .charts {
+    grid-template-columns: 1fr;
   }
 }

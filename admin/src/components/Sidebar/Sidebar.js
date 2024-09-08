@@ -1,129 +1,132 @@
-import React, { useState } from "react";
-import { Container, Row, Col, ListGroup, Accordion, Nav } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import './Sidebar.css';
+import {
+  BsHeadsetVr,
+  BsGrid1X2Fill,
+  BsFillArchiveFill,
+  BsFillFolderFill,
+  BsFillGrid3X3GapFill,
+  BsBook,
+  BsPeopleFill,
+  BsListCheck,
+  BsMenuButtonWideFill,
+  BsFillGearFill,
+  BsJustify,
+  BsChevronDown, 
+  BsChevronUp
+} from 'react-icons/bs';
+import { NavLink, useLocation } from 'react-router-dom'; // Import useLocation untuk memeriksa rute saat ini
 
-function Sidebar() {
-  const [open, setOpen] = useState(false);
+function Sidebar({ openSidebarToggle, OpenSidebar }) {
+  const location = useLocation(); // Mengambil rute saat ini
+  const [isMoviesOpen, setIsMoviesOpen] = useState(false);
+  const [isAttributesOpen, setIsAttributesOpen] = useState(false); // State untuk Attributes accordion
+
+  // Toggle untuk membuka/menutup accordion Movies
+  const toggleMoviesMenu = () => {
+    setIsMoviesOpen(!isMoviesOpen);
+  };
+
+  // Toggle untuk membuka/menutup accordion Attributes
+  const toggleAttributesMenu = () => {
+    setIsAttributesOpen(!isAttributesOpen);
+  };
+
+  // Menggunakan useEffect untuk memeriksa rute dan mengatur state dari accordion
+  useEffect(() => {
+    if (location.pathname.includes("/movie")) {
+      setIsMoviesOpen(true); // Buka accordion jika berada di rute Movie
+    } else {
+      setIsMoviesOpen(false); // Tutup accordion jika tidak di rute Movie
+    }
+
+    if (location.pathname.includes("/attribute")) {
+      setIsAttributesOpen(true); // Buka accordion jika berada di rute Attributes
+    } else {
+      setIsAttributesOpen(false); // Tutup accordion jika tidak di rute Attributes
+    }
+  }, [location.pathname]); // Meng-update setiap kali rute berubah
 
   return (
-    <Container fluid className="p-0">
-      <Row>
-        {/* Sidebar Container */}
-        <Col xs={8} md={3} lg={2} className="bg-white sidebar p-2 vh-100 position-fixed">
-          <Row className="m-2 d-flex align-items-center">
-            <Col xs="auto">
-              <i className="bi bi-bootstrap-fill me-3 fs-4"></i>
-            </Col>
-            <Col>
-              <span className="brand-name fs-4">Lalajo Euy</span>
-            </Col>
-          </Row>
-          <hr className="text-dark" />
-          <ListGroup variant="flush">
-            <ListGroup.Item className="py-2">
-              <Nav.Link as={Link} to="/" className="d-flex align-items-center">
-                <i className="bi bi-speedometer2 fs-5 me-3"></i>
-                <span>Dashboard</span>
-              </Nav.Link>
-            </ListGroup.Item>
+    <aside id="sidebar" className={openSidebarToggle ? "sidebar-open" : ""}>
+      <div className="sidebar-title">
+        <div className="sidebar-brand">
+          <BsHeadsetVr className="icon_header" /> LALAJO EUY
+        </div>
+        <div className="close-sidebar">
+          <BsJustify className="close-icon" onClick={OpenSidebar} />
+        </div>
+      </div>
+      <ul className="sidebar-list">
+        <li className="sidebar-list-item">
+          <NavLink to="/" className="sidebar-link" activeClassName="active">
+            <BsGrid1X2Fill className="icon" /> <span>Dashboard</span>
+          </NavLink>
+        </li>
 
-            <Accordion className="sidebar-accordion">
-              <Accordion.Item eventKey="0">
-                <Accordion.Header className="d-flex align-items-center">
-                  <i className="bi bi-house fs-5 me-3"></i>
-                  <span>Drama</span>
-                </Accordion.Header>
-                <Accordion.Body className="p-0 ps-3" >
-                  <ListGroup variant="flush">
-                    <ListGroup.Item className="py-2 px-3 ">
-                      <Nav.Link as={Link} to="/drama-input" className="submenu-item">
-                        Input Drama
-                      </Nav.Link>
-                    </ListGroup.Item>
-                    <ListGroup.Item className="py-2 px-3">
-                      <Nav.Link as={Link} to="/drama-list" className="submenu-item">
-                        List Drama
-                      </Nav.Link>
-                    </ListGroup.Item>
-                    <ListGroup.Item className="py-2 px-3">
-                      <Nav.Link as={Link} to="/drama-validasi" className="submenu-item">
-                        Validasi Drama
-                      </Nav.Link>
-                    </ListGroup.Item>
-                  </ListGroup>
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
+        {/* Movies Accordion */}
+        <li className="sidebar-list-item">
+          <div className="sidebar-link" onClick={toggleMoviesMenu}>
+            <BsFillArchiveFill className="icon" /> <span>Movies</span>
+            {isMoviesOpen ? <BsChevronUp className="accordion-icon" /> : <BsChevronDown className="accordion-icon" />}
+          </div>
+          <ul className={`submenu-list ${isMoviesOpen ? "open" : "closed"}`}>
+            <li className="submenu-list-item">
+              <NavLink to="/movie-input" className="submenu-link" activeClassName="active">Movie Input</NavLink>
+            </li>
+            <li className="submenu-list-item">
+              <NavLink to="/movie-list" className="submenu-link" activeClassName="active">Movie List</NavLink>
+            </li>
+            <li className="submenu-list-item">
+              <NavLink to="/movie-validation" className="submenu-link" activeClassName="active">Movie Validation</NavLink>
+            </li>
+          </ul>
+        </li>
 
-            <ListGroup.Item className="py-2">
-              <Nav.Link as={Link} to="/country-input" className="d-flex align-items-center">
-                <i className="bi bi-table fs-5 me-3"></i>
-                <span>Countries</span>
-              </Nav.Link>
-            </ListGroup.Item>
-            <ListGroup.Item className="py-2">
-              <Nav.Link as={Link} to="/award-input" className="d-flex align-items-center">
-                <i className="bi bi-clipboard-data fs-5 me-3"></i>
-                <span>Awards</span>
-              </Nav.Link>
-            </ListGroup.Item>
-            <ListGroup.Item className="py-2">
-              <Nav.Link as={Link} to="/genre-input" className="d-flex align-items-center">
-                <i className="bi bi-clipboard-data fs-5 me-3"></i>
-                <span>Genres</span>
-              </Nav.Link>
-            </ListGroup.Item>
-            <ListGroup.Item className="py-2">
-              <Nav.Link as={Link} to="/actor-input" className="d-flex align-items-center">
-                <i className="bi bi-clipboard-data fs-5 me-3"></i>
-                <span>Actors</span>
-              </Nav.Link>
-            </ListGroup.Item>
-            <ListGroup.Item className="py-2">
-              <Nav.Link as={Link} to="/review-manager" className="d-flex align-items-center">
-                <i className="bi bi-clipboard-data fs-5 me-3"></i>
-                <span>Reviews</span>
-              </Nav.Link>
-            </ListGroup.Item>
+        {/* Attributes Accordion */}
+        <li className="sidebar-list-item">
+          <div className="sidebar-link" onClick={toggleAttributesMenu}>
+            <BsFillFolderFill className="icon" /> <span>Attributes</span>
+            {isAttributesOpen ? <BsChevronUp className="accordion-icon" /> : <BsChevronDown className="accordion-icon" />}
+          </div>
+          <ul className={`submenu-list ${isAttributesOpen ? "open" : "closed"}`}>
+            <li className="submenu-list-item">
+              <NavLink to="/attribute-actor" className="submenu-link" activeClassName="active">Input Actor</NavLink>
+            </li>
+            <li className="submenu-list-item">
+              <NavLink to="/attribute-genre" className="submenu-link" activeClassName="active">Input Genre</NavLink>
+            </li>
+            <li className="submenu-list-item">
+              <NavLink to="/attribute-country" className="submenu-link" activeClassName="active">Input Country</NavLink>
+            </li>
+            <li className="submenu-list-item">
+              <NavLink to="/attribute-award" className="submenu-link" activeClassName="active">Input Award</NavLink>
+            </li>
+          </ul>
+        </li>
 
-            <Accordion className="sidebar-accordion">
-              <Accordion.Item eventKey="0">
-                <Accordion.Header className="d-flex align-items-center">
-                  <i className="bi bi-people fs-5 me-3"></i>
-                  <span>Pengaturan</span>
-                </Accordion.Header>
-                <Accordion.Body className="p-0 ps-3">
-                  <ListGroup variant="flush">
-                    <ListGroup.Item className="py-2 px-3">
-                      <Nav.Link as={Link} to="/user-settings" className="submenu-item">
-                        User
-                      </Nav.Link>
-                    </ListGroup.Item>
-                    <ListGroup.Item className="py-2 px-3">
-                      <Nav.Link as={Link} to="/pengaturan-user" className="submenu-item">
-                        Pengaturan User
-                      </Nav.Link>
-                    </ListGroup.Item>
-                  </ListGroup>
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-
-            <ListGroup.Item className="py-2">
-              <Nav.Link as={Link} to="/logout" className="d-flex align-items-center">
-                <i className="bi bi-power fs-5 me-3"></i>
-                <span>Logout</span>
-              </Nav.Link>
-            </ListGroup.Item>
-          </ListGroup>
-        </Col>
-        
-        {/* Main Content Area */}
-        <Col xs={12} md={{ span: 9, offset: 3 }} lg={{ span: 10, offset: 2 }} className="p-3">
-          {/* Tambahkan komponen lain atau konten halaman di sini */}
-        </Col>
-      </Row>
-    </Container>
+        <li className="sidebar-list-item">
+          <NavLink to="/review-list" className="sidebar-link" activeClassName="active">
+            <BsBook className="icon" /> <span>Reviews</span>
+          </NavLink>
+        </li>
+        <li className="sidebar-list-item">
+          <NavLink to="/users" className="sidebar-link" activeClassName="active">
+            <BsPeopleFill className="icon" /> <span>Users</span>
+          </NavLink>
+        </li>
+        <li className="sidebar-list-item">
+          <NavLink to="/reports" className="sidebar-link" activeClassName="active">
+            <BsMenuButtonWideFill className="icon" /> <span>Reports</span>
+          </NavLink>
+        </li>
+        <li className="sidebar-list-item">
+          <NavLink to="/settings" className="sidebar-link" activeClassName="active">
+            <BsFillGearFill className="icon" /> <span>Settings</span>
+          </NavLink>
+        </li>
+      </ul>
+    </aside>
   );
 }
 

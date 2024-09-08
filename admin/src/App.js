@@ -1,53 +1,47 @@
-import React, { useState } from "react";
+import { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap-icons/font/bootstrap-icons.css";
-import Sidebar from "../src/components/Sidebar/Sidebar";
-import Home from "../src/Dashboard/Home";
-import InputDrama from "../src/InputDrama/InputDrama"; // Pastikan ini sudah sesuai dengan lokasi file InputDrama
-import InputCountry from "../src/InputCountry/InputCountry"; // Pastikan ini sudah sesuai dengan lokasi file InputCountry
-import InputAward from "../src/InputAward/InputAward"; // Pastikan ini sudah sesuai dengan lokasi file InputAward
-import InputGenres from "../src/InputGenres/InputGenres"; // Pastikan ini sudah sesuai dengan lokasi file InputAward
-import InputActors from "../src/InputActor/InputActors"; // Pastikan ini sudah sesuai dengan lokasi file InputActors
-import ReviewManager from "../src/ReviewManager/ReviewManager"; // Pastikan ini sudah sesuai dengan lokasi file ReviewManager
-import ListDrama from "./ListDrama/ListDrama";
-import UserSetting from "./UserSettings/UserSetting";
-// import { Nav } from "react-bootstrap";
-import Navigation from "./components/NavBar/Nav";
-import ValidateDrama from "./ValidateDrama/ValidateDrama";
-import "./App.css";
+import './App.css';
+import Header from '../src/components/Header/Header';
+import Sidebar from '../src/components/Sidebar/Sidebar';
+import Home from '../src/Dashboard/Home';
+import DramaInput from '../src/InputDrama/InputDrama';
+import ListDrama from '../src/ListDrama/ListDrama';
+import ValidateDrama from './ValidateDrama/ValidateDrama';
+import ReviewManager from './ReviewManager/ReviewManager';
+import ActorManager from './InputActor/InputActors';
+import GenreManager from './InputGenres/InputGenres';
+import CountryManager from './InputCountry/InputCountry';
+import AwardsManager from './InputAward/InputAward';
+import UserSetting from './UserSettings/UserSetting';
+
+// Import component lain sesuai kebutuhan
 
 function App() {
-  const [toggle] = useState(true);
+  const [openSidebarToggle, setOpenSidebarToggle] = useState(false); // Default tutup di mobile
 
-  // const Toggle = () => {
-  //   setToggle(!toggle);
-  // };
+  const OpenSidebar = () => {
+    setOpenSidebarToggle(!openSidebarToggle);
+  };
 
   return (
     <Router>
-      <div className="container-fluid bg-secondary min-vh-100">
-        <div className="row">
-          {toggle && (
-            <div className="col-4 col-md-2 bg-white vh-100 position-fixed">
-              <Sidebar />
-            </div>
-          )}
-          {toggle && <div className="col-4 col-md-2"></div>}
-          <div className="col">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/drama-input" element={<InputDrama />} />
-              <Route path="drama-list" element={<ListDrama/>} />
-              <Route path="/drama-validasi" element={<ValidateDrama />} />
-              <Route path="/country-input" element={<InputCountry />} />
-              <Route path="/award-input" element={<InputAward />} />
-              <Route path="/genre-input" element={<InputGenres />} />
-              <Route path="/actor-input" element={<InputActors />} />
-              <Route path="/review-manager" element={<ReviewManager />} />
-              <Route path="user-settings" element={<UserSetting/>} />
-            </Routes>
-          </div>
+      <div className={`grid-container ${openSidebarToggle ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <Header OpenSidebar={OpenSidebar} openSidebarToggle={openSidebarToggle} />
+        <Sidebar openSidebarToggle={openSidebarToggle} OpenSidebar={OpenSidebar} /> {/* Pass OpenSidebar */}
+        <div className="main-container">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/movie-input" element={<DramaInput />} />
+            <Route path="/movie-list" element={<ListDrama />} />
+            <Route path="/movie-validation" element={<ValidateDrama />} />
+            <Route path="/review-list" element={<ReviewManager />} />
+            <Route path="/attribute-actor" element={<ActorManager />} />
+            <Route path="/attribute-genre" element={<GenreManager/>} />
+            <Route path="/attribute-country" element={<CountryManager/>} />
+            <Route path="/attribute-award" element={<AwardsManager  />} />
+            <Route path="/users" element={<UserSetting  />} />
+            
+          </Routes>
         </div>
       </div>
     </Router>

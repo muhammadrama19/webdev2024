@@ -1,103 +1,161 @@
-import React from 'react';
-import { Container, Row, Col, Card, Table } from 'react-bootstrap';
-import Nav from '../components/NavBar/Nav';
+import React from "react";
+import {
+  BsCameraReels,
+  BsFilm,
+  BsGlobeAmericas,
+  BsFillGrid3X3GapFill,
+  BsPeopleFill,
+  BsFillBellFill,
+} from "react-icons/bs";
+import {
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+} from "recharts";
+import "./Home.css";
 
-function Home({ Toggle }) {
+function Home() {
+  const data = [
+    {
+      name: "Page A",
+      uv: 4000,
+      pv: 2400,
+      amt: 2400,
+    },
+    {
+      name: "Page B",
+      uv: 3000,
+      pv: 1398,
+      amt: 2210,
+    },
+    {
+      name: "Page C",
+      uv: 2000,
+      pv: 9800,
+      amt: 2290,
+    },
+    {
+      name: "Page D",
+      uv: 2780,
+      pv: 3908,
+      amt: 2000,
+    },
+    {
+      name: "Page E",
+      uv: 1890,
+      pv: 4800,
+      amt: 2181,
+    },
+    {
+      name: "Page F",
+      uv: 2390,
+      pv: 3800,
+      amt: 2500,
+    },
+    {
+      name: "Page G",
+      uv: 3490,
+      pv: 4300,
+      amt: 2100,
+    },
+  ];
+
   return (
-    <div className='px-3'>
-      {/* <Nav Toggle={Toggle} />  */}
-      <Container fluid>
-        <Row className='g-3 my-2'>
-          <Col md={3} className='p-1'>
-            <Card className='p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded'>
-              <div>
-                <h3 className='fs-2'>4</h3>
-                <p className='fs-5'>Movies</p>
-              </div>
-              <i className='bi bi-cart-plus p-3 fs-1'></i>
-            </Card>
-          </Col>
-          <Col md={3} className='p-1'>
-            <Card className='p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded'>
-              <div>
-                <h3 className='fs-2'>12</h3>
-                <p className='fs-5'>Genres</p>
-              </div>
-              <i className='bi bi-currency-dollar p-3 fs-1'></i>
-            </Card>
-          </Col>
-          <Col md={3} className='p-1'>
-            <Card className='p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded'>
-              <div>
-                <h3 className='fs-2'>1080</h3>
-                <p className='fs-5'>Users</p>
-              </div>
-              <i className='bi bi-truck p-3 fs-1'></i>
-            </Card>
-          </Col>
-          <Col md={3} className='p-1'>
-            <Card className='p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded'>
-              <div>
-                <h3 className='fs-2'>20%</h3>
-                <p className='fs-5'>Increase</p>
-              </div>
-              <i className='bi bi-graph-up-arrow p-3 fs-1'></i>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-      <Container fluid className="mt-2">
-        <h4 className='text-dark fs-4 mb-3'>Recent Orders</h4>   
-        <Table striped bordered hover className="bg-white rounded">
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">First</th>
-              <th scope="col">Last</th>
-              <th scope="col">Handle</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">1</th>
-              <td>Mark</td>
-              <td>Otto</td>
-              <td>@mdo</td>
-            </tr>
-            <tr>
-              <th scope="row">2</th>
-              <td>Jacob</td>
-              <td>Thornton</td>
-              <td>@fat</td>
-            </tr>
-            <tr>
-              <th scope="row">3</th>
-              <td>Larry</td>
-              <td>the Bird</td>
-              <td>@twitter</td>
-            </tr>
-            <tr>
-              <th scope="row">4</th>
-              <td>Larry</td>
-              <td>the Bird</td>
-              <td>@twitter</td>
-            </tr>
-            <tr>
-              <th scope="row">5</th>
-              <td>Larry</td>
-              <td>the Bird</td>
-              <td>@twitter</td>
-            </tr>
-            <tr>
-              <th scope="row">6</th>
-              <td>Larry</td>
-              <td>the Bird</td>
-              <td>@twitter</td>
-            </tr>
-          </tbody>
-        </Table>
-      </Container>
-    </div>
+    <main className="main-container">
+      <div className="main-title">
+        <h3>DASHBOARD</h3>
+      </div>
+
+      <div className="main-cards">
+        <div className="card">
+          <div className="card-inner">
+            <h3>Movies</h3>
+            <BsCameraReels className="card_icon" />
+          </div>
+          <h1>300</h1>
+        </div>
+        <div className="card">
+          <div className="card-inner">
+            <h3>Genres</h3>
+            <BsFilm className="card_icon" />
+          </div>
+          <h1>12</h1>
+        </div>
+        <div className="card">
+          <div className="card-inner">
+            <h3>Country</h3>
+            <BsGlobeAmericas className="card_icon" />
+          </div>
+          <h1>33</h1>
+        </div>
+        <div className="card">
+          <div className="card-inner">
+            <h3>CUSTOMERS</h3>
+            <BsPeopleFill className="card_icon" />
+          </div>
+          <h1>33</h1>
+        </div>
+      </div>
+
+      <div className="charts">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            width={500}
+            height={300}
+            data={data}
+            margin={{
+              top: 5,
+              right: 30,
+              left: 20,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="pv" fill="#8884d8" />
+            <Bar dataKey="uv" fill="#82ca9d" />
+          </BarChart>
+        </ResponsiveContainer>
+
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            width={500}
+            height={300}
+            data={data}
+            margin={{
+              top: 5,
+              right: 30,
+              left: 20,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="pv"
+              stroke="#8884d8"
+              activeDot={{ r: 8 }}
+            />
+            <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </main>
   );
 }
 
