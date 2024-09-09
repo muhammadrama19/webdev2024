@@ -92,14 +92,17 @@ const ActorManager = () => {
 
 
     return (
-        <Container className="input-actor-container">
+        <Container>
+            <Container className="App">
+                <h1 className="title">Actors Manager</h1>
+            </Container>
             {/* Button to Add New Actor */}
             <Button
                 variant="success"
                 className="d-flex align-items-center ms-auto mb-3"
                 onClick={handleShowModal}>
                 <FaPlus className="me-2" />
-                Add Actor
+                Add New Actor
             </Button>
 
             {/* Modal for Adding/Editing Actor */}
@@ -186,43 +189,47 @@ const ActorManager = () => {
             </Modal>
 
             {/* Table Section */}
-            <Table striped bordered hover>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Countries</th>
-                        <th>Actor Name</th>
-                        <th>Birth Date</th>
-                        <th>Photos</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {actors.map((actor, index) => (
-                        <tr key={actor.id}>
-                            <td>{index + 1}</td>
-                            <td>{actor.country}</td>
-                            <td>{actor.name}</td>
-                            <td>{actor.birthDate}</td>
-                            <td>
-                                {actor.photo ? (
-                                    <img src={actor.photo} alt={actor.name} width={50} />
-                                ) : (
-                                    <div style={{ width: 50, height: 50, backgroundColor: '#ddd' }} />
-                                )}
-                            </td>
-                            <td>
-                                <Button className="btn btn-sm btn-primary me-2" onClick={() => handleEditActor(actor.id)}>
-                                    Edit
-                                </Button>
-                                <Button className="btn btn-sm btn-danger" onClick={() => handleDeleteActor(actor.id)}>
-                                    Delete
-                                </Button>
-                            </td>
+            <Container className="actor-table-wrapper">
+                <Table striped bordered hover className="actor-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Countries</th>
+                            <th>Actor Name</th>
+                            <th>Birth Date</th>
+                            <th>Photos</th>
+                            <th>Actions</th>
                         </tr>
-                    ))}
-                </tbody>
-            </Table>
+                    </thead>
+                    <tbody>
+                        {actors.map((actor, index) => (
+                            <tr key={actor.id}>
+                                <td>{index + 1}</td>
+                                <td>{actor.country}</td>
+                                <td>{actor.name}</td>
+                                <td>{actor.birthDate}</td>
+                                <td>
+                                    {actor.photo ? (
+                                        <img src={actor.photo} alt={actor.name} width={50} />
+                                    ) : (
+                                        <div style={{ width: 50, height: 50, backgroundColor: '#ddd' }} />
+                                    )}
+                                </td>
+                                <td>
+                                    <Container className="action-button">
+                                        <Button className="btn btn-sm btn-primary me-2" onClick={() => handleEditActor(actor.id)}>
+                                            Edit
+                                        </Button>
+                                        <Button className="btn btn-sm btn-danger" onClick={() => handleDeleteActor(actor.id)}>
+                                            Delete
+                                        </Button>
+                                    </Container>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </Container>
         </Container>
     );
 };
