@@ -8,9 +8,8 @@
 }
 
 .review-table-wrapper {
-  height: calc(100vh - 150px);
-  overflow-y: auto;
-  margin-top: 10px;
+  overflow-x: auto;
+  flex-grow: 1; 
 }
 
 .table {
@@ -25,14 +24,7 @@
   text-align: center;
   background-color: #323B54;
   color: #fff;
-}
-
-.table th:nth-child(1),
-.table th:nth-child(2),
-.table th:nth-child(5),
-.table th:nth-child(6) {
-  width: 10%;
-}
+} */
 
 .table th:nth-child(3) {
   width: 15%;

@@ -42,10 +42,14 @@ function ValidateDrama() {
   });
 
   return (
-    <Container className="validas-drama-container">
+    <Container>
+      <Container className="App">
+        <h1 className="title">Validate Drama</h1>
+      </Container>
       {/* Filter Section */}
-      <Row className="mb-3">
-        <Col md={3}>
+      <Row className="mb-3 justify-content-end">
+        {/* Kolom pertama dengan Dropdown Filter */}
+        <Col xs="auto" className="d-flex me-2 align-items-center">
           <Dropdown onSelect={handleFilterChange}>
             <Dropdown.Toggle variant="light" id="dropdown-filter">
               Filtered by: {filter}
@@ -57,7 +61,9 @@ function ValidateDrama() {
             </Dropdown.Menu>
           </Dropdown>
         </Col>
-        <Col md={2}>
+
+        {/* Kolom kedua dengan Dropdown Shows */}
+        <Col xs="auto" className="d-flex me-2 align-items-center">
           <Dropdown onSelect={handleShowCountChange}>
             <Dropdown.Toggle variant="light" id="dropdown-show">
               Shows: {showCount}
@@ -71,12 +77,18 @@ function ValidateDrama() {
             </Dropdown.Menu>
           </Dropdown>
         </Col>
-        <Col xs={12} md={6} className="text-md-end mt-3 mt-md-0">
-          <Button variant="light" disabled>
-            <i className="bi bi-search"></i>
-          </Button>
+
+        {/* Kolom ketiga dengan Input Pencarian */}
+        <Col xs="auto" className="d-flex me-2 align-items-center">
+          <input
+            type="text"
+            className="search-input form-control"
+            placeholder="Search"
+          />
         </Col>
       </Row>
+
+
 
       {/* Table Section */}
       <Table striped bordered hover responsive>
@@ -85,36 +97,41 @@ function ValidateDrama() {
             <th>Username</th>
             <th>Drama</th>
             <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           {filteredDramas.slice(0, showCount).map((drama) => (
-            <tr key={drama.id} className={drama.status === "Unapproved" ? "table-danger" : ""}>
+            <tr key={drama.id}>
               <td>{drama.username}</td>
               <td>{drama.drama}</td>
               <td>{drama.status}</td>
               <td>
-                <Button
-                  variant="success"
-                  className="me-2"
-                  size="sm"
-                  onClick={() => handleApproveDrama(drama.id)}
-                >
-                  Approve
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleDeleteDrama(drama.id)}
-                >
-                  Delete
-                </Button>
+                <Container className="action-button">
+                  {drama.status === "Unapproved" && (
+                    <Button
+                      variant="success"
+                      className="me-2"
+                      size="sm"
+                      onClick={() => handleApproveDrama(drama.id)}
+                    >
+                      Approve
+                    </Button>
+                  )}
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDeleteDrama(drama.id)}
+                  >
+                    Delete
+                  </Button>
+                </Container>
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
-    </Container>
+    </Container >
   );
 }
 

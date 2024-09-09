@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Form, Container, Modal, Button } from "react-bootstrap";
+import { Table, Form, Container, Modal, Button, Col, Dropdown } from "react-bootstrap";
 import "../ListDrama/ListDrama.css"; // Pastikan file CSS sudah ada
 
 const ListDrama = () => {
@@ -63,21 +63,26 @@ const ListDrama = () => {
   };
 
   return (
-    <Container className="list-drama-container">
+    <Container>
+      <Container className="App">
+        <h1 className="title">Movies List</h1>
+      </Container>
       {/* Header dengan Select dan Search */}
-      <div className="list-drama-header d-flex justify-content-between align-items-center mb-3">
-        <div className="dropdown-toggle">
-          <Form.Select
-            value={showCount}
-            onChange={(e) => setShowCount(e.target.value)}
-            aria-label="Select show count"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={15}>15</option>
-            <option value={20}>20</option>
-          </Form.Select>
-        </div>
+      <div className="list-drama-header d-flex justify-content-end align-items-center mb-3">
+        <Col xs="auto" className="d-flex me-3">
+          <Dropdown onSelect={setShowCount}>
+            <Dropdown.Toggle variant="light" id="dropdown-show">
+              Shows: {showCount}
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              {[10, 20, 50].map((count) => (
+                <Dropdown.Item key={count} eventKey={count}>
+                  {count}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        </Col>
         <input
           type="text"
           className="search-input"
@@ -107,18 +112,20 @@ const ListDrama = () => {
                 <td>{drama.genres}</td>
                 <td>{drama.synopsis}</td>
                 <td>
-                  <Button
-                    className="btn btn-sm btn-primary me-2"
-                    onClick={() => handleEdit(drama)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(drama.id)}
-                  >
-                    Delete
-                  </Button>
+                  <Container className="action-button">
+                    <Button
+                      className="btn btn-sm btn-primary me-2"
+                      onClick={() => handleEdit(drama)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDelete(drama.id)}
+                    >
+                      Delete
+                    </Button>
+                  </Container>
                 </td>
               </tr>
             ))}

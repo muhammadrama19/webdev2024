@@ -62,36 +62,35 @@ const ReviewManager = () => {
                 <h1 className="title">Reviews Manager</h1>
             </Container>
             {/* Filter Section */}
-            <Container >
-                <Row className="mb-3 d-flex justify-content-end">
-                    <Col xs="auto" className="ms-auto">
-                        <Dropdown onSelect={handleFilterChange}>
-                            <Dropdown.Toggle variant="light" id="dropdown-filter">
-                                Filtered by: {filter}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item eventKey="None">None</Dropdown.Item>
-                                <Dropdown.Item eventKey="Approved">Approved</Dropdown.Item>
-                                <Dropdown.Item eventKey="Unapproved">Unapproved</Dropdown.Item>
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </Col>
-                    <Col xs="auto" className="ms-auto">
-                        <Dropdown onSelect={handleShowCountChange}>
-                            <Dropdown.Toggle variant="light" id="dropdown-show">
-                                Shows: {showCount}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                {[10, 20, 50].map((count) => (
-                                    <Dropdown.Item key={count} eventKey={count}>
-                                        {count}
-                                    </Dropdown.Item>
-                                ))}
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </Col>
-                </Row>
-            </Container>
+            <Row className="mb-3 justify-content-end">
+                <Col xs="auto" className="d-flex">
+                    <Dropdown onSelect={handleFilterChange}>
+                        <Dropdown.Toggle variant="light" id="dropdown-filter">
+                            Filtered by: {filter}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            <Dropdown.Item eventKey="None">None</Dropdown.Item>
+                            <Dropdown.Item eventKey="Approved">Approved</Dropdown.Item>
+                            <Dropdown.Item eventKey="Unapproved">Unapproved</Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </Col>
+                <Col xs="auto" className="d-flex">
+                    <Dropdown onSelect={handleShowCountChange}>
+                        <Dropdown.Toggle variant="light" id="dropdown-show">
+                            Shows: {showCount}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            {[10, 20, 50].map((count) => (
+                                <Dropdown.Item key={count} eventKey={count}>
+                                    {count}
+                                </Dropdown.Item>
+                            ))}
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </Col>
+            </Row>
+
 
             {/* Table Section */}
             <Container className="review-table-wrapper">
