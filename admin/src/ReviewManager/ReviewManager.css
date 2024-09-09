@@ -1,19 +1,10 @@
-.review-manager-container {
-  padding: 20px;
-  height: 100%;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
-}
-
 .review-manager-header {
   position: sticky;
   top: 0;
-  background-color: #f9f9f9;
+  background-color: #323B54;
   z-index: 10;
   padding: 10px 0;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #323B54;
 }
 
 .review-table-wrapper {
@@ -32,6 +23,8 @@
   vertical-align: middle;
   padding: 10px;
   text-align: center;
+  background-color: #323B54;
+  color: #fff;
 }
 
 .table th:nth-child(1),
@@ -69,3 +62,28 @@
   text-align: center;
 }
 
+/* Menghilangkan underline dan outline pada state umum */
+.action-buttons button, .action-buttons a {
+  text-decoration: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+/* Menghilangkan underline dan outline pada hover */
+.action-buttons button:hover, .action-buttons a:hover {
+  text-decoration: none !important;
+  outline: none !important;
+}
+
+/* Menghilangkan outline saat fokus */
+.action-buttons button:focus, .action-buttons a:focus {
+  outline: none !important;
+  box-shadow: none !important; /* Menghilangkan shadow jika ada */
+}
+
+/* Menghilangkan style saat tombol aktif atau di-klik */
+.action-buttons button:active, .action-buttons a:active {
+  outline: none !important;
+  text-decoration: none !important;
+  border: none !important;
+}

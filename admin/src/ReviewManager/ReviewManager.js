@@ -29,7 +29,7 @@ const ReviewManager = () => {
             username: "Luffy",
             rate: 2,
             drama: "[2024] Japan - Eye Love You",
-            comments: "Meh",
+            comments: "This drama is so boring. I don't like it.",
             status: "Approved",
             isChecked: false,
         },
@@ -57,11 +57,14 @@ const ReviewManager = () => {
     });
 
     return (
-        <Container className="review-manager-container">
+        <Container >
+            <Container className="App">
+                <h1 className="title">Reviews Manager</h1>
+            </Container>
             {/* Filter Section */}
-            <div className="review-manager-header">
-                <Row className="mb-3">
-                    <Col md={3}>
+            <Container >
+                <Row className="mb-3 d-flex justify-content-end">
+                    <Col xs="auto" className="ms-auto">
                         <Dropdown onSelect={handleFilterChange}>
                             <Dropdown.Toggle variant="light" id="dropdown-filter">
                                 Filtered by: {filter}
@@ -73,7 +76,7 @@ const ReviewManager = () => {
                             </Dropdown.Menu>
                         </Dropdown>
                     </Col>
-                    <Col md={2}>
+                    <Col xs="auto" className="ms-auto">
                         <Dropdown onSelect={handleShowCountChange}>
                             <Dropdown.Toggle variant="light" id="dropdown-show">
                                 Shows: {showCount}
@@ -88,10 +91,10 @@ const ReviewManager = () => {
                         </Dropdown>
                     </Col>
                 </Row>
-            </div>
+            </Container>
 
             {/* Table Section */}
-            <div className="review-table-wrapper">
+            <Container className="review-table-wrapper">
                 <Table striped bordered hover>
                     <thead>
                         <tr>
@@ -105,7 +108,7 @@ const ReviewManager = () => {
                     </thead>
                     <tbody>
                         {filteredReviews.slice(0, showCount).map((review) => (
-                            <tr key={review.id} className={review.status === "Unapproved" ? "table-danger" : ""}>
+                            <tr key={review.id}>
                                 <td>{review.username}</td>
                                 <td>
                                     <Container className="rate-container">
@@ -116,29 +119,31 @@ const ReviewManager = () => {
                                 <td>{review.comments}</td>
                                 <td>{review.status}</td>
                                 <td>
-                                    {review.status === "Unapproved" && (
+                                    <Container className="action-button">
+                                        {review.status === "Unapproved" && (
+                                            <Button
+                                                variant="success"
+                                                className="me-2"
+                                                size="sm"
+                                                onClick={() => handleApproveReview(review.id)}
+                                            >
+                                                Approve
+                                            </Button>
+                                        )}
                                         <Button
-                                            variant="success"
-                                            className="me-2"
+                                            variant="danger"
                                             size="sm"
-                                            onClick={() => handleApproveReview(review.id)}
+                                            onClick={() => handleDeleteReview(review.id)}
                                         >
-                                            Approve
+                                            Delete
                                         </Button>
-                                    )}
-                                    <Button
-                                        variant="danger"
-                                        size="sm"
-                                        onClick={() => handleDeleteReview(review.id)}
-                                    >
-                                        Delete
-                                    </Button>
+                                    </Container>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </Table>
-            </div>
+            </Container>
         </Container>
     );
 };
