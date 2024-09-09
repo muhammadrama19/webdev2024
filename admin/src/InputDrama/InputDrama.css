@@ -1,81 +1,138 @@
 .drama-input-container {
-    padding: 20px;
-    background-color: var(--main-color);
-    border-radius: 8px;
-    height: 100%;
+  padding: 20px;
+  background-color: var(--main-color);
+  border-radius: 8px;
+  height: 100%;
+}
+
+.image-upload-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.camera-icon {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 150px;
+  background-color: #fff;
+  border-radius: 8px;
+  position: relative; /* Menambahkan relative positioning */
+}
+
+.camera-icon img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+.camera-icon i {
+  font-size: 48px;
+  color: #aaa;
+  z-index: 1;
+  display: block;
+}
+
+.file-input-container {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.genres,
+.actors {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.genres .form-check,
+.actors .form-check {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.form-group-submit {
+  margin-top: 30px;
+}
+
+.small-image-upload-container {
+  text-align: center;
+  margin: auto;
+  width: 100%; /* Buat lebar kontainer menyesuaikan layar */
+}
+
+.small-camera-icon {
+  border: 2px dashed #ccc;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%; /* Lebar kontainer menyesuaikan dengan layar */
+  max-width: 250px; /* Batas lebar maksimal pada layar besar */
+  height: 300px; /* Tinggi kontainer default */
+  background-color: #fff;
+  border-radius: 8px;
+  position: relative; /* Menambahkan relative positioning */
+  margin: auto;
+}
+
+.small-camera-icon img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+.small-camera-icon i {
+  font-size: 32px; /* Ukuran ikon lebih kecil */
+  color: #aaa;
+  z-index: 1;
+  display: block;
+}
+
+.small-file-input-container {
+  margin: 10px auto;
+  width: 100%; /* Buat input menyesuaikan layar */
+  max-width: 250px; /* Batas lebar maksimal pada layar besar */
+}
+
+.upload-text {
+  font-size: 14px;
+  color: #000000; /* Sesuaikan warna dengan warna yang lebih lembut */
+  position: absolute;
+  bottom: 10px; /* Mengatur jarak teks dari bagian bawah */
+  text-align: center;
+  width: 100%;
+  z-index: 1;
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .small-camera-icon {
+    width: 200px; /* Lebar kontainer lebih kecil pada tablet */
+    height: 250px; /* Tinggi kontainer lebih kecil pada tablet */
   }
-  
-  .image-upload-container {
-    text-align: center;
-    margin-bottom: 20px;
+
+  .small-file-input-container {
+    width: 200px; /* Lebar input lebih kecil pada tablet */
   }
-  
-  .camera-icon {
-    border: 2px dashed #ccc;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 200px;
-    background-color: #fff;
-    border-radius: 8px;
+}
+
+@media (max-width: 576px) {
+  .small-camera-icon {
+    width: 150px; /* Lebar kontainer lebih kecil pada ponsel */
+    height: 200px; /* Tinggi kontainer lebih kecil pada ponsel */
   }
-  
-  .file-input-container {
-    margin-top: 10px;
-    width: 100%;
+
+  .small-file-input-container {
+    width: 150px; /* Lebar input lebih kecil pada ponsel */
   }
-  
-  .genres, .actors {
-    display: flex;
-    flex-wrap: wrap;
-  }
-  
-  .genres .form-check, .actors .form-check {
-    margin-right: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .form-group-submit {
-    margin-top: 30px;
-  }
-  
-  /* Responsive styling */
-  @media (max-width: 768px) {
-    .image-upload-container {
-      margin-bottom: 30px;
-    }
-  
-    .drama-input-form .row {
-      flex-direction: column;
-    }
-  
-    .drama-input-form .col-md-4 {
-      margin-bottom: 20px;
-    }
-  
-    .form-group-submit {
-      display: flex;
-      justify-content: space-between;
-      flex-direction: column;
-    }
-  
-    .form-group-submit .back-button, .form-group-submit .submit-button {
-      margin-bottom: 10px;
-    }
-  }
-  
-  @media (max-width: 576px) {
-    .camera-icon {
-      height: 150px;
-    }
-  
-    .form-group-submit .back-button, .form-group-submit .submit-button {
-      width: 100%;
-    }
-  
-    .form-group-submit .submit-button {
-      margin-top: 10px;
-    }
-  }
-  
+}
