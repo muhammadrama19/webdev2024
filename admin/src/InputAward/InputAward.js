@@ -56,14 +56,17 @@ const AwardsManager = () => {
     };
 
     return (
-        <Container className="input-award-container">
+        <Container>
+            <Container className="App">
+                <h1 className="title">Awards Manager</h1>
+            </Container>
             {/* Form Section */}
             <Button
                 variant="success"
                 className="d-flex align-items-center ms-auto mb-3"
                 onClick={handleShowModal}>
                 <FaPlus className="me-2" />
-                Add Award
+                Add New Award
             </Button>
 
             <Modal show={showModal} onHide={handleCloseModal} centered>
@@ -106,58 +109,62 @@ const AwardsManager = () => {
                 </Modal.Body>
                 <Modal.Footer>
                     <Button
-                    variant="secondary"
-                    className="mt-2"
-                    onClick={() => setShowModal(false)}>
-                    Cancel
-                </Button>
-                <Button
-                    type="submit"
-                    variant="primary"
-                    className="mt-2"
-                    style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
-                    onClick={handleAddAward}>
-                    {editing !== null ? 'Save Changes' : 'Submit'}
-                </Button>
-            </Modal.Footer>
-        </Modal>
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={() => setShowModal(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-2"
+                        style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
+                        onClick={handleAddAward}>
+                        {editing !== null ? 'Save Changes' : 'Submit'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
 
-            {/* Table Section */ }
-    <Table className="table table-striped" striped bordered hover>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Country</th>
-                <th>Year</th>
-                <th>Award</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {entries.map((entry, index) => (
-                <tr key={entry.id}>
-                    <td>{index + 1}</td>
-                    <td>{entry.country}</td>
-                    <td>{entry.year}</td>
-                    <td>{entry.award}</td>
-                    <td>
-                        <Button
-                            className="btn btn-sm btn-primary me-2"
-                            onClick={() => handleEdit(entry.id)}
-                        >
-                            Edit
-                        </Button>
-                        <Button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleDelete(entry.id)}
-                        >
-                            Delete
-                        </Button>
-                    </td>
-                </tr>
-            ))}
-        </tbody>
-    </Table>
+            {/* Table Section */}
+            <Container className='award-table-wrapper'>
+                <Table className="award-table" striped bordered hover>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Country</th>
+                            <th>Year</th>
+                            <th>Award</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {entries.map((entry, index) => (
+                            <tr key={entry.id}>
+                                <td>{index + 1}</td>
+                                <td>{entry.country}</td>
+                                <td>{entry.year}</td>
+                                <td>{entry.award}</td>
+                                <td>
+                                    <Container className="action-button">
+                                        <Button
+                                            className="btn btn-sm btn-primary me-2"
+                                            onClick={() => handleEdit(entry.id)}
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            className="btn btn-sm btn-danger"
+                                            onClick={() => handleDelete(entry.id)}
+                                        >
+                                            Delete
+                                        </Button>
+                                    </Container>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </Container>
         </Container >
     );
 };

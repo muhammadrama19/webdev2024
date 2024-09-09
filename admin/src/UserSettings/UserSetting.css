@@ -16,7 +16,6 @@
   }
   
   .action-button {
-    color: #007bff;
     text-decoration: none;
     padding: 0;
     margin-right: 10px;
@@ -31,8 +30,7 @@
   }
   
   .action-button:hover {
-    text-decoration: underline;
-    color: #0056b3;
+    text-decoration: none;
   }
   
   .text-danger {

@@ -34,6 +34,18 @@ body {
   justify-content: space-between;
 }
 
+.App {
+  text-align: left;
+}
+.title {
+  color: #EBEEF5;
+  font-family: "Montserrat", sans-serif;
+  font-size: 50px;
+}
+.text {
+  font-size: 20px;
+}
+
 .main-cards {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;

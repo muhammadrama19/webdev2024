@@ -57,7 +57,10 @@ const UserSetting = () => {
   };
 
   return (
-    <Container className="user-setting-container">
+    <Container >
+      <Container className="App">
+        <h1 className="title">User Setting</h1>
+      </Container>
       <Button variant="success" className="d-flex align-items-center ms-auto mb-3" onClick={handleShowModal}>
         <FaPlus className="me-2" />
         Add User

@@ -77,11 +77,14 @@ const CountryManager = () => {
     };
 
     return (
-        <Container className="input-country-container">
+        <Container>
+            <Container className="App">
+                <h1 className="title">Country Manager</h1>
+            </Container>
             {/* Form Section */}
             <Button variant="success" className="d-flex align-items-center ms-auto mb-3" onClick={handleShowModal}>
                 <FaPlus className="me-2" />
-                Add Country
+                Add New Country
             </Button>
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
@@ -107,89 +110,91 @@ const CountryManager = () => {
             </Modal>
 
             {/* Table Section */}
-            <Table className="table table-striped" striped bordered hover>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Country</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {countries.map((country, index) => (
-                        <tr key={country.id} className={country.isDefault ? "table-danger" : ""}>
-                            <td>{index + 1}</td>
-                            <td>
-                                {editing === country.id ? (
-                                    <Form.Control
-                                        type="text"
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                    />
-                                ) : (
-                                    country.name
-                                )}
-                            </td>
-                            <td>
-                                {editing === country.id ? (
-                                    <>
-                                        <Button
-                                            variant="success"
-                                            size="sm"
-                                            onClick={() => handleRenameCountry(country.id)}
-                                            className="me-2"
-                                        >
-                                            Save
-                                        </Button>
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() => setEditing(null)}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            className="me-2"
-                                            onClick={() => {
-                                                setEditing(country.id);
-                                                setEditName(country.name);
-                                            }}
-                                            disabled={editing !== null}
-                                        >
-                                            Rename
-                                        </Button>
-                                        <Button
-                                            variant="danger"
-                                            size="sm"
-                                            className="me-2"
-                                            onClick={() => handleDeleteCountry(country.id)}
-                                            disabled={editing !== null}
-                                        >
-                                            Delete
-                                        </Button>
-                                        {!country.isDefault && (
+            <Container className="country-table-wrapper">
+                <Table className="country-table" striped bordered hover>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Country</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {countries.map((country, index) => (
+                            <tr key={country.id}>
+                                <td>{index + 1}</td>
+                                <td>
+                                    {editing === country.id ? (
+                                        <Form.Control
+                                            type="text"
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                        />
+                                    ) : (
+                                        country.name
+                                    )}
+                                </td>
+                                <td>
+                                    {editing === country.id ? (
+                                        <>
                                             <Button
-                                                variant="outline-secondary"
+                                                variant="success"
                                                 size="sm"
-                                                onClick={() => handleSetDefault(country.id)}
+                                                onClick={() => handleRenameCountry(country.id)}
+                                                className="me-2"
+                                            >
+                                                Save
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setEditing(null)}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <Container className="action-button">
+                                            <Button
+                                                variant="primary"
+                                                size="sm"
+                                                className="me-2"
+                                                onClick={() => {
+                                                    setEditing(country.id);
+                                                    setEditName(country.name);
+                                                }}
                                                 disabled={editing !== null}
                                             >
-                                                Set Default
+                                                Rename
                                             </Button>
-                                        )}
-                                    </>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </Table>
-        </Container>
+                                            <Button
+                                                variant="danger"
+                                                size="sm"
+                                                className="me-2"
+                                                onClick={() => handleDeleteCountry(country.id)}
+                                                disabled={editing !== null}
+                                            >
+                                                Delete
+                                            </Button>
+                                            {!country.isDefault && (
+                                                <Button
+                                                    variant="outline-secondary"
+                                                    size="sm"
+                                                    onClick={() => handleSetDefault(country.id)}
+                                                    disabled={editing !== null}
+                                                >
+                                                    Set Default
+                                                </Button>
+                                            )}
+                                        </Container>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </Container>
+        </Container >
     );
 };
 

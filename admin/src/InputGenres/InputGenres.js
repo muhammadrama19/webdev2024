@@ -60,11 +60,14 @@ const GenreManager = () => {
     };
 
     return (
-        <Container className="input-genre-container">
+        <Container>
+            <Container className="App">
+                <h1 className="title">Genres Manager</h1>
+            </Container>
             {/* Form Section */}
             <Button variant="success" className="d-flex align-items-center ms-auto mb-3" onClick={handleShowModal}>
                 <FaPlus className="me-2" />
-                Add Genre
+                Add New Genre
             </Button>
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
@@ -92,78 +95,82 @@ const GenreManager = () => {
             </Modal>
 
             {/* Table Section */}
-            <Table className="table table-striped" striped bordered hover>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Genre</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {genres.map((country, index) => (
-                        <tr key={country.id} className={country.isDefault ? "table-danger" : ""}>
-                            <td>{index + 1}</td>
-                            <td>
-                                {editing === country.id ? (
-                                    <Form.Control
-                                        type="text"
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                    />
-                                ) : (
-                                    country.name
-                                )}
-                            </td>
-                            <td>
-                                {editing === country.id ? (
-                                    <>
-                                        <Button
-                                            variant="success"
-                                            size="sm"
-                                            onClick={() => handleRenameGenre(country.id)}
-                                            className="me-2"
-                                        >
-                                            Save
-                                        </Button>
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() => setEditing(null)}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            onClick={() => {
-                                                setEditing(country.id);
-                                                setEditName(country.name);
-                                            }}
-                                            className="me-2"
-                                            disabled={editing !== null}
-                                        >
-                                            Rename
-                                        </Button>
-                                        <Button
-                                            variant="danger"
-                                            size="sm"
-                                            onClick={() => handleDeleteGenre(country.id)}
-                                            className="me-2"
-                                            disabled={editing !== null}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </>
-                                )}
-                            </td>
+            <Container className="genre-table-wrapper">
+                <Table className="genre-table" striped bordered hover>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Genre</th>
+                            <th>Actions</th>
                         </tr>
-                    ))}
-                </tbody>
-            </Table>
+                    </thead>
+                    <tbody>
+                        {genres.map((country, index) => (
+                            <tr key={country.id} className={country.isDefault ? "table-danger" : ""}>
+                                <td>{index + 1}</td>
+                                <td>
+                                    {editing === country.id ? (
+                                        <Form.Control
+                                            type="text"
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                        />
+                                    ) : (
+                                        country.name
+                                    )}
+                                </td>
+                                <td>
+                                    <Container className="action-button">
+                                        {editing === country.id ? (
+                                            <>
+                                                <Button
+                                                    variant="success"
+                                                    size="sm"
+                                                    onClick={() => handleRenameGenre(country.id)}
+                                                    className="me-2"
+                                                >
+                                                    Save
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => setEditing(null)}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setEditing(country.id);
+                                                        setEditName(country.name);
+                                                    }}
+                                                    className="me-2"
+                                                    disabled={editing !== null}
+                                                >
+                                                    Rename
+                                                </Button>
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteGenre(country.id)}
+                                                    className="me-2"
+                                                    disabled={editing !== null}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </>
+                                        )}
+                                    </Container>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </Container>
         </Container>
     );
 };

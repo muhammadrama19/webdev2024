@@ -1,7 +1,10 @@
-.input-country-container {
-    padding: 20px;
-    height: 100vh;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
+.country-table-wrapper {
+  overflow-x: auto; /* Hanya tabel yang di-scroll */
+  flex-grow: 1; /* Tabel akan menempati sisa ruang */
+}
+
+.country-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+}
