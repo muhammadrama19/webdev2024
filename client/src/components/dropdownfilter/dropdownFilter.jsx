@@ -1,20 +1,30 @@
 import React from 'react';
-import { Form } from 'react-bootstrap';
-import './dropdownFilter.scss';
+import PropTypes from 'prop-types';
+import { Dropdown } from 'react-bootstrap';
+import './dropdownFilter.scss'; // Ensure this path is correct
 
-const DropdownFilter = ({ label, options, onSelect }) => {
+const DropdownFilterCustom = ({ label, options, onSelect }) => {
   return (
-    <Form.Group controlId={`dropdown-${label}`} className="dropdown-filter">
-      <Form.Label>{label}</Form.Label>
-      <Form.Control as="select" onChange={(e) => onSelect(e.target.value)}>
+    <Dropdown className="dropdown-filter">
+      <Dropdown.Toggle variant="success" id={`${label}-dropdown`}>
+        {label}
+      </Dropdown.Toggle>
+
+      <Dropdown.Menu>
         {options.map((option, index) => (
-          <option key={index} value={option}>
+          <Dropdown.Item key={index} onClick={() => onSelect(option)}>
             {option}
-          </option>
+          </Dropdown.Item>
         ))}
-      </Form.Control>
-    </Form.Group>
+      </Dropdown.Menu>
+    </Dropdown>
   );
 };
 
-export default DropdownFilter;
+DropdownFilterCustom.propTypes = {
+  label: PropTypes.string.isRequired,
+  options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onSelect: PropTypes.func.isRequired,
+};
+
+export default DropdownFilterCustom;
