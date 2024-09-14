@@ -17,7 +17,7 @@ const MovieCardDetail = ({ title, rating, metaScore, description, creators, genr
                 <span className="rating">
                   <Badge bg="warning" text="dark">
                     {rating}
-                  </Badge> Rating: {rating}/10 from 362,717 users
+                  </Badge> Rating: {rating}/10 from 362,717
                 </span>
                 <br />
                 <span className="metascore">

@@ -4,6 +4,7 @@ import LoginIcon from "@mui/icons-material/Login";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import SearchBar from "../searchInput/search";
 import "./navbar.scss";
 
 const Navbar = () => {
@@ -81,18 +82,7 @@ const Navbar = () => {
           </div>
         </div>
         <div className="right">
-          {searchVisible && (
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search..."
-            />
-          )}
-          <SearchIcon className="icon" onClick={toggleSearch} />
-          <LoginIcon className="icon" />
-          <div className="hamburger" onClick={toggleSidebar}>
-            {sidebarVisible ? <CloseIcon /> : <MenuIcon />}
-          </div>
+          <SearchBar/>
         </div>
       </div>
 

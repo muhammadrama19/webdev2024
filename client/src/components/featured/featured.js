@@ -1,33 +1,97 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Row, Col } from 'react-bootstrap';
 import './featured.scss';
-// import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-// import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import Button from '../button/button';
 
-const Featured = ({ type }) => {
-  return (
-    <div className='featured'>
+// Preload image function
+const preloadImage = (src) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = resolve;
+    img.onerror = reject;
+  });
+};
 
-      <img 
-        src="https://images2.alphacoders.com/132/thumb-1920-1320904.jpg" 
-        alt="Featured"
-      />
-      <div className="info">
+const Featured = () => {
+  const [movies, setMovies] = useState([]); // To store the array of movies
+  const [currentMovieIndex, setCurrentMovieIndex] = useState(0); // Track which movie is displayed
+  const [fadeClass, setFadeClass] = useState('fade-in'); // Handle fade animation
+
+  // Function to fetch movie data from the endpoint and preload images
+  const fetchMovies = async () => {
+    try {
+      const response = await fetch('http://localhost:8001/movies/featured');
+      const data = await response.json();
+      console.log('Fetched movie data:', data);
+
+      // Preload all background images
+      await Promise.all(data.map(movie => preloadImage(movie.background)));
+
+      setMovies(data); // Store the array of movies after images are preloaded
+    } catch (error) {
+      console.error('Error fetching the featured movie:', error);
+    }
+  };
+
+  // Fetch movie and set interval to update every 10 seconds
+  useEffect(() => {
+    fetchMovies(); // Fetch the movies on mount
+
+    const interval = setInterval(() => {
+      setFadeClass('fade-out'); // Trigger fade out
+
+      setTimeout(() => {
+        setCurrentMovieIndex((prevIndex) => (prevIndex + 1) % movies.length); // Move to the next movie
+        setFadeClass('fade-in'); // Trigger fade in
+      }, 500); // Duration of fade-out
+    }, 10000); // Change movie every 10 seconds
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, [movies.length]);
+
+  if (movies.length === 0) return <div>Loading...</div>; // Display loading until movies are fetched
+
+  const currentMovie = movies[currentMovieIndex]; // Get the current movie to display
+
+  return (
+    <div className={`featured-container ${fadeClass}`}>
+      {/* Background Image */}
+      <div className="background">
         <img 
-          src="https://upload.wikimedia.org/wikipedia/commons/5/50/Barbie_%282023_movie_logo%29.png" 
-          alt="Movie Logo" 
+          src={currentMovie.background}
+          alt={currentMovie.title}
+          className="background-image"
         />
-        <span className='desc'>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quae quibusdam repellendus esse illum non vitae inventore quos voluptate provident nostrum assumenda error, et hic blanditiis aliquam. Omnis nihil voluptatum expedita.
-        </span>
-        <div className="buttons">
-        <Button className={"mt-3 border-white"} variant="default" onClick={() => alert('Primary Button')}>
-        Info
-      </Button>
-      <Button className={"mt-3"} variant="primary" onClick={() => alert('Primary Button')}>
-        Play
-      </Button>
-        </div>
+      </div>
+
+      {/* Movie Poster and Synopsis */}
+      <div className="content-overlay">
+        <Row>
+          <Col md={4} className="poster-col">
+            <img 
+              src={currentMovie.poster}
+              alt={currentMovie.title} 
+              className="movie-poster pt-5"
+            />
+          </Col>
+          <Col md={8} className="info-col">
+            <div className="info">
+            <p className="movieTitle">
+                {currentMovie.title}
+              </p>
+              <p className="desc">
+                {currentMovie.synopsis}
+              </p>
+              <div className="buttons">
+                <Button className="mt-3 border-white" variant="primary" onClick={() => alert('Info Button')}>
+                  See More
+                </Button>
+     
+              </div>
+            </div>
+          </Col>
+        </Row>
       </div>
     </div>
   );
