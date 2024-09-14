@@ -1,11 +1,30 @@
 import './movieReview.scss';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Container, Button } from 'react-bootstrap';
 import UserReview from '../userReview/userReview';
 import ReviewInput from '../reviewInput/reviewInput';
 
-const MovieReview = () => {
+const MovieReview = ({ id }) => {
+  const [reviews, setReviews] = useState([]);
   const [showReviewInput, setShowReviewInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch(`http://localhost:8001/movies/detail/review/${id}`); // Use backticks for template literals
+        const data = await response.json();
+        console.log(data); // Inspect the API response
+        setReviews(data || []); // Ensure `data` is an array
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [id]); // Add `id` as a dependency to refetch reviews when `id` changes
 
   const handleAddReviewClick = () => {
     setShowReviewInput(true);
@@ -15,61 +34,36 @@ const MovieReview = () => {
     setShowReviewInput(false);
   };
 
+  if (isLoading) {
+    return <p>Loading reviews...</p>;
+  }
+
   return (
     <Container>
       <Card className='movie-review'>
-        <div className='titleSection'>
-          Review
-        </div>
+        <div className='titleSection'>Reviews</div>
         <Row>
-          <Col xs={12} md={12}>
-            <UserReview  
-              userName="Louis Peitzman"
-              userImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg"
-              rating={4}
-              reviewText="I'm starting to feel like the Weyland-Yutani Corporation does not have our best interests at heart."
-            />
-             <UserReview  
-              userName="Louis Peitzman"
-              userImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg"
-              rating={4}
-              reviewText="I'm starting to feel like the Weyland-Yutani Corporation does not have our best interests at heart."
-            />
-             <UserReview  
-              userName="Louis Peitzman"
-              userImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg"
-              rating={4}
-              reviewText="I'm starting to feel like the Weyland-Yutani Corporation does not have our best interests at heart."
-            />
-             <UserReview  
-              userName="Louis Peitzman"
-              userImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg"
-              rating={4}
-              reviewText="I'm starting to feel like the Weyland-Yutani Corporation does not have our best interests at heart."
-            />
-             <UserReview  
-              userName="Louis Peitzman"
-              userImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg"
-              rating={4}
-              reviewText="I'm starting to feel like the Weyland-Yutani Corporation does not have our best interests at heart."
-            />
-             <UserReview  
-              userName="Louis Peitzman"
-              userImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg"
-              rating={4}
-              reviewText="I'm starting to feel like the Weyland-Yutani Corporation does not have our best interests at heart."
-            />
-             <UserReview  
-              userName="Louis Peitzman"
-              userImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg"
-              rating={4}
-              reviewText="I'm starting to feel like the Weyland-Yutani Corporation does not have our best interests at heart."
-            />
-          </Col>
+          {Array.isArray(reviews) && reviews.length > 0 ? (
+            reviews.map((review) => (
+              <Col xs={12} md={12} key={review.review_id}>
+                <UserReview
+                  userName={review.user_name} 
+                  userImage={review.user_picture || '/assets/Oval.svg'} // Correct path to the placeholder image
+                  rating={review.rating || 'No rating provided'} // Handle null rating
+                  reviewText={review.content}
+                  createdAt={new Date(review.created_at).toLocaleDateString()} // Format the date
+                />
+              </Col>
+            ))
+          ) : (
+            <Col>
+              <p>No reviews available.</p>
+            </Col>
+          )}
         </Row>
       </Card>
     </Container>
   );
-}
+};
 
 export default MovieReview;

@@ -21,7 +21,7 @@ const Featured = () => {
   // Function to fetch movie data from the endpoint and preload images
   const fetchMovies = async () => {
     try {
-      const response = await fetch('http://localhost:8001/movies/featured');
+      const response = await fetch('http://localhost:8001/featured');
       const data = await response.json();
       console.log('Fetched movie data:', data);
 

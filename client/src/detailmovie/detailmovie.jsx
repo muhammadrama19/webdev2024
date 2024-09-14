@@ -1,55 +1,71 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./detailmovie.scss";
-import MovieDetail from "../components/moviecarddetail/movieCardDetail";
-import ActorSlider from "../components/actorSlider/actorSlider";
+import MovieDetailCard from "../components/moviecarddetail/movieCardDetail";
 import MovieReview from "../components/movieReview/movieReview";
-import MediaTrailer from "../components/media/media";
-import { useState } from "react";
 import { Container, Row, Col } from 'react-bootstrap';
-
 import ReviewBar from '../components/reviewBar/reviewBar';
 import CoverDetail from "../components/coverdetail/coverDetail";
+import ActorSlider from "../components/actorSlider/actorSlider";
+import MediaPlayer from "../components/media/media";
+import { useParams } from 'react-router-dom'; 
 
 const Detailmovie = () => {
-  const [showReviewInput, setShowReviewInput] = useState(true);
+  const [movieData, setMovieData] = useState(null);
+  const { id } = useParams(); 
 
-  const handleClose = () => {
-    setShowReviewInput(false);
-  };
+  // Fetch movie details
+  useEffect(() => {
+    const fetchMovieDetail = async () => {
+      try {
+        const response = await fetch(`http://localhost:8001/movies/detail/${id}`); // Use ID from URL params
+        const data = await response.json();
+        setMovieData(data);
+      } catch (error) {
+        console.error("Error fetching movie details:", error);
+      }
+    };
+
+    fetchMovieDetail();
+  }, [id]); 
+
+  if (!movieData) {
+    return <div>Loading...</div>; // Show loading while data is fetched
+  }
 
   return (
     <div className="movieDetail">
-    <CoverDetail/>
+      <CoverDetail srcBackground={movieData.background}/>
       <Container fluid>
         <Row className="justify-content-center">
           <Col md={6}>
-            <MovieDetail
-              title="Another Title"
-              rating="6.9"
-              metaScore="N/A"
-              description="Epic drama set thousands of years before the events of J.R.R. Tolkien's 'The Hobbit' and 'The Lord of the Rings'..."
-              creators={["Patrick McKay", "John D. Payne"]}
-              genres={["Action", "Adventure", "Drama"]}
-              imageSrc="https://image.tmdb.org/t/p/w1280/6PCnxKZZIVRanWb710pNpYVkCSw.jpg"
+            {/* Populate MovieDetailCard with fetched data */}
+            <MovieDetailCard
+              title={movieData.title}
+              rating={movieData.imdb_score}
+              country={movieData.country_release}
+              description={movieData.synopsis}
+              creators={[movieData.director]}
+              genres={movieData.genre.map((g) => g.name)}
+              imageSrc={movieData.poster}
             />
           </Col>
           <Col md={4}>
-            <ReviewBar/>
+            <ReviewBar srcImg={movieData.poster} title={movieData.title}/>
           </Col>
         </Row>
         <Row className="justify-content-center mt-4">
           <Col md={8}>
-            <ActorSlider />
+          <ActorSlider actors={movieData.actors} />
           </Col>
         </Row>
         <Row className="justify-content-center mt-4">
           <Col md={8}>
-            <MediaTrailer />
+           <MediaPlayer link={movieData.trailer}/>
           </Col>
         </Row>
-        <Row className="justify-content-center mt-4">
+        <Row className="justify-content-center mt-2">
           <Col md={8}>
-            <MovieReview />
+            <MovieReview id={movieData.id} />
           </Col>
         </Row>
       </Container>
