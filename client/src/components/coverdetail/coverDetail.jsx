@@ -6,11 +6,11 @@ import Button from '../button/button';
 
 const CoverDetail = ({ type }) => {
   return (
-    <div className='featured'>
+    <div className='coverDetail'>
 
       <img 
         src="https://media.themoviedb.org/t/p/w1066_and_h600_bestv2/vGgMkqnRtVV42KX7xJv63WJ7B4Z.jpg" 
-        alt="Featured"
+        alt="coverDetail"
       />
    
     </div>

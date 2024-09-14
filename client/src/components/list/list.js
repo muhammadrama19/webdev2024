@@ -1,57 +1,50 @@
-import React, { useRef, useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import './list.scss';
 import ListItem from '../listitem/listitem';
+import './list.scss';
 
-const List = () => {  // Rename 'list' to 'List'
-
-    const [isMoved, setIsMoved] = useState(false);
-
-    const [slideNumber, setSlideNumber] = useState(0);
-
-
+const List = ({ title, movies }) => {  // Receive movies as a prop
+  const [isMoved, setIsMoved] = useState(false);
+  const [slideNumber, setSlideNumber] = useState(0);
   const listRef = useRef();
 
   const handleClick = (direction) => {
-    
     let distance = listRef.current.getBoundingClientRect().x - 50;
     setIsMoved(true);
     if (direction === 'left' && slideNumber > 0) {
       setSlideNumber(slideNumber - 1);
       listRef.current.style.transform = `translateX(${230 + distance}px)`;
     }
-    if(direction === 'right' && slideNumber < 5) {
-        setSlideNumber(slideNumber + 1);
+    if (direction === 'right' && slideNumber < movies.length - 1) {
+      setSlideNumber(slideNumber + 1);
       listRef.current.style.transform = `translateX(${-230 + distance}px)`;
     }
-  }
+  };
 
   return (
-    <div className='lists'>
-      <span className='listsTitle'>Popular</span>
+    <div className="lists">
+      <span className="listsTitle">{title}</span>  {/* Display the title */}
       <div className="wrapperList">
-        <ArrowBackIosIcon className='sliderArrow back' 
-        onClick={() => handleClick("left")}
-        style={{display: !isMoved && "none"}} />
+        <ArrowBackIosIcon
+          className="sliderArrow back"
+          onClick={() => handleClick('left')}
+          style={{ display: !isMoved && 'none' }}
+        />
         <div className="customContainerList" ref={listRef}>
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
-          <ListItem />
+          {movies.map((movie, index) => (
+            <ListItem
+              key={index}
+              imageUrl={movie.background}
+              rating={movie.imdb_score}
+              title= {movie.title}  // Adjust if views are available
+            />
+          ))}
         </div>
-        <ArrowForwardIosIcon className='sliderArrow forward' onClick={() => handleClick("right")} />
+        <ArrowForwardIosIcon className="sliderArrow forward" onClick={() => handleClick('right')} />
       </div>
     </div>
   );
-}
+};
 
-export default List;  // Update the export to 'List'
+export default List;

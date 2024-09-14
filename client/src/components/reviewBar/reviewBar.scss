@@ -4,6 +4,7 @@
     border-radius: 8px;
     // margin-top: 150px;
     width: 250px;
+    box-shadow: var(--elevation-2);
 
     .addReviewButton {
         font-size: 14px;
@@ -40,6 +41,7 @@
       span {
         font-size: 14px;
       }
+      
   
       // Individual styles for each icon when active
       &.watch-active .review-icon {
@@ -53,6 +55,8 @@
       &.watchlist-active .review-icon {
         color: var(--succes-color)// Green for Watchlist
       }
+
+      
     }
   
     .add-review-button {

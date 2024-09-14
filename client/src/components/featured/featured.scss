@@ -1,168 +1,86 @@
-.featured {
-    height: 90vh;
-    position: relative;
-  
-    .category {
-      position: absolute;
-      top: 80px;
-      left: 50px;
-      font-size: 30px;
-      font-weight: 500;
-      color: white;
-      display: flex;
-      align-items: center;
-  
-      select {
-        cursor: pointer;
-        background-color: var(--main-color);
-        border: 1px solid white;
-        border-radius: 5px;
-        color: white;
-        margin-left: 20px;
-        padding: 5px;
-      }
-    }
-  
-    img {
+.featured-container {
+  position: relative;
+  height: 90vh;
+  width: 100%;
+  overflow: hidden;
+  transition: opacity 0.5s ease-in-out; // Transition for fade animation
+
+  &.fade-in {
+    opacity: 1;
+  }
+
+  &.fade-out {
+    opacity: 0;
+  }
+
+  .background {
+    img.background-image {
       width: 100%;
       height: 100%;
       object-fit: cover;
-    }
-  
-    .info {
-      width: 45%;
       position: absolute;
-      left: 50px;
-      bottom: 100px;
-      color: white;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      filter: brightness(0.5);
+    }
+  }
+
+  .content-overlay {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 50px;
+
+    .poster-col {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .movie-poster {
+        width: 50%;
+        max-width: 300px;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+    }
+
+    .info-col {
       display: flex;
       flex-direction: column;
-  
-      img {
-        width: 250px;
-      }
-  
+      justify-content: center;
+      color: white;
+
       .desc {
-        margin: 20px 0;
+        font-size: 18px;
+        margin-bottom: 20px;
       }
-  
+      .movieTitle{
+        font-size: 50px;
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+
       .buttons {
         display: flex;
-        flex-wrap: wrap;
-  
-        button {
-          padding: 10px 20px;
-          margin-right: 20px;
-          border: none;
-          border-radius: 5px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          font-weight: 500;
-          cursor: pointer;
-  
-          &.play {
-            background-color: white;
-            color: var(--main-color);
-          }
-  
-          &.more {
-            background-color: grey;
-            color: white;
-          }
-  
-          span {
-            margin-left: 5px;
-          }
-        }
-      }
-    }
-  
-    @media (max-width: 1024px) {
-      .info {
-        width: 60%;
-        bottom: 50px;
-  
-        img {
-          width: 200px;
-        }
-  
-        .buttons {
-          button {
-            font-size: 16px;
-            padding: 8px 16px;
-          }
-        }
-      }
-    }
-  
-    @media (max-width: 768px) {
-      height: 70vh;
-  
-      .category {
-        top: 50px;
-        left: 30px;
-        font-size: 24px;
-  
-        select {
-          margin-left: 10px;
-          padding: 4px;
-        }
-      }
-  
-      .info {
-        width: 80%;
-        left: 20px;
-        bottom: 40px;
-  
-        img {
-          width: 150px;
-        }
-  
-        .desc {
-          font-size: 14px;
-        }
-  
-        .buttons {
-          flex-direction: column;
-          align-items: flex-start;
-  
-          button {
-            width: 100%;
-            margin: 10px 0;
-          }
-        }
-      }
-    }
-  
-    @media (max-width: 480px) {
-      height: 60vh;
-  
-      .category {
-        font-size: 20px;
-      }
-  
-      .info {
-        width: 90%;
-        left: 10px;
-        bottom: 20px;
-  
-        img {
-          width: 120px;
-        }
-  
-        .desc {
-          font-size: 12px;
-        }
-  
-        .buttons {
-          button {
-            font-size: 14px;
-            padding: 6px 12px;
-          }
-        }
+        gap: 15px;
       }
     }
   }
-  
+
+  @media (max-width: 768px) {
+    .content-overlay {
+      flex-direction: column;
+
+      .poster-col, .info-col {
+        text-align: center;
+      }
+
+      .info-col {
+        margin-top: 20px;
+      }
+    }
+  }
+}
