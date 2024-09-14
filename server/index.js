@@ -63,10 +63,52 @@ app.get('/movies/movie', (req, res) => {
 
 
 //fetch movie detail based on its id
-
-app.get('/movies/:id', (req, res) => {
+app.get('/movies/detail/:id', (req, res) => {
   const { id } = req.params;
-  const query = 'SELECT * FROM movies WHERE id = ?';
+  const query = `
+    SELECT
+      movies.id AS movie_id,
+      movies.title,
+      movies.alt_title,
+      countries.id AS country_id,
+      countries.country_name,
+      movies.release_year,
+      movies.imdb_score,
+      movies.synopsis,
+      movies.view,
+      movies.poster,
+      movies.background,
+      movies.trailer,
+      movies.director,
+      actors.id AS actor_id,
+      actors.name AS actor_name,
+      actors.actor_picture,
+      movie_actors.role,
+      genres.id AS genre_id,
+      genres.name AS genre_name,
+      awards.id AS awards_id,
+      awards.awards_name
+    FROM
+      movies
+    LEFT JOIN
+      movie_actors ON movies.id = movie_actors.movie_id
+    LEFT JOIN
+      actors ON movie_actors.actor_id = actors.id
+    LEFT JOIN
+      movie_genres ON movies.id = movie_genres.movie_id
+    LEFT JOIN
+      genres ON movie_genres.genre_id = genres.id
+    LEFT JOIN 
+      movie_countries ON movies.id = movie_countries.movie_id
+    LEFT JOIN
+      countries ON movie_countries.country_id = countries.id
+    LEFT JOIN 
+      movie_awards ON movies.id = movie_awards.movie_id
+    LEFT JOIN
+      awards ON movie_awards.awards_id = awards.id
+    WHERE
+      movies.id = ?
+  `;
   
   db.query(query, [id], (err, results) => {
     if (err) {
@@ -79,10 +121,104 @@ app.get('/movies/:id', (req, res) => {
       return;
     }
 
-    res.json(results[0]);
+    // Process results to structure them
+    const movie = {
+      id: results[0].movie_id,
+      title: results[0].title,
+      alt_title: results[0].alt_title,
+      country_release: results[0].country_name,
+      genre: [],
+      release_year: results[0].release_year,
+      imdb_score: results[0].imdb_score,
+      synopsis: results[0].synopsis,
+      view: results[0].view,
+      poster: results[0].poster,
+      background: results[0].background,
+      trailer: results[0].trailer,
+      director: results[0].director,
+      actors: [],
+      awards: []
+    };
+
+    const genreMap = new Map();
+    const actorMap = new Map();
+    const awardMap = new Map();
+
+    results.forEach(row => {
+      if (row.genre_id) {
+        if (!genreMap.has(row.genre_id)) {
+          genreMap.set(row.genre_id, {
+            id: row.genre_id,
+            name: row.genre_name
+          });
+        }
+      }
+      
+      if (row.awards_id) {
+        if (!awardMap.has(row.awards_id)) {
+          awardMap.set(row.awards_id, {
+            id: row.awards_id,
+            name: row.awards_name
+          });
+        }
+      }
+
+      if (row.actor_id) {
+        if (!actorMap.has(row.actor_id)) {
+          actorMap.set(row.actor_id, {
+            id: row.actor_id,
+            name: row.actor_name,
+            role: row.role,
+            actor_picture: row.actor_picture
+          });
+        }
+      }
+    });
+
+    movie.genre = Array.from(genreMap.values());
+    movie.actors = Array.from(actorMap.values());
+    movie.awards = Array.from(awardMap.values());
+
+    res.json(movie);
   });
 });
 
+
+
+//fetch movie review
+app.get('/movies/detail/review/:id', (req, res) => {
+  const { id } = req.params;
+  const query = `
+    SELECT
+      reviews.id AS review_id,
+      users.id AS user_id,
+      users.username AS user_name,
+      users.profile_picture AS user_picture,
+      reviews.content,
+      reviews.rating,
+      reviews.created_at
+    FROM
+      reviews
+    JOIN
+      users ON users.id = reviews.user_id
+    WHERE
+      reviews.movie_id = ?
+  `;
+  
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      res.status(500).json({ error: 'Database query failed' });
+      return;
+    }
+
+    if (results.length === 0) {
+      res.status(404).json({ error: 'Review not found' });
+      return;
+    }
+
+    res.json(results);
+  });
+});
 
 
 
@@ -158,7 +294,7 @@ app.get('/filters', async (req, res) => {
 
 
 // Fetch top 10 highest-rated movies
-app.get('/movies/top-rated', (req, res) => {
+app.get('/top-rated', (req, res) => {
   const query = 'SELECT title, background, imdb_score FROM movies ORDER BY imdb_score DESC LIMIT 15';
 
   db.query(query, (err, results) => {
@@ -167,12 +303,11 @@ app.get('/movies/top-rated', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    
     res.json(results); // Send the top 10 movies to the front-end
   });
 });
 
-app.get('/movies/featured', (req, res) => {
+app.get('/featured', (req, res) => {
   const query = 'SELECT title, background, poster, imdb_score, synopsis FROM movies WHERE release_year=2024 ORDER BY imdb_score DESC LIMIT 10';
 
   db.query(query, (err, results) => {

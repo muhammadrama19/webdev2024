@@ -6,7 +6,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import CloseIcon from "@mui/icons-material/Close";
 import { Container, Row, Col, Button, Form, Modal } from "react-bootstrap";
 
-const ReviewInput = ({ movieImage, onClose }) => {
+const ReviewInput = ({ movieImage, title, onClose }) => {
   const [rating, setRating] = useState(0);
   const [liked, setLiked] = useState(false);
   const [review, setReview] = useState("");
@@ -30,7 +30,7 @@ const ReviewInput = ({ movieImage, onClose }) => {
             <button className="close-button" onClick={onClose}>
               <CloseIcon />
             </button>
-            <h2>Alien: Romulus 2024</h2>
+            <h2>{title}</h2>
             <Form.Group controlId="reviewTextarea">
               <Form.Control
                 as="textarea"

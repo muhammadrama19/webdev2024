@@ -1,91 +1,101 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
-import './home.scss';
-import DropdownFilterCustom from '../components/filter/dropdownfilter';
-import Featured from '../components/featured/featured';
-import List from '../components/list/list';  // Import List
-import Card from '../components/card/card';
-import PaginationCustom from '../components/pagination/pagination';
-
+import React, { useState, useEffect } from "react";
+import { Container, Row, Col } from "react-bootstrap";
+import "./home.scss";
+import DropdownFilterCustom from "../components/filter/dropdownfilter";
+import Featured from "../components/featured/featured";
+import List from "../components/list/list";
+import Card from "../components/card/card";
+import PaginationCustom from "../components/pagination/pagination";
+import { useNavigate } from 'react-router-dom';
 const Home = () => {
-  const genres = ["Action", "Comedy", "Drama", "Horror"];
+
   const status = ["Ongoing", "Completed"];
   const availability = ["Available", "Not Available"];
-  const awards = ["Best Picture", "Best Actor", "Best Actress", "Best Director"];
 
   const [movies, setMovies] = useState([]);
-  const [topRated, setTopRated] = useState([]);  // State for top-rated movies
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const limit = 10;
+
   const [filters, setFilters] = useState({
     years: [],
     genres: [],
     awards: [],
-    countries: []
+    countries: [],
   });
 
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const response = await fetch('http://localhost:8001/filters');
+        const response = await fetch("http://localhost:8001/filters");
         const data = await response.json();
 
         // Transform years into ranges
-        const decadeOptions = data.years.map(yearRange => `${yearRange.start}-${yearRange.end - 1}`);
-        
+        const decadeOptions = data.years.map(
+          (yearRange) => `${yearRange.start}-${yearRange.end - 1}`
+        );
+
         setFilters({
           years: decadeOptions,
-          genres: data.genres.map(genre => genre.name),
-          awards: data.awards.map(award => award.name),
-          countries: data.countries.map(country => country.name)
+          genres: data.genres.map((genre) => genre.name),
+          awards: data.awards.map((award) => award.name),
+          countries: data.countries.map((country) => country.name),
         });
       } catch (error) {
-        console.error('Error fetching filters:', error);
+        console.error("Error fetching filters:", error);
       }
     };
 
     fetchFilters();
   }, []);
 
-  useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        const response = await fetch(`http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}`);
-        const data = await response.json();
-        setMovies(data.movies);
-        setTotalPages(Math.ceil(data.totalCount / limit));
-      } catch (error) {
-        console.error('Error fetching movies:', error);
-      }
-    };
-
-    fetchMovies();
-  }, [currentPage]);
-
+  const [topRated, setTopRated] = useState([]);
   useEffect(() => {
     const fetchTopRated = async () => {
       try {
-        const response = await fetch('http://localhost:8001/movies/top-rated');
+        const response = await fetch("http://localhost:8001/top-rated");
         const data = await response.json();
-        setTopRated(data);  // Set top-rated movies
+        setTopRated(data); // Set top-rated movies
       } catch (error) {
-        console.error('Error fetching top rated movies:', error);
+        console.error("Error fetching top rated movies:", error);
       }
     };
 
     fetchTopRated();
   }, []);
 
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}`
+        );
+        const data = await response.json();
+        setMovies(data.movies);
+        setTotalPages(Math.ceil(data.totalCount / limit)); // Update total pages
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+      }
+    };
+
+    fetchMovies();
+  }, [currentPage]);
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    console.log(`Page changed to: ${page}`);
   };
+
+  const navigate = useNavigate(); // Initialize useNavigate
+  
+  const handleCardClick = (id) => {
+    navigate(`/movies/${id}`); // Navigate to Detailmovie with movie ID
+  };
+
 
   return (
     <div className="home">
       <Featured type="movie" />
-      <List title="Top Rated Movies" movies={topRated} />  {/* Pass movies prop */}
+      <List title="Top Rated Movies" movies={topRated} />
 
       <Container className="dropdown-container">
         <Row className="align-items-center">
@@ -145,10 +155,21 @@ const Home = () => {
       </Container>
 
       <Container className="card-container mt-5">
-        <Row className="justify-content-center pt-4" style={{ borderTop: '1px solid var(--primary-color)' }}>
+        <Row
+          className="justify-content-center pt-4"
+          style={{ borderTop: "1px solid var(--primary-color)" }}
+        >
           {movies.map((movie) => (
-            <Col key={movie.id} xs={6} sm={6} md={4} lg={3} className="mb-4 d-flex justify-content-center">
+            <Col
+              key={movie.id}
+              xs={6}
+              sm={6}
+              md={4}
+              lg={3}
+              className="mb-4 d-flex justify-content-center"
+            >
               <Card
+                onClick={() => handleCardClick(movie.id)}
                 src={movie.src}
                 title={movie.title}
                 year={movie.year}

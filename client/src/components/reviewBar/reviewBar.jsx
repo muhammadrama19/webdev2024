@@ -10,7 +10,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import ReviewInput from "../reviewInput/reviewInput";
 import "./reviewBar.scss";
 
-const ReviewBar = () => {
+const ReviewBar = ({srcImg, title}) => {
   // State management for icons and text
   const [watchClicked, setWatchClicked] = useState(false);
   const [likeClicked, setLikeClicked] = useState(false);
@@ -107,7 +107,8 @@ const ReviewBar = () => {
       </Row>
       {showReviewInput && (
         <ReviewInput 
-          movieImage="https://media.themoviedb.org/t/p/w600_and_h900_bestv2/qOKAI6aunD4J5MXiwwomAhI3jI2.jpg" 
+          movieImage={srcImg}
+          title={title}
           onClose={handleCloseReviewInput} 
         />
       )}

@@ -1,8 +1,8 @@
 import './card.scss';
 
-const Card = ({ src, title, year, genres, rating, views }) => {
+const Card = ({ onClick,src, title, year, genres, rating, views }) => {
   return (
-    <div className="card-item">
+    <div className="card-item" onClick={onClick}>
       <div className="image-container">
         <img src={src} loading="lazy" alt={title} />
       </div>
