@@ -14,11 +14,15 @@ const List = ({ title, movies }) => {  // Receive movies as a prop
     setIsMoved(true);
     if (direction === 'left' && slideNumber > 0) {
       setSlideNumber(slideNumber - 1);
-      listRef.current.style.transform = `translateX(${230 + distance}px)`;
+      listRef.current.style.transform = `translateX(${ 5 *230 + distance}px)`;
     }
     if (direction === 'right' && slideNumber < movies.length - 1) {
       setSlideNumber(slideNumber + 1);
-      listRef.current.style.transform = `translateX(${-230 + distance}px)`;
+      listRef.current.style.transform = `translateX(${ 5 * (-230) + distance}px)`;
+    }
+    if ( slideNumber == movies.length - 1) {
+      setSlideNumber(0);
+      listRef.current.style.transform = `translateX(${0}px)`;
     }
   };
 

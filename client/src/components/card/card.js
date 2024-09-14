@@ -4,7 +4,7 @@ const Card = ({ src, title, year, genres, rating, views }) => {
   return (
     <div className="card-item">
       <div className="image-container">
-        <img src={src} alt={title} />
+        <img src={src} loading="lazy" alt={title} />
       </div>
       <div className="content">
         <h3 className="title">{title}</h3>

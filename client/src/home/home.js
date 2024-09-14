@@ -18,6 +18,35 @@ const Home = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const limit = 10;
+  const [filters, setFilters] = useState({
+    years: [],
+    genres: [],
+    awards: [],
+    countries: []
+  });
+
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        const response = await fetch('http://localhost:8001/filters');
+        const data = await response.json();
+
+        // Transform years into ranges
+        const decadeOptions = data.years.map(yearRange => `${yearRange.start}-${yearRange.end - 1}`);
+        
+        setFilters({
+          years: decadeOptions,
+          genres: data.genres.map(genre => genre.name),
+          awards: data.awards.map(award => award.name),
+          countries: data.countries.map(country => country.name)
+        });
+      } catch (error) {
+        console.error('Error fetching filters:', error);
+      }
+    };
+
+    fetchFilters();
+  }, []);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -66,17 +95,15 @@ const Home = () => {
         </Row>
         <Row className="align-items-center" style={{ borderTop: '1px solid var(--primary-color)' }}>
           <Col xs={12} sm={6} md={4} lg={2}>
-            <DropdownFilterCustom
-              label="Year"
-              options={["2020-2025", "2015-2020", "2010-2015", "2005-2010"]}
-              onSelect={(option) => console.log(option)}
-            />
+          <DropdownFilterCustom
+        label="Year"
+        options={filters.years}
+      />
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
-              label="Type"
-              options={["Series", "Movies"]}
-              onSelect={(option) => console.log(option)}
+              label="Genres"
+              options={filters.genres}
             />
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
@@ -88,8 +115,8 @@ const Home = () => {
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
-              label="Genre"
-              options={genres}
+              label="awards"
+              options={filters.awards}
               onSelect={(option) => console.log(option)}
             />
           </Col>
@@ -109,15 +136,8 @@ const Home = () => {
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
-              label="Award"
-              options={awards}
-              onSelect={(option) => console.log(option)}
-            />
-          </Col>
-          <Col xs={12} sm={6} md={4} lg={2}>
-            <DropdownFilterCustom
               label="Country"
-              options={["United States", "Canada", "UK", "France"]}
+              options= {filters.countries}
               onSelect={(option) => console.log(option)}
             />
           </Col>

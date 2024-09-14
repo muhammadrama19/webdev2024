@@ -3,7 +3,7 @@ import { Row, Col } from 'react-bootstrap';
 import './featured.scss';
 import Button from '../button/button';
 
-// Preload image function
+
 const preloadImage = (src) => {
   return new Promise((resolve, reject) => {
     const img = new Image();
