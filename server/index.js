@@ -68,7 +68,6 @@ app.get('/movies/movie', (req, res) => {
   const { page = 1, limit = 10, year, genre, status, availability, country_release, sort } = req.query;
   const offset = (page - 1) * limit;
 
-  // Base query with joins and group by
   let query = `
     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
            GROUP_CONCAT(g.name SEPARATOR ', ') AS genres, 
@@ -99,49 +98,46 @@ app.get('/movies/movie', (req, res) => {
     queryParams.push(year);
   }
 
-  if (genre) {
-    query += ` AND g.name = ?`; // Filtering by specific genre
+  if (genre && genre.trim()) {
+    query += ` AND g.name = ?`;
     countQuery += ` AND g.name = ?`;
     queryParams.push(genre);
   }
 
   if (status) {
-    query += ` AND m.status = ?`; // Assuming you have a status column in your movies table
+    query += ` AND m.status = ?`;
     countQuery += ` AND m.status = ?`;
     queryParams.push(status);
   }
 
   if (availability) {
-    query += ` AND m.availability = ?`; // Assuming availability is stored in your movies table
+    query += ` AND m.availability = ?`;
     countQuery += ` AND m.availability = ?`;
     queryParams.push(availability);
   }
 
   if (country_release) {
-    query += ` AND c.country_name = ?`; // Assuming country is stored in your movies table
+    query += ` AND c.country_name = ?`;
     countQuery += ` AND c.country_name = ?`;
     queryParams.push(country_release);
   }
 
-  // Sorting logic: Use movie id if no sort order is specified, otherwise sort by title
   if (!sort) {
     query += ` GROUP BY m.id ORDER BY m.id`; // Default sorting by movie id
   } else {
     query += ` GROUP BY m.id ORDER BY m.title ${sort.toUpperCase()}`; // Sorting by title with given order
   }
 
-  // Add pagination limits and offsets
+  // Add pagination limits
   query += ` LIMIT ? OFFSET ?`;
   queryParams.push(parseInt(limit), parseInt(offset));
 
-  // Execute the main movie query
   db.query(query, queryParams, (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
       return;
     }
 
-    // Execute the count query to get the total count for pagination
     db.query(countQuery, queryParams.slice(0, -2), (countErr, countResults) => {
       if (countErr) {
         res.status(500).json({ error: 'Failed to get movie count' });
@@ -156,7 +152,6 @@ app.get('/movies/movie', (req, res) => {
     });
   });
 });
-
 
 
 
