@@ -7,15 +7,17 @@ import List from "../components/list/list";
 import Card from "../components/card/card";
 import PaginationCustom from "../components/pagination/pagination";
 import { useNavigate } from 'react-router-dom';
-const Home = () => {
+import Button from '../components/button/button';
 
+const Home = () => {
   const status = ["Ongoing", "Completed"];
   const availability = ["Available", "Not Available"];
-
+  
   const [movies, setMovies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const limit = 10;
+  const sortOptions = ["Ascending", "Descending"];
 
   const [filters, setFilters] = useState({
     years: [],
@@ -24,28 +26,34 @@ const Home = () => {
     countries: [],
   });
 
+  const [selectedFilters, setSelectedFilters] = useState({
+    year: '',
+    genre: '',
+    status: '',
+    availability: '',
+    country: '',
+  });
+  const [sortOrder, setSortOrder] = useState(''); // New state for sort order
+  const handleSortChange = (value) => {
+    setSortOrder(value === "Ascending" ? "asc" : value === "Descending" ? "desc" : ''); // Clear sortOrder if no sort selected
+  };
+
   useEffect(() => {
     const fetchFilters = async () => {
       try {
         const response = await fetch("http://localhost:8001/filters");
         const data = await response.json();
-
-        // Transform years into ranges
-        const decadeOptions = data.years.map(
-          (yearRange) => `${yearRange.start}-${yearRange.end - 1}`
-        );
-
+        const decadeOptions = data.years.map(yearRange => `${yearRange.start}-${yearRange.end - 1}`);
         setFilters({
           years: decadeOptions,
-          genres: data.genres.map((genre) => genre.name),
-          awards: data.awards.map((award) => award.name),
-          countries: data.countries.map((country) => country.name),
+          genres: data.genres.map(genre => genre.name),
+          awards: data.awards.map(award => award.name),
+          countries: data.countries.map(country => country.name),
         });
       } catch (error) {
         console.error("Error fetching filters:", error);
       }
     };
-
     fetchFilters();
   }, []);
 
@@ -55,42 +63,49 @@ const Home = () => {
       try {
         const response = await fetch("http://localhost:8001/top-rated");
         const data = await response.json();
-        setTopRated(data); // Set top-rated movies
+        setTopRated(data); 
       } catch (error) {
-        console.error("Error fetching top rated movies:", error);
+        console.error("Error fetching top-rated movies:", error);
       }
     };
-
     fetchTopRated();
   }, []);
 
   useEffect(() => {
     const fetchMovies = async () => {
       try {
+        const { year, genre, status, availability, country } = selectedFilters;
+        const sortParam = sortOrder ? `&sort=${sortOrder}` : ''; 
         const response = await fetch(
-          `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}`
+          `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}&year=${year}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}${sortParam}`
         );
         const data = await response.json();
         setMovies(data.movies);
-        setTotalPages(Math.ceil(data.totalCount / limit)); // Update total pages
+        setTotalPages(Math.ceil(data.totalCount / limit)); 
       } catch (error) {
         console.error("Error fetching movies:", error);
       }
     };
-
     fetchMovies();
-  }, [currentPage]);
+  }, [currentPage, selectedFilters, sortOrder]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  const navigate = useNavigate(); // Initialize useNavigate
-  
-  const handleCardClick = (id) => {
-    navigate(`/movies/${id}`); // Navigate to Detailmovie with movie ID
+  const handleFilterChange = (filterType, value) => {
+    setSelectedFilters((prevFilters) => ({
+      ...prevFilters,
+      [filterType]: value,
+    }));
+    setCurrentPage(1); // Reset to the first page on filter change
   };
 
+  const navigate = useNavigate();
+
+  const handleCardClick = (id) => {
+    navigate(`/movies/${id}`); 
+  };
 
   return (
     <div className="home">
@@ -103,55 +118,52 @@ const Home = () => {
             <span>Filter by:</span>
           </Col>
         </Row>
-        <Row className="align-items-center" style={{ borderTop: '1px solid var(--primary-color)' }}>
+        <Row className="align-items-center" >
           <Col xs={12} sm={6} md={4} lg={2}>
-          <DropdownFilterCustom
-        label="Year"
-        options={filters.years}
-      />
+            <DropdownFilterCustom
+              label="Year"
+              options={filters.years}
+              onSelect={(option) => handleFilterChange('year', option)}
+            />
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={2}>
+            <DropdownFilterCustom
+              label="Year"
+              options={filters.years}
+              onSelect={(option) => handleFilterChange('year', option)}
+            />
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Genres"
               options={filters.genres}
+              onSelect={(option) => handleFilterChange('genre', option)}
             />
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
-              label="Sort By"
-              options={["Latest", "Oldest"]}
-              onSelect={(option) => console.log(option)}
-            />
-          </Col>
-          <Col xs={12} sm={6} md={4} lg={2}>
-            <DropdownFilterCustom
-              label="awards"
-              options={filters.awards}
-              onSelect={(option) => console.log(option)}
-            />
-          </Col>
-          <Col xs={12} sm={6} md={4} lg={2}>
-            <DropdownFilterCustom
-              label="Status"
-              options={status}
-              onSelect={(option) => console.log(option)}
+              label="Sort By:"
+              options={sortOptions}
+              onSelect={handleSortChange}
             />
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Availability"
               options={availability}
-              onSelect={(option) => console.log(option)}
+              onSelect={(option) => handleFilterChange('availability', option)}
             />
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Country"
-              options= {filters.countries}
-              onSelect={(option) => console.log(option)}
+              options={filters.countries}
+              onSelect={(option) => handleFilterChange('country', option)} 
             />
           </Col>
+          
         </Row>
+        
       </Container>
 
       <Container className="card-container mt-5">
