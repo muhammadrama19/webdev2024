@@ -22,31 +22,127 @@ db.connect((err) => {
   console.log('Connected to MySQL!');
 });
 
-// Fetch movies with pagination
+// // Fetch movies with pagination
+// app.get('/movies/movie', (req, res) => {
+//   const { page = 1, limit = 10 } = req.query;
+//   const offset = (page - 1) * limit;
+
+//   const query = `
+//     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
+//            GROUP_CONCAT(g.name SEPARATOR ', ') AS genres, 
+//            m.imdb_score AS rating, m.view 
+//     FROM movies m
+//     JOIN movie_genres mg ON m.id = mg.movie_id
+//     JOIN genres g ON mg.genre_id = g.id
+//     GROUP BY m.id
+//     LIMIT ? OFFSET ?;
+//   `;
+
+//   db.query(query, [parseInt(limit), parseInt(offset)], (err, results) => {
+//     if (err) {
+//       res.status(500).json({ error: 'Database query failed' });
+//       return;
+//     }
+
+//     const countQuery = 'SELECT COUNT(*) AS totalCount FROM movies';
+    
+//     db.query(countQuery, (countErr, countResults) => {
+//       if (countErr) {
+//         res.status(500).json({ error: 'Failed to get movie count' });
+//         return;
+//       }
+
+//       const totalCount = countResults[0].totalCount;
+//       res.json({
+//         movies: results, 
+//         totalCount,
+//       });
+//     });
+//   });
+// });
+
+
+//filter based on criteria 
+// Fetch movies with pagination and filters
 app.get('/movies/movie', (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 10, year, genre, status, availability, country_release, sort } = req.query;
   const offset = (page - 1) * limit;
 
-  const query = `
+  // Base query with joins and group by
+  let query = `
     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
            GROUP_CONCAT(g.name SEPARATOR ', ') AS genres, 
-           m.imdb_score AS rating, m.view 
+           m.imdb_score AS rating, m.view, c.country_name AS country
     FROM movies m
     JOIN movie_genres mg ON m.id = mg.movie_id
     JOIN genres g ON mg.genre_id = g.id
-    GROUP BY m.id
-    LIMIT ? OFFSET ?;
+    JOIN movie_countries mc ON m.id = mc.movie_id
+    JOIN countries c ON mc.country_id = c.id
+    WHERE 1=1
   `;
 
-  db.query(query, [parseInt(limit), parseInt(offset)], (err, results) => {
+  let countQuery = `
+    SELECT COUNT(DISTINCT m.id) AS totalCount 
+    FROM movies m
+    JOIN movie_genres mg ON m.id = mg.movie_id
+    JOIN genres g ON mg.genre_id = g.id
+    JOIN movie_countries mc ON m.id = mc.movie_id
+    JOIN countries c ON mc.country_id = c.id
+    WHERE 1=1
+  `;
+
+  const queryParams = [];
+
+  if (year) {
+    query += ` AND m.release_year = ?`;
+    countQuery += ` AND m.release_year = ?`;
+    queryParams.push(year);
+  }
+
+  if (genre) {
+    query += ` AND g.name = ?`; // Filtering by specific genre
+    countQuery += ` AND g.name = ?`;
+    queryParams.push(genre);
+  }
+
+  if (status) {
+    query += ` AND m.status = ?`; // Assuming you have a status column in your movies table
+    countQuery += ` AND m.status = ?`;
+    queryParams.push(status);
+  }
+
+  if (availability) {
+    query += ` AND m.availability = ?`; // Assuming availability is stored in your movies table
+    countQuery += ` AND m.availability = ?`;
+    queryParams.push(availability);
+  }
+
+  if (country_release) {
+    query += ` AND c.country_name = ?`; // Assuming country is stored in your movies table
+    countQuery += ` AND c.country_name = ?`;
+    queryParams.push(country_release);
+  }
+
+  // Sorting logic: Use movie id if no sort order is specified, otherwise sort by title
+  if (!sort) {
+    query += ` GROUP BY m.id ORDER BY m.id`; // Default sorting by movie id
+  } else {
+    query += ` GROUP BY m.id ORDER BY m.title ${sort.toUpperCase()}`; // Sorting by title with given order
+  }
+
+  // Add pagination limits and offsets
+  query += ` LIMIT ? OFFSET ?`;
+  queryParams.push(parseInt(limit), parseInt(offset));
+
+  // Execute the main movie query
+  db.query(query, queryParams, (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
       return;
     }
 
-    const countQuery = 'SELECT COUNT(*) AS totalCount FROM movies';
-    
-    db.query(countQuery, (countErr, countResults) => {
+    // Execute the count query to get the total count for pagination
+    db.query(countQuery, queryParams.slice(0, -2), (countErr, countResults) => {
       if (countErr) {
         res.status(500).json({ error: 'Failed to get movie count' });
         return;
@@ -54,12 +150,14 @@ app.get('/movies/movie', (req, res) => {
 
       const totalCount = countResults[0].totalCount;
       res.json({
-        movies: results, 
+        movies: results,
         totalCount,
       });
     });
   });
 });
+
+
 
 
 //fetch movie detail based on its id
