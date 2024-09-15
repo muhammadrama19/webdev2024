@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import "./home.scss";
-import DropdownFilterCustom from "../components/filter/dropdownfilter";
+import DropdownFilterCustom from "../components/dropdownfilter/dropdownFilter";
 import Featured from "../components/featured/featured";
 import List from "../components/list/list";
 import Card from "../components/card/card";
@@ -71,6 +71,7 @@ const Home = () => {
     fetchTopRated();
   }, []);
 
+
   useEffect(() => {
     const fetchMovies = async () => {
       try {
@@ -88,7 +89,7 @@ const Home = () => {
     };
     fetchMovies();
   }, [currentPage, selectedFilters, sortOrder]);
-
+  
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -96,10 +97,12 @@ const Home = () => {
   const handleFilterChange = (filterType, value) => {
     setSelectedFilters((prevFilters) => ({
       ...prevFilters,
-      [filterType]: value,
+      [filterType]: value || '', // Set empty string if 'None' is selected
     }));
     setCurrentPage(1); // Reset to the first page on filter change
+    console.log(selectedFilters);
   };
+  
 
   const navigate = useNavigate();
 
@@ -135,7 +138,7 @@ const Home = () => {
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
-              label="Genres"
+              label="Genre"
               options={filters.genres}
               onSelect={(option) => handleFilterChange('genre', option)}
             />
