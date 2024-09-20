@@ -68,9 +68,33 @@ app.get('/movies/movie', (req, res) => {
   const { page = 1, limit = 10, year, genre, status, availability, country_release, sort } = req.query;
   const offset = (page - 1) * limit;
 
+  let filterConditions = [];
+  let queryParams = [];
+
+  if (year) {
+    filterConditions.push(`m.release_year = ?`);
+    queryParams.push(year);
+  }
+
+  if (status) {
+    filterConditions.push(`m.status = ?`);
+    queryParams.push(status);
+  }
+
+  if (availability) {
+    filterConditions.push(`m.availability = ?`);
+    queryParams.push(availability);
+  }
+
+  if (country_release) {
+    filterConditions.push(`c.country_name = ?`);
+    queryParams.push(country_release);
+  }
+
+  // Main query to fetch movies and genres
   let query = `
     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
-           GROUP_CONCAT(g.name SEPARATOR ', ') AS genres, 
+           GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS genres, 
            m.imdb_score AS rating, m.view, c.country_name AS country
     FROM movies m
     JOIN movie_genres mg ON m.id = mg.movie_id
@@ -80,52 +104,28 @@ app.get('/movies/movie', (req, res) => {
     WHERE 1=1
   `;
 
-  let countQuery = `
-    SELECT COUNT(DISTINCT m.id) AS totalCount 
-    FROM movies m
-    JOIN movie_genres mg ON m.id = mg.movie_id
-    JOIN genres g ON mg.genre_id = g.id
-    JOIN movie_countries mc ON m.id = mc.movie_id
-    JOIN countries c ON mc.country_id = c.id
-    WHERE 1=1
-  `;
-
-  const queryParams = [];
-
-  if (year) {
-    query += ` AND m.release_year = ?`;
-    countQuery += ` AND m.release_year = ?`;
-    queryParams.push(year);
+  // Apply filters
+  if (filterConditions.length) {
+    query += ` AND ${filterConditions.join(' AND ')}`;
   }
 
+  // If a specific genre is requested, filter movies but keep all genres
   if (genre && genre.trim()) {
-    query += ` AND g.name = ?`;
-    countQuery += ` AND g.name = ?`;
+    query += ` AND m.id IN (
+      SELECT mg.movie_id 
+      FROM movie_genres mg 
+      JOIN genres g ON mg.genre_id = g.id 
+      WHERE g.name = ?
+    )`;
     queryParams.push(genre);
   }
 
-  if (status) {
-    query += ` AND m.status = ?`;
-    countQuery += ` AND m.status = ?`;
-    queryParams.push(status);
-  }
+  query += ` GROUP BY m.id`;
 
-  if (availability) {
-    query += ` AND m.availability = ?`;
-    countQuery += ` AND m.availability = ?`;
-    queryParams.push(availability);
-  }
-
-  if (country_release) {
-    query += ` AND c.country_name = ?`;
-    countQuery += ` AND c.country_name = ?`;
-    queryParams.push(country_release);
-  }
-
-  if (!sort) {
-    query += ` GROUP BY m.id ORDER BY m.id`; // Default sorting by movie id
+  if (sort) {
+    query += ` ORDER BY m.title ${sort.toUpperCase()}`; 
   } else {
-    query += ` GROUP BY m.id ORDER BY m.title ${sort.toUpperCase()}`; // Sorting by title with given order
+    query += ` ORDER BY m.id`; 
   }
 
   // Add pagination limits
@@ -136,6 +136,22 @@ app.get('/movies/movie', (req, res) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
       return;
+    }
+
+    // Count query remains the same, but we use the filtered IDs here too
+    const countQuery = `
+      SELECT COUNT(DISTINCT m.id) AS totalCount 
+      FROM movies m
+      JOIN movie_genres mg ON m.id = mg.movie_id
+      JOIN genres g ON mg.genre_id = g.id
+      JOIN movie_countries mc ON m.id = mc.movie_id
+      JOIN countries c ON mc.country_id = c.id
+      WHERE 1=1
+    `;
+
+    // Apply filters to count query as well
+    if (filterConditions.length) {
+      countQuery += ` AND ${filterConditions.join(' AND ')}`;
     }
 
     db.query(countQuery, queryParams.slice(0, -2), (countErr, countResults) => {
@@ -152,6 +168,7 @@ app.get('/movies/movie', (req, res) => {
     });
   });
 });
+
 
 
 
