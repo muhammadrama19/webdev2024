@@ -60,20 +60,23 @@ db.connect((err) => {
 //     });
 //   });
 // });
-
-
-//filter based on criteria 
-// Fetch movies with pagination and filters
 app.get('/movies/movie', (req, res) => {
-  const { page = 1, limit = 10, year, genre, status, availability, country_release, sort } = req.query;
+  const { page = 1, limit = 10, yearRange, genre, status, availability, country_release, sort } = req.query;
   const offset = (page - 1) * limit;
 
   let filterConditions = [];
   let queryParams = [];
 
-  if (year) {
-    filterConditions.push(`m.release_year = ?`);
-    queryParams.push(year);
+  // Handle year range filtering
+  if (yearRange) {
+    try {
+      const range = JSON.parse(yearRange); // Parse the incoming JSON string
+      queryParams.push(range.start, range.end); // Push start and end years to params
+      filterConditions.push(`m.release_year BETWEEN ? AND ?`);
+    } catch (error) {
+      console.error("Error parsing yearRange:", error);
+      return res.status(400).json({ error: 'Invalid yearRange format' });
+    }
   }
 
   if (status) {
@@ -92,7 +95,7 @@ app.get('/movies/movie', (req, res) => {
   }
 
   // Main query to fetch movies and genres
-  let query = `
+  let query = ` 
     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
            GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS genres, 
            m.imdb_score AS rating, m.view, c.country_name AS country
@@ -109,7 +112,7 @@ app.get('/movies/movie', (req, res) => {
     query += ` AND ${filterConditions.join(' AND ')}`;
   }
 
-  // If a specific genre is requested, filter movies but keep all genres
+  // Handle genre filtering
   if (genre && genre.trim()) {
     query += ` AND m.id IN (
       SELECT mg.movie_id 
@@ -132,14 +135,18 @@ app.get('/movies/movie', (req, res) => {
   query += ` LIMIT ? OFFSET ?`;
   queryParams.push(parseInt(limit), parseInt(offset));
 
+  // Execute the main movie query
   db.query(query, queryParams, (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
       return;
     }
 
-    // Count query remains the same, but we use the filtered IDs here too
-    const countQuery = `
+    // Slice off LIMIT and OFFSET for the COUNT query
+    const countQueryParams = queryParams.slice(0, -2);
+
+    // Count query to get the total number of filtered movies
+    let countQuery = ` 
       SELECT COUNT(DISTINCT m.id) AS totalCount 
       FROM movies m
       JOIN movie_genres mg ON m.id = mg.movie_id
@@ -154,7 +161,18 @@ app.get('/movies/movie', (req, res) => {
       countQuery += ` AND ${filterConditions.join(' AND ')}`;
     }
 
-    db.query(countQuery, queryParams.slice(0, -2), (countErr, countResults) => {
+    // Handle genre filtering in count query as well
+    if (genre && genre.trim()) {
+      countQuery += ` AND m.id IN (
+        SELECT mg.movie_id 
+        FROM movie_genres mg 
+        JOIN genres g ON mg.genre_id = g.id 
+        WHERE g.name = ?
+      )`;
+    }
+
+    // Execute the count query with the correct parameters
+    db.query(countQuery, countQueryParams, (countErr, countResults) => {
       if (countErr) {
         res.status(500).json({ error: 'Failed to get movie count' });
         return;
@@ -168,7 +186,6 @@ app.get('/movies/movie', (req, res) => {
     });
   });
 });
-
 
 
 
