@@ -82,7 +82,9 @@ const Home = () => {
         );
         const data = await response.json();
         setMovies(data.movies);
-        setTotalPages(Math.ceil(data.totalCount / limit)); 
+        const totalFilteredPages = Math.ceil(data.totalCount / limit);
+      setTotalPages(totalFilteredPages); // Set the updated total pages
+      
       } catch (error) {
         console.error("Error fetching movies:", error);
       }
