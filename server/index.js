@@ -401,7 +401,7 @@ app.get('/top-rated', (req, res) => {
 });
 
 app.get('/featured', (req, res) => {
-  const query = 'SELECT title, background, poster, imdb_score, synopsis FROM movies WHERE release_year=2024 ORDER BY imdb_score DESC LIMIT 10';
+  const query = 'SELECT id, title, background, poster, imdb_score, synopsis FROM movies WHERE release_year=2024 ORDER BY imdb_score DESC LIMIT 10';
 
   db.query(query, (err, results) => {
     if (err) {
@@ -415,11 +415,6 @@ app.get('/featured', (req, res) => {
 }
 );
 
-//Fetch correspond movie detail
-app.get('/movies/moviedetail', (req,res) => {
-  const query = ''
-
-})
 
 
 

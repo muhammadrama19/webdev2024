@@ -11,7 +11,7 @@ const Media = ({ link }) => {
     return url; // Return the original URL if it's not a YouTube URL
   };
 
-  const embedUrl = getYouTubeEmbedUrl(link);
+  const embedUrl = link ? getYouTubeEmbedUrl(link) : null;
 
   return (
     <Container>
@@ -21,15 +21,19 @@ const Media = ({ link }) => {
         </div>
         <Row>
           <Col xs={12} md={12}>
-            <iframe 
-              width="100%" 
-              height="315" // Adjust height as needed
-              src={embedUrl} 
-              title="YouTube video player" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen
-            ></iframe>
+            {embedUrl ? (
+              <iframe 
+                width="100%" 
+                height="315" // Adjust height as needed
+                src={embedUrl} 
+                title="YouTube video player" 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <div>No trailer available</div>
+            )}
           </Col>
         </Row>
       </Card>
