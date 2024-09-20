@@ -122,35 +122,35 @@ const Home = () => {
           </Col>
         </Row>
         <Row className="align-items-center" >
-          <Col xs={12} sm={6} md={4} lg={2}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Year"
               options={filters.years}
               onSelect={(option) => handleFilterChange('year', option)}
             />
           </Col>
-          <Col xs={12} sm={6} md={4} lg={2}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Year"
               options={filters.years}
               onSelect={(option) => handleFilterChange('year', option)}
             />
           </Col>
-          <Col xs={12} sm={6} md={4} lg={2}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Genre"
               options={filters.genres}
               onSelect={(option) => handleFilterChange('genre', option)}
             />
           </Col>
-          <Col xs={12} sm={6} md={4} lg={2}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Sort By:"
               options={sortOptions}
               onSelect={handleSortChange}
             />
           </Col>
-          <Col xs={12} sm={6} md={4} lg={2}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Availability"
               options={availability}

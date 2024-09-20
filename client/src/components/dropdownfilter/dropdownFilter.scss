@@ -1,6 +1,7 @@
 .dropdown-filter {
   // Style the entire dropdown container
   margin: 10px 10px;
+  min-width: 100px;
 
   .dropdown-toggle {
     // Override the button style

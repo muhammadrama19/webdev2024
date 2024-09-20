@@ -1,22 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Dropdown } from "react-bootstrap";
 import "./dropdownFilter.scss"; // Ensure this path is correct
 
 const DropdownFilterCustom = ({ label, options, onSelect }) => {
+  const [selectedOption, setSelectedOption] = useState("");
+
+  const handleSelect = (option) => {
+    setSelectedOption(option);
+    onSelect(option);
+  };
+
   return (
     <Dropdown className="dropdown-filter">
-      <Dropdown.Toggle className="label">
-        {label}
+      <Dropdown.Toggle>
+        {selectedOption || `${label}`}
       </Dropdown.Toggle>
 
       <Dropdown.Menu>
-        {/* Add a "None" or "All" option */}
-        <Dropdown.Item onClick={() => onSelect("")}>Select</Dropdown.Item>
-
+        <Dropdown.Item onClick={() => handleSelect("")}>Select {label}</Dropdown.Item>
         {options.map((option, index) => (
-          <Dropdown.Item key={index} onClick={() => onSelect(option)} className="select">
-            {option} 
+          <Dropdown.Item key={index} onClick={() => handleSelect(option)} className="select">
+            {option}
           </Dropdown.Item>
         ))}
       </Dropdown.Menu>

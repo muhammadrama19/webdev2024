@@ -70,25 +70,17 @@ const Navbar = () => {
             <span>Home</span>
             <span>Login</span>
             <span>Register</span>
-            <div className="country">
-              <div className="options">
-                {countries.map((country, index) => (
-                  <span key={index} onClick={() => handleCountryChange(country)}>
-                    {country}
-                  </span>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
         <div className="right">
-          <SearchBar/>
+          <SearchBar />
+          <MenuIcon className="hamburger" onClick={toggleSidebar} /> {/* Add this */}
         </div>
       </div>
 
       {/* Sidebar Menu */}
       <div className={`sidebar ${sidebarVisible ? "active" : ""}`}>
-      <div className="sidebar-header">
+        <div className="sidebar-header">
           <span className="logo-brand">Lalajo Euy!</span>
           <CloseIcon className="close-icon" onClick={toggleSidebar} />
         </div>

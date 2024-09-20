@@ -11,6 +11,7 @@ import Detailmovie from './detailmovie/detailmovie';
 
 
 
+
 function App() {
   return (
 
@@ -23,6 +24,7 @@ function App() {
         <Route path='/Login' element={<Login />}/>
         <Route path= '/testFetch' element={<TestFetch/>}/>
         <Route path="/movies/:id" element={<Detailmovie />} />
+        <Route path="/featured_movies/:id" element={<Moviedetail />} />
       </Routes>
 
 
