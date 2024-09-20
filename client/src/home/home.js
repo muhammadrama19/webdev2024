@@ -78,12 +78,13 @@ const Home = () => {
         const { year, genre, status, availability, country } = selectedFilters;
         const sortParam = sortOrder ? `&sort=${sortOrder}` : ''; 
         const response = await fetch(
-          `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}&year=${year}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}${sortParam}`
+          `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}${sortParam}`
         );
         const data = await response.json();
         setMovies(data.movies);
         const totalFilteredPages = Math.ceil(data.totalCount / limit);
       setTotalPages(totalFilteredPages); // Set the updated total pages
+      console.log(data.totalCount);
       
       } catch (error) {
         console.error("Error fetching movies:", error);
@@ -97,13 +98,23 @@ const Home = () => {
   };
 
   const handleFilterChange = (filterType, value) => {
-    setSelectedFilters((prevFilters) => ({
-      ...prevFilters,
-      [filterType]: value || '', // Set empty string if 'None' is selected
-    }));
-    setCurrentPage(1); // Reset to the first page on filter change
+    if (filterType === "year" && value.includes("-")) {
+      const [start, end] = value.split("-").map(Number);
+      const yearRange = JSON.stringify({ start, end: end }); 
+      setSelectedFilters((prevFilters) => ({
+        ...prevFilters,
+        year: yearRange, 
+      }));
+    } else {
+      setSelectedFilters((prevFilters) => ({
+        ...prevFilters,
+        [filterType]: value || '', 
+      }));
+    }
     console.log(selectedFilters);
+    setCurrentPage(1); // Reset to the first page on filter change
   };
+  
   
 
   const navigate = useNavigate();
