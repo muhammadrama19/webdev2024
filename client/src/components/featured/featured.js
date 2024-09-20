@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Row, Col } from 'react-bootstrap';
-import './featured.scss';
-import Button from '../button/button';
+import React, { useState, useEffect } from "react";
+import { Row, Col } from "react-bootstrap";
+import "./featured.scss";
+import Button from "../button/button";
+import { useNavigate } from "react-router-dom";
+
 
 // Lazy load image function
 const preloadImage = (src) => {
@@ -16,16 +18,18 @@ const preloadImage = (src) => {
 const Featured = () => {
   const [movies, setMovies] = useState([]); // To store the array of movies
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0); // Track which movie is displayed
-  const [fadeClass, setFadeClass] = useState('fade-in'); // Handle fade animation
+  const [fadeClass, setFadeClass] = useState("fade-in"); // Handle fade animation
   const [loading, setLoading] = useState(true); // Loading state for lazy loading
+
+  const navigate = useNavigate(); // Navigate to movie details page
 
   // Fetch movie data and preload images once
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await fetch('http://localhost:8001/featured');
+        const response = await fetch("http://localhost:8001/featured");
         const data = await response.json();
-        console.log('Fetched movie data:', data);
+        console.log("Fetched movie data:", data);
 
         // Preload only the first movie's background image to reduce initial load
         await preloadImage(data[0].background);
@@ -33,7 +37,7 @@ const Featured = () => {
         setMovies(data); // Store the array of movies after preloading the first image
         setLoading(false); // Set loading to false after the first image is loaded
       } catch (error) {
-        console.error('Error fetching the featured movie:', error);
+        console.error("Error fetching the featured movie:", error);
       }
     };
 
@@ -44,11 +48,11 @@ const Featured = () => {
   useEffect(() => {
     if (movies.length > 0) {
       const interval = setInterval(() => {
-        setFadeClass('fade-out'); // Trigger fade out
+        setFadeClass("fade-out"); // Trigger fade out
 
         setTimeout(() => {
           setCurrentMovieIndex((prevIndex) => (prevIndex + 1) % movies.length); // Move to the next movie
-          setFadeClass('fade-in'); // Trigger fade in
+          setFadeClass("fade-in"); // Trigger fade in
         }, 500); // Duration of fade-out
       }, 10000); // Change movie every 10 seconds
 
@@ -72,7 +76,7 @@ const Featured = () => {
     <div className={`featured-container ${fadeClass}`}>
       {/* Background Image */}
       <div className="background">
-        <img 
+        <img
           src={currentMovie.background}
           alt={currentMovie.title}
           className="background-image"
@@ -83,9 +87,9 @@ const Featured = () => {
       <div className="content-overlay">
         <Row>
           <Col md={4} lg={4} sm={2} className="poster-col">
-            <img 
+            <img
               src={currentMovie.poster}
-              alt={currentMovie.title} 
+              alt={currentMovie.title}
               className="movie-poster pt-5"
             />
           </Col>
@@ -94,7 +98,11 @@ const Featured = () => {
               <p className="movieTitle">{currentMovie.title}</p>
               <p className="desc">{currentMovie.synopsis}</p>
               <div className="buttons">
-                <Button className="mt-3 border-white" variant="primary" onClick={() => alert('Info Button')}>
+                <Button
+                  className="mt-3 border-white"
+                  variant="primary"
+                  onClick={() => navigate(`/movies/${currentMovie.id}`)}
+                >
                   See More
                 </Button>
               </div>

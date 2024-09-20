@@ -60,7 +60,7 @@ const Detailmovie = () => {
         </Row>
         <Row className="justify-content-center mt-4">
           <Col md={8}>
-           <MediaPlayer link={movieData.trailer}/>
+           <MediaPlayer link={movieData.trailer || ""}/>
           </Col>
         </Row>
         <Row className="justify-content-center mt-2">
