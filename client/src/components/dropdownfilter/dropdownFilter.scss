@@ -27,6 +27,9 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 10px 0;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    max-height: 200px; // Control the height of the dropdown
+    overflow-y: auto;  // Make the dropdown scrollable if items exceed the height
 
     .dropdown-item {
       // Style each dropdown item
