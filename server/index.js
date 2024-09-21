@@ -61,7 +61,7 @@ db.connect((err) => {
 //   });
 // });
 app.get('/movies/movie', (req, res) => {
-  const { page = 1, limit = 10, yearRange, genre, status, availability, country_release, sort } = req.query;
+  const { page = 1, limit = 10, yearRange, genre, status, availability, country_release, sort, awards } = req.query;
   const offset = (page - 1) * limit;
 
   let filterConditions = [];
@@ -77,6 +77,11 @@ app.get('/movies/movie', (req, res) => {
       console.error("Error parsing yearRange:", error);
       return res.status(400).json({ error: 'Invalid yearRange format' });
     }
+  }
+
+  if (awards) {
+    filterConditions.push(`a.awards_name = ?`);
+    queryParams.push(awards);
   }
 
   if (status) {
@@ -98,12 +103,14 @@ app.get('/movies/movie', (req, res) => {
   let query = ` 
     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
            GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS genres, 
-           m.imdb_score AS rating, m.view, c.country_name AS country
+           m.imdb_score AS rating, m.view, c.country_name AS country, a.awards_name AS awards
     FROM movies m
     JOIN movie_genres mg ON m.id = mg.movie_id
     JOIN genres g ON mg.genre_id = g.id
     JOIN movie_countries mc ON m.id = mc.movie_id
     JOIN countries c ON mc.country_id = c.id
+    JOIN movie_awards ma ON m.id = ma.movie_id
+    JOIN awards a ON ma.awards_id = a.id
     WHERE 1=1
   `;
 
@@ -153,6 +160,8 @@ app.get('/movies/movie', (req, res) => {
       JOIN genres g ON mg.genre_id = g.id
       JOIN movie_countries mc ON m.id = mc.movie_id
       JOIN countries c ON mc.country_id = c.id
+      JOIN movie_awards ma ON m.id = ma.movie_id
+      JOIN awards a ON ma.awards_id = a.id
       WHERE 1=1
     `;
 
@@ -161,7 +170,6 @@ app.get('/movies/movie', (req, res) => {
       countQuery += ` AND ${filterConditions.join(' AND ')}`;
     }
 
-    // Handle genre filtering in count query as well
     if (genre && genre.trim()) {
       countQuery += ` AND m.id IN (
         SELECT mg.movie_id 

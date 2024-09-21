@@ -24,6 +24,7 @@ const Home = () => {
     genres: [],
     awards: [],
     countries: [],
+    awards: [],
   });
 
   const [selectedFilters, setSelectedFilters] = useState({
@@ -32,6 +33,7 @@ const Home = () => {
     status: '',
     availability: '',
     country: '',
+    awards: '',
   });
   const [sortOrder, setSortOrder] = useState(''); // New state for sort order
   const handleSortChange = (value) => {
@@ -75,10 +77,10 @@ const Home = () => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const { year, genre, status, availability, country } = selectedFilters;
+        const { year, genre, status, availability, country, awards } = selectedFilters;
         const sortParam = sortOrder ? `&sort=${sortOrder}` : ''; 
         const response = await fetch(
-          `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}${sortParam}`
+          `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&awards=${awards}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}${sortParam}`
         );
         const data = await response.json();
         setMovies(data.movies);
@@ -145,8 +147,8 @@ const Home = () => {
           <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Year"
-              options={filters.years}
-              onSelect={(option) => handleFilterChange('year', option)}
+              options={filters.awards}
+              onSelect={(option) => handleFilterChange('awards', option)}
             />
           </Col>
           <Col xs={6} sm={6} md={4} lg={2}>
