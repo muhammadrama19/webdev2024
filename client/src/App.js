@@ -8,6 +8,7 @@ import Register from './register/register';
 import Login from './login/login';
 import TestFetch from './test/testFetch';
 import Detailmovie from './detailmovie/detailmovie';
+import SearchResult from './search/searchResult';
 
 
 
@@ -24,6 +25,7 @@ function App() {
         <Route path='/Login' element={<Login />}/>
         <Route path= '/testFetch' element={<TestFetch/>}/>
         <Route path="/movies/:id" element={<Detailmovie />} />
+        <Route path="/searchresult" element={<SearchResult />} />
       </Routes>
 
 

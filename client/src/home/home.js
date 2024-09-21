@@ -128,7 +128,15 @@ const Home = () => {
   return (
     <div className="home">
       <Featured type="movie" />
-      <List title="Top Rated Movies" movies={topRated} />
+      <Container>
+        <Row>
+          <Col xs={12} className="listTitle pt-5 font-weight-500">
+            Top Rated Movies
+          </Col>
+          <List title="Top Rated Movies" movies={topRated} />
+        </Row>
+      </Container>
+      
 
       <Container className="dropdown-container">
         <Row className="align-items-center">
@@ -136,7 +144,7 @@ const Home = () => {
             <span>Filter by:</span>
           </Col>
         </Row>
-        <Row className="align-items-center" >
+        <Row className="align-items-center" style={{ borderTop: "1px solid var(--primary-color)" }} >
           <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Year"
@@ -148,7 +156,7 @@ const Home = () => {
             <DropdownFilterCustom
               label="Year"
               options={filters.awards}
-              onSelect={(option) => handleFilterChange('awards', option)}
+              onSelect={(option) => handleFilterChange('year', option)}
             />
           </Col>
           <Col xs={6} sm={6} md={4} lg={2}>
