@@ -1,31 +1,27 @@
-.glass-input {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
+.search-modal-body {
+  backdrop-filter: blur(10px); /* Adds a blur effect */
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent dark background */
+  border-color: white;
+}
+
+.modal-backdrop {
+  background-color: rgba(var(--main-color), 1); /* Darker background for backdrop */
+}
+
+.modal-content {
+  background-color: rgba(var(--main-color), 1); /* Semi-transparent background for modal content */
   border-radius: 10px;
-  padding: 10px;
-  color: #fff;
-  font-size: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-
-  ::placeholder {
-    color: rgba(255, 255, 255, 0.9); 
-  }
+  border-color: white;
+  color: white;
 }
 
-.input-label {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-  margin-bottom: 5px;
+input {
+  font-size: 1.2rem;
+  color: white; /* Text inside the input is white */
 }
 
-@media (max-width: 576px) {
-  .glass-input {
-    font-size: 0.9rem;
-    padding: 8px;
-  }
 
-  .input-label {
-    font-size: 0.8rem;
-  }
+.search-input::placeholder {
+  color: white !important; /* Makes the placeholder text white */
+  opacity: 1; /* Ensures placeholder text is fully opaque */
 }

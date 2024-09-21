@@ -4,6 +4,7 @@ import LoginIcon from "@mui/icons-material/Login";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import SearchBar from "../searchInput/search";
 import "./navbar.scss";
 
 const Navbar = () => {
@@ -69,36 +70,20 @@ const Navbar = () => {
             <span>Home</span>
             <span>Login</span>
             <span>Register</span>
-            <div className="country">
-              <div className="options">
-                {countries.map((country, index) => (
-                  <span key={index} onClick={() => handleCountryChange(country)}>
-                    {country}
-                  </span>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
         <div className="right">
-          {searchVisible && (
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search..."
-            />
-          )}
-          <SearchIcon className="icon" onClick={toggleSearch} />
-          <LoginIcon className="icon" />
-          <div className="hamburger" onClick={toggleSidebar}>
-            {sidebarVisible ? <CloseIcon /> : <MenuIcon />}
-          </div>
+          <SearchBar />
+          <MenuIcon className="hamburger" onClick={toggleSidebar} /> {/* Add this */}
         </div>
       </div>
 
       {/* Sidebar Menu */}
       <div className={`sidebar ${sidebarVisible ? "active" : ""}`}>
-        <span className="logo-brand">Lalajo Euy!</span>
+        <div className="sidebar-header">
+          <span className="logo-brand">Lalajo Euy!</span>
+          <CloseIcon className="close-icon" onClick={toggleSidebar} />
+        </div>
         <span>Home</span>
         <span>Login</span>
         <span>Register</span>
