@@ -5,7 +5,25 @@
     margin-bottom: 15px;
     border-top: 1px solid var(--primary-color);
     border-radius: 0px;
-    
+
+    .review-text{
+      position: relative;
+      overflow: hidden;
+
+      .see-more{
+        color: var(--primary-color);
+        cursor: pointer;
+        text-decoration: underline;
+      }
+    }
+    .review-date{
+      font-size: 0.8rem;
+      color: #ccc;
+      display: flex;
+      justify-content: space-between;
+      filter: brightness(0.8);
+      
+    }
     .user-image {
       padding: 0;
       img {
@@ -14,6 +32,8 @@
         object-fit: cover;
       }
     }
+
+    
     
     .review-content {
       display: flex;

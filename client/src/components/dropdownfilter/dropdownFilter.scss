@@ -1,0 +1,52 @@
+.dropdown-filter {
+  // Style the entire dropdown container
+  margin: 10px 10px;
+  min-width: 100px;
+
+  .dropdown-toggle {
+    // Override the button style
+    background-color: var(--primary-color); // Change to your preferred color
+    border: none;
+    color: white;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin: 10px 10px;
+    min-width: 100px;
+    &:hover {
+      background-color: var(--primary-on-hover); // Hover effect
+    }
+    &:active {
+      background-color: var(--primary-on-active); // Active effect
+    }
+  }
+
+  .dropdown-menu {
+    // Style the dropdown menu
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px 0;
+
+    .dropdown-item {
+      // Style each dropdown item
+      color: #333;
+      padding: 8px 15px;
+      font-size: 14px;
+      &:hover {
+        // background-color: var(--primary-color);
+        color: var(--primary-color);
+      }
+
+      &.select {
+        background-color: white;
+        
+      }
+    }
+  }
+
+  .label {
+    // Additional custom styles for the label if needed
+    font-size: 16
+  }
+}

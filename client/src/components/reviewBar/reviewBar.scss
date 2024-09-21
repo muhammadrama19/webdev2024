@@ -1,9 +1,10 @@
 .review-bar {
-    background-color: #3a3f47;
+    background-color: #445566;
     padding: 20px;
     border-radius: 8px;
-    margin-top: 150px;
+    // margin-top: 150px;
     width: 250px;
+    box-shadow: var(--elevation-2);
 
     .addReviewButton {
         font-size: 14px;
@@ -18,7 +19,7 @@
         transition: background-color 0.3s ease;
 
         &:hover {
-            background-color: #5A4AF4;
+            background-color: var(--primary-on-hover);
             color: white;
         }
     }
@@ -27,7 +28,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      color: #b0b0b0;
+      color: white;
       cursor: pointer;
   
       .review-icon {
@@ -40,24 +41,27 @@
       span {
         font-size: 14px;
       }
+      
   
       // Individual styles for each icon when active
       &.watch-active .review-icon {
-        color: #3498db; // Blue for Watch
+        color: var(--secondary-color); // Blue for Watch
       }
   
       &.like-active .review-icon {
-        color: #e74c3c; // Red for Like
+        color: var(--warning-color); // Red for Like
       }
   
       &.watchlist-active .review-icon {
-        color: #2ecc71; // Green for Watchlist
+        color: var(--succes-color)// Green for Watchlist
       }
+
+      
     }
   
     .add-review-button {
       margin-top: 20px;
-      background-color: #2b2f36;
+      background-color: var(--primary-color);
       color: #b0b0b0;
       border: none;
       padding: 10px 20px;

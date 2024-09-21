@@ -1,8 +1,9 @@
 .review-input-modal {
   .modal-content {
-    background-color: var(--main-color);
+    background-color: #445566;
     color: white;
     border-radius: 8px;
+    border-color: #445566;
   }
 
   .review-input-container {
@@ -12,6 +13,8 @@
     .movie-image {
       width: 100px;
       border-radius: 8px;
+      $box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--elevation-2);
     }
 
     .close-button {
@@ -39,7 +42,7 @@
         display: flex;
 
         .filled {
-          color: gold;
+          color: var(--tertary-color);
         }
 
         .unfilled {
