@@ -196,6 +196,22 @@ app.get('/movies/movie', (req, res) => {
 });
 
 
+app.get("/search", (req, res) => {
+  const query = req.query.q;
+  if (!query) {
+    return res.status(400).send("Search query is required");
+  }
+
+  // Use MySQL LIKE to find matches in the title or description
+  const sql = `SELECT id, title, poster, release_year, imdb_score FROM movies WHERE title LIKE ? LIMIT 10`;
+  const searchTerm = `%${query}%`;
+  
+  db.query(sql, [searchTerm, searchTerm], (err, results) => {
+    if (err) throw err;
+    res.json(results);
+  });
+});
+
 
 //fetch movie detail based on its id
 app.get('/movies/detail/:id', (req, res) => {
