@@ -449,6 +449,106 @@ app.get('/featured', (req, res) => {
 }
 );
 
+app.get('/dashboard', (req, res) => {
+  const queryMovies = 'SELECT COUNT(*) AS movieCount FROM movies';
+  const queryGenres = 'SELECT COUNT(*) AS genreCount FROM genres';
+  const queryCountries = 'SELECT COUNT(*) AS countryCount FROM countries';
+  const queryAwards = 'SELECT COUNT(*) AS awardCount FROM users';
+
+  // Menjalankan query secara berurutan menggunakan promise
+  const getMoviesCount = () => new Promise((resolve, reject) => {
+    db.query(queryMovies, (err, results) => {
+      if (err) reject(err);
+      else resolve(results[0].movieCount);
+    });
+  });
+
+  const getGenresCount = () => new Promise((resolve, reject) => {
+    db.query(queryGenres, (err, results) => {
+      if (err) reject(err);
+      else resolve(results[0].genreCount);
+    });
+  });
+
+  const getCountriesCount = () => new Promise((resolve, reject) => {
+    db.query(queryCountries, (err, results) => {
+      if (err) reject(err);
+      else resolve(results[0].countryCount);
+    });
+  });
+
+  const getAwardsCount = () => new Promise((resolve, reject) => {
+    db.query(queryAwards, (err, results) => {
+      if (err) reject(err);
+      else resolve(results[0].awardCount);
+    });
+  });
+
+  // Menggunakan Promise.all untuk menjalankan semua query secara paralel
+  Promise.all([getMoviesCount(), getGenresCount(), getCountriesCount(), getAwardsCount()])
+    .then(([movieCount, genreCount, countryCount, awardCount]) => {
+      const response = {
+        movieCount,
+        genreCount,
+        countryCount,
+        awardCount,
+      };
+      res.json(response);
+    })
+    .catch(err => {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+    });
+});
+
+
+
+app.get('/movie-list', (req, res) => {
+  const query = `
+    SELECT 
+  m.id, 
+  m.title, 
+  GROUP_CONCAT(DISTINCT ac.name SEPARATOR ', ') AS Actors,  -- Gunakan DISTINCT untuk mencegah duplikasi aktor
+  GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,   -- Gunakan DISTINCT untuk mencegah duplikasi genre
+  m.synopsis
+FROM movies m
+JOIN movie_actors mac ON mac.movie_id = m.id
+JOIN actors ac ON ac.id = mac.actor_id
+JOIN movie_genres mg ON mg.movie_id = m.id
+JOIN genres g ON g.id = mg.genre_id
+GROUP BY m.id;
+ 
+
+  `;
+
+  // Eksekusi query dan kirim hasil ke frontend
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);  // Mengembalikan data film beserta aktor dan genre
+  });
+});
+
+app.get('/users', (req, res) => {
+  const query = `
+    SELECT id, username, role, email FROM users
+  `;
+
+  // Eksekusi query dan kirim hasil ke frontend
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);  // Mengembalikan data film beserta aktor dan genre
+  });
+});
+
+
 
 
 
