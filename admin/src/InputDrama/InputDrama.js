@@ -281,7 +281,7 @@ const DramaInput = () => {
               <Button
                 variant="secondary"
                 className="back-button me-2"
-                style={{ backgroundColor: "#20283E", borderColor: "#20283E" }}
+                style={{ backgroundColor: "#545858", borderColor: "#20283E" }}
               >
                 Back
               </Button>

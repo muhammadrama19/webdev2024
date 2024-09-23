@@ -7,17 +7,39 @@ import Home from '../src/Dashboard/Home';
 import DramaInput from '../src/InputDrama/InputDrama';
 import ListDrama from '../src/ListDrama/ListDrama';
 import ValidateDrama from './ValidateDrama/ValidateDrama';
+import ValidateHistory from './ValidateHistory/validateHistory'; // Import ValidateHistory component
 import ReviewManager from './ReviewManager/ReviewManager';
 import ActorManager from './InputActor/InputActors';
 import GenreManager from './InputGenres/InputGenres';
 import CountryManager from './InputCountry/InputCountry';
 import AwardsManager from './InputAward/InputAward';
 import UserSetting from './UserSettings/UserSetting';
-
-// Import component lain sesuai kebutuhan
+import MovieTrash from './MovieTrash/movieTrash'; // Import MovieTrash component
 
 function App() {
   const [openSidebarToggle, setOpenSidebarToggle] = useState(false); // Default tutup di mobile
+  const [dramas, setDramas] = useState([ // State untuk menyimpan movie aktif
+    {
+      id: 1,
+      title: "[2024] Japan - Eye Love You",
+      actors: "Takuya Kimura, Takeuchi Yuko, Neinen Reina",
+      genres: "Romance, Adventures, Comedy",
+      synopsis: "I love this drama. It taught me a lot about money and finance. Love is not everything. We need to face the reality too. Being stoic is the best.",
+      status: "Unapproved"
+    },
+    {
+      id: 2,
+      title: "Rama - Pemuda Ciamis",
+      actors: "M. Rama Nurimani",
+      genres: "Romance, Adventures, Comedy",
+      synopsis: "A lovely boy from Ciamis.",
+      status: "Unapproved"
+    }
+    // Tambahkan lebih banyak movie sesuai kebutuhan
+  ]); // State yang menyimpan movie di ListDrama
+
+  const [trashDramas, setTrashDramas] = useState([]); // State untuk menyimpan movie yang dihapus
+  const [validatedDramas, setValidatedDramas] = useState([]); // State untuk menyimpan drama yang sudah divalidasi
 
   const OpenSidebar = () => {
     setOpenSidebarToggle(!openSidebarToggle);
@@ -32,15 +54,32 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/movie-input" element={<DramaInput />} />
-            <Route path="/movie-list" element={<ListDrama />} />
-            <Route path="/movie-validation" element={<ValidateDrama />} />
+            {/* Pass state dramas, trashDramas, dan setDramas ke ListDrama */}
+            <Route 
+              path="/movie-list" 
+              element={<ListDrama dramas={dramas} setDramas={setDramas} trashDramas={trashDramas} setTrashDramas={setTrashDramas} />} 
+            />
+            {/* Pass state validatedDramas untuk validasi */}
+            <Route 
+              path="/movie-validation" 
+              element={<ValidateDrama validatedDramas={validatedDramas} setValidatedDramas={setValidatedDramas} />} 
+            />
+            {/* Route untuk history validasi */}
+            <Route 
+              path="/validate-history" 
+              element={<ValidateHistory validatedDramas={validatedDramas} />} 
+            />
             <Route path="/review-list" element={<ReviewManager />} />
             <Route path="/attribute-actor" element={<ActorManager />} />
-            <Route path="/attribute-genre" element={<GenreManager/>} />
-            <Route path="/attribute-country" element={<CountryManager/>} />
-            <Route path="/attribute-award" element={<AwardsManager  />} />
-            <Route path="/users" element={<UserSetting  />} />
-            
+            <Route path="/attribute-genre" element={<GenreManager />} />
+            <Route path="/attribute-country" element={<CountryManager />} />
+            <Route path="/attribute-award" element={<AwardsManager />} />
+            <Route path="/users" element={<UserSetting />} />
+            {/* Tambahkan route untuk MovieTrash dan pass state dramas dan trashDramas */}
+            <Route 
+              path="/movie-trash" 
+              element={<MovieTrash dramas={dramas} setDramas={setDramas} trashDramas={trashDramas} setTrashDramas={setTrashDramas} />} 
+            />
           </Routes>
         </div>
       </div>

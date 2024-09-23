@@ -5,10 +5,8 @@ import {
   BsGrid1X2Fill,
   BsFillArchiveFill,
   BsFillFolderFill,
-  BsFillGrid3X3GapFill,
   BsBook,
   BsPeopleFill,
-  BsListCheck,
   BsMenuButtonWideFill,
   BsFillGearFill,
   BsJustify,
@@ -71,9 +69,6 @@ function Sidebar({ openSidebarToggle, OpenSidebar }) {
             {isMoviesOpen ? <BsChevronUp className="accordion-icon" /> : <BsChevronDown className="accordion-icon" />}
           </div>
           <ul className={`submenu-list ${isMoviesOpen ? "open" : "closed"}`}>
-            <li className="submenu-list-item">
-              <NavLink to="/movie-input" className="submenu-link" activeClassName="active">Movie Input</NavLink>
-            </li>
             <li className="submenu-list-item">
               <NavLink to="/movie-list" className="submenu-link" activeClassName="active">Movie List</NavLink>
             </li>

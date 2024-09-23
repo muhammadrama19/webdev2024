@@ -1,70 +1,71 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Table, Button, Dropdown } from 'react-bootstrap';
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import "./ValidateDrama.css";
 
-function ValidateDrama() {
-  const [dramas, SetValidateDramas] = useState([
+function ValidateDrama({ validatedDramas, setValidatedDramas }) {
+  const [dramas, setDramas] = useState([
     {
       id: 1,
       username: "Nara",
       drama: "[2024] Japan - Eye Love You",
       status: "Unapproved",
-      isChecked: false,
     },
     {
       id: 2,
       username: "Luffy",
       drama: "[2024] One Piece",
       status: "Unapproved",
-      isChecked: false,
     },
   ]);
 
-  const [filter, setFilter] = useState("None");
   const [showCount, setShowCount] = useState(10);
+  const navigate = useNavigate(); // Initialize navigate for redirection
 
   const handleApproveDrama = (id) => {
-    SetValidateDramas(dramas.map((drama) =>
-      drama.id === id ? { ...drama, status: "Approved" } : drama
-    ));
+    const approvedDrama = dramas.find((drama) => drama.id === id);
+    // Simpan drama yang di-approve ke validatedDramas dengan waktu validasi
+    setValidatedDramas([
+      ...validatedDramas, 
+      { 
+        drama: approvedDrama.drama, 
+        status: "Approved", 
+        time: new Date().toLocaleString() // Simpan timestamp waktu validasi
+      }
+    ]);
+    // Hapus drama dari list dramas
+    setDramas(dramas.filter((drama) => drama.id !== id));
   };
 
-  const handleDeleteDrama = (id) => {
-    SetValidateDramas(dramas.filter((drama) => drama.id !== id));
+  const handleRejectDrama = (id) => {
+    const rejectedDrama = dramas.find((drama) => drama.id === id);
+    // Simpan drama yang di-reject ke validatedDramas dengan waktu validasi
+    setValidatedDramas([
+      ...validatedDramas, 
+      { 
+        drama: rejectedDrama.drama, 
+        status: "Rejected", 
+        time: new Date().toLocaleString() // Simpan timestamp waktu validasi
+      }
+    ]);
+    // Hapus drama dari list dramas
+    setDramas(dramas.filter((drama) => drama.id !== id));
   };
 
-  const handleFilterChange = (selectedFilter) => setFilter(selectedFilter);
-  const handleShowCountChange = (count) => setShowCount(count);
-
-  const filteredDramas = dramas.filter((drama) => {
-    if (filter === "None") return true;
-    return drama.status === filter;
-  });
+  const handleHistoryClick = () => {
+    navigate("/validate-history"); // Redirect to history page
+  };
 
   return (
     <Container>
       <Container className="App">
         <h1 className="title">Validate Drama</h1>
       </Container>
-      {/* Filter Section */}
-      <Row className="mb-3 justify-content-end">
-        {/* Kolom pertama dengan Dropdown Filter */}
-        <Col xs="auto" className="d-flex me-2 align-items-center">
-          <Dropdown onSelect={handleFilterChange}>
-            <Dropdown.Toggle variant="light" id="dropdown-filter">
-              Filtered by: {filter}
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item eventKey="None">None</Dropdown.Item>
-              <Dropdown.Item eventKey="Approved">Approved</Dropdown.Item>
-              <Dropdown.Item eventKey="Unapproved">Unapproved</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        </Col>
 
-        {/* Kolom kedua dengan Dropdown Shows */}
+      {/* Filter Section */}
+      <Row className="mb-3">
         <Col xs="auto" className="d-flex me-2 align-items-center">
-          <Dropdown onSelect={handleShowCountChange}>
+          <Dropdown onSelect={(e) => setShowCount(e)}>
             <Dropdown.Toggle variant="light" id="dropdown-show">
               Shows: {showCount}
             </Dropdown.Toggle>
@@ -78,7 +79,6 @@ function ValidateDrama() {
           </Dropdown>
         </Col>
 
-        {/* Kolom ketiga dengan Input Pencarian */}
         <Col xs="auto" className="d-flex me-2 align-items-center">
           <input
             type="text"
@@ -86,9 +86,14 @@ function ValidateDrama() {
             placeholder="Search"
           />
         </Col>
+
+        {/* Tombol History */}
+        <Col xs="auto" className="ms-auto">
+          <Button variant="warning" onClick={handleHistoryClick}>
+            History
+          </Button>
+        </Col>
       </Row>
-
-
 
       {/* Table Section */}
       <Table striped bordered hover responsive>
@@ -101,14 +106,14 @@ function ValidateDrama() {
           </tr>
         </thead>
         <tbody>
-          {filteredDramas.slice(0, showCount).map((drama) => (
+          {dramas.slice(0, showCount).map((drama) => (
             <tr key={drama.id}>
               <td>{drama.username}</td>
               <td>{drama.drama}</td>
               <td>{drama.status}</td>
               <td>
-                <Container className="action-button">
-                  {drama.status === "Unapproved" && (
+                {drama.status === "Unapproved" && (
+                  <>
                     <Button
                       variant="success"
                       className="me-2"
@@ -117,21 +122,21 @@ function ValidateDrama() {
                     >
                       Approve
                     </Button>
-                  )}
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDeleteDrama(drama.id)}
-                  >
-                    Delete
-                  </Button>
-                </Container>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleRejectDrama(drama.id)}
+                    >
+                      Reject
+                    </Button>
+                  </>
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
-    </Container >
+    </Container>
   );
 }
 
