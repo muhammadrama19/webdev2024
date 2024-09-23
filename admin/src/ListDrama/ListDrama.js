@@ -1,40 +1,29 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Table, Form, Container, Modal, Button, Col, Dropdown } from "react-bootstrap";
-import "../ListDrama/ListDrama.css"; 
+import "../ListDrama/ListDrama.css";
 
 const ListDrama = ({ trashDramas, setTrashDramas }) => {
-  const [filterStatus, setFilterStatus] = useState("Unapproved");
   const [showCount, setShowCount] = useState(10);
-  const [dramas, setDramas] = useState([
-    {
-      id: 1,
-      title: "[2024] Japan - Eye Love You",
-      actors: "Takuya Kimura, Takeuchi Yuko, Neinen Reina",
-      genres: "Romance, Adventures, Comedy",
-      synopsis: "I love this drama. It taught me a lot about money and finance. Love is not everything. We need to face the reality too. Being stoic is the best.",
-      status: "Unapproved"
-    },
-    {
-      id: 2,
-      title: "Rama - Pemuda Ciamis",
-      actors: "M. Rama Nurimani",
-      genres: "Romance, Adventures, Comedy",
-      synopsis: "A lovely boy from Ciamis.",
-      status: "Unapproved"
-    },
-    {
-      id: 3,
-      title: "Azhar - Pemuda Bekasi",
-      actors: "M. Azharuddin Hamid",
-      genres: "Romance, Sci-fi, Comedy",
-      synopsis: "A backpacker from Bekasi.",
-      status: "Unapproved"
-    },
-  ]);
-
+  const [dramas, setDramas] = useState([]);
+  const [loading, setLoading] = useState(true); // To handle loading state
   const [editingDrama, setEditingDrama] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  // useEffect to fetch data from backend
+  useEffect(() => {
+    fetch('http://localhost:8001/movie-list') // Pastikan URL sesuai dengan backend kamu
+      .then((response) => response.json())
+      .then((data) => {
+        // Set data yang diambil langsung ke state dramas
+        setDramas(data);
+        setLoading(false); // Data has been loaded
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setLoading(false); // Stop loading on error
+      });
+  }, []);
 
   const handleEdit = (drama) => {
     setEditingDrama(drama);
@@ -43,8 +32,8 @@ const ListDrama = ({ trashDramas, setTrashDramas }) => {
 
   const handleDelete = (id) => {
     const deletedDrama = dramas.find((drama) => drama.id === id);
-    setTrashDramas([...trashDramas, deletedDrama]); // Pindahkan movie ke Trash
-    setDramas(dramas.filter((drama) => drama.id !== id)); // Hapus dari list utama
+    setTrashDramas([...trashDramas, deletedDrama]);
+    setDramas(dramas.filter((drama) => drama.id !== id));
   };
 
   const handleSave = () => {
@@ -104,63 +93,61 @@ const ListDrama = ({ trashDramas, setTrashDramas }) => {
         </div>
 
         <div>
-          <Button
-            className="btn btn-danger me-2"
-            onClick={handleViewTrash}
-          >
+          <Button className="btn btn-danger me-2" onClick={handleViewTrash}>
             Trash
           </Button>
 
-          <Button
-            className="btn btn-success"
-            onClick={handleAddMovies}
-          >
+          <Button className="btn btn-success" onClick={handleAddMovies}>
             Add Movies
           </Button>
         </div>
       </div>
 
-      <div className="drama-table-wrapper">
-        <Table striped bordered hover className="drama-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Drama</th>
-              <th>Actors</th>
-              <th>Genres</th>
-              <th>Synopsis</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dramas.slice(0, showCount).map((drama, index) => (
-              <tr key={drama.id}>
-                <td>{index + 1}</td>
-                <td>{drama.title}</td>
-                <td>{drama.actors}</td>
-                <td>{drama.genres}</td>
-                <td>{drama.synopsis}</td>
-                <td>
-                  <Container className="action-button">
-                    <Button
-                      className="btn btn-sm btn-primary me-2"
-                      onClick={() => handleEdit(drama)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(drama.id)}
-                    >
-                      Delete
-                    </Button>
-                  </Container>
-                </td>
+      {loading ? (
+        <p>Loading data...</p>
+      ) : (
+        <div className="drama-table-wrapper">
+          <Table striped bordered hover className="drama-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Drama</th>
+                <th>Actors</th>
+                <th>Genres</th>
+                <th>Synopsis</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+            </thead>
+            <tbody>
+              {dramas.slice(0, showCount).map((drama, index) => (
+                <tr key={drama.id}>
+                  <td>{index + 1}</td>
+                  <td>{drama.title}</td>
+                  <td>{drama.Actors}</td> {/* Menggunakan data Actors langsung */}
+                  <td>{drama.Genres}</td> {/* Menggunakan data Genres langsung */}
+                  <td>{drama.synopsis}</td>
+                  <td>
+                    <Container className="action-button">
+                      <Button
+                        className="btn btn-sm btn-primary me-2"
+                        onClick={() => handleEdit(drama)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        className="btn btn-sm btn-danger"
+                        onClick={() => handleDelete(drama.id)}
+                      >
+                        Delete
+                      </Button>
+                    </Container>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
+      )}
 
       {editingDrama && (
         <Modal show={showModal} onHide={() => setShowModal(false)} centered>
@@ -183,7 +170,7 @@ const ListDrama = ({ trashDramas, setTrashDramas }) => {
                 <Form.Control
                   type="text"
                   name="actors"
-                  value={editingDrama.actors}
+                  value={editingDrama.Actors}
                   onChange={handleChange}
                 />
               </Form.Group>
@@ -192,7 +179,7 @@ const ListDrama = ({ trashDramas, setTrashDramas }) => {
                 <Form.Control
                   type="text"
                   name="genres"
-                  value={editingDrama.genres}
+                  value={editingDrama.Genres}
                   onChange={handleChange}
                 />
               </Form.Group>
@@ -220,7 +207,6 @@ const ListDrama = ({ trashDramas, setTrashDramas }) => {
               type="submit"
               variant="primary"
               className="mt-2"
-              style={{ backgroundColor: "#ff5722", borderColor: "#ff5722" }}
               onClick={handleSave}
             >
               Save Changes
