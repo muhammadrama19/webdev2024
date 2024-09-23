@@ -1,19 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Table, Form, Button, Modal } from 'react-bootstrap';
 import { FaPlus } from "react-icons/fa";
 import './InputAward.css';
 
 const AwardsManager = () => {
-    const [entries, setAwards] = useState([
-        { id: 1, country: 'Japan', year: '2024', award: 'Japanese Drama Awards Spring 2024' },
-        { id: 2, country: 'Korea', year: '2024', award: 'Korean Drama Awards Winter 2024' },
-        { id: 3, country: 'USA', year: '2023', award: 'American Music Awards 2023' },
-    ]);
+    const [awards, setAwards] = useState([]);
     const [newAward, setNewAward] = useState({ country: '', year: '', award: '' });
     const [editing, setEditing] = useState(null);
     const [showModal, setShowModal] = useState(false);
 
     const handleShowModal = () => setShowModal(true);
+
+    useEffect(() => {
+        const fetchAwards = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/awards');
+                const data = await response.json();
+                setAwards(data);
+            } catch (error) {
+                console.error("Error fetching actors:", error);
+            }
+        };
+        fetchAwards();
+    }, []);
+
     const handleCloseModal = () => {
         setShowModal(false);
         setNewAward({ country: '', year: '', award: '' });
@@ -28,14 +38,14 @@ const AwardsManager = () => {
     const handleAddAward = () => {
         if (newAward.country && newAward.year && newAward.award) {
             if (editing !== null) {
-                setAwards(entries.map((entry) =>
+                setAwards(awards.map((entry) =>
                     entry.id === editing ? { ...entry, ...newAward } : entry
                 ));
                 setEditing(null);
             } else {
                 setAwards([
-                    ...entries,
-                    { id: entries.length + 1, ...newAward }
+                    ...awards,
+                    { id: awards.length + 1, ...newAward }
                 ]);
             }
             handleCloseModal();
@@ -45,14 +55,14 @@ const AwardsManager = () => {
     };
 
     const handleEdit = (id) => {
-        const entry = entries.find((entry) => entry.id === id);
+        const entry = awards.find((entry) => entry.id === id);
         setNewAward(entry);
         setEditing(id);
         handleShowModal();
     };
 
     const handleDelete = (id) => {
-        setAwards(entries.filter((entry) => entry.id !== id));
+        setAwards(awards.filter((entry) => entry.id !== id));
     };
 
     return (
@@ -138,23 +148,23 @@ const AwardsManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {entries.map((entry, index) => (
-                            <tr key={entry.id}>
-                                <td>{index + 1}</td>
-                                <td>{entry.country}</td>
-                                <td>{entry.year}</td>
-                                <td>{entry.award}</td>
+                        {awards.map((award) => (
+                            <tr key={award.id}>
+                                <td>{award.id}</td>
+                                <td>{award.country}</td>
+                                <td>{award.year}</td>
+                                <td>{award.awards_name}</td>
                                 <td>
                                     <Container className="action-button">
                                         <Button
                                             className="btn btn-sm btn-primary me-2"
-                                            onClick={() => handleEdit(entry.id)}
+                                            onClick={() => handleEdit(award.id)}
                                         >
                                             Edit
                                         </Button>
                                         <Button
                                             className="btn btn-sm btn-danger"
-                                            onClick={() => handleDelete(entry.id)}
+                                            onClick={() => handleDelete(award.id)}
                                         >
                                             Delete
                                         </Button>

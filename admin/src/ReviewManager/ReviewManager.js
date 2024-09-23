@@ -1,42 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Table, Button, Dropdown } from 'react-bootstrap';
 import "./ReviewManager.css";
 
 const ReviewManager = () => {
-    const [reviews, setReviews] = useState([
-        {
-            id: 1,
-            username: "Nara",
-            rate: 5,
-            drama: "[2024] Japan - Eye Love You",
-            comments: `I love this drama. It taught me a lot about money and finance. Love is not everything. 
-            We need to face the reality too. Being stoic is the best.\n\nWhat the most thing that I love is about the kindness. Having money is perfect.`,
-            status: "Unapproved",
-            isChecked: false,
-        },
-        {
-            id: 3,
-            username: "Nara",
-            rate: 5,
-            drama: "[2024] Japan - Eye Love You",
-            comments: `I love this drama. It taught me a lot about money and finance. Love is not everything. 
-            We need to face the reality too. Being stoic is the best.\n\nWhat the most thing that I love is about the kindness. Having money is perfect.`,
-            status: "Unapproved",
-            isChecked: false,
-        },
-        {
-            id: 2,
-            username: "Luffy",
-            rate: 2,
-            drama: "[2024] Japan - Eye Love You",
-            comments: "This drama is so boring. I don't like it.",
-            status: "Approved",
-            isChecked: false,
-        },
-    ]);
-
+    const [reviews, setReviews] = useState([]);
     const [filter, setFilter] = useState("None");
     const [showCount, setShowCount] = useState(10);
+
+    useEffect(() => {
+        const Reviews = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/reviews');
+                const data = await response.json();
+                setReviews(data);
+            } catch (error) {
+                console.error("Error fetching actors:", error);
+            }
+        };
+        Reviews();
+    }, []);
 
     const handleApproveReview = (id) => {
         setReviews(reviews.map((review) =>
@@ -53,8 +35,8 @@ const ReviewManager = () => {
 
     const filteredReviews = reviews.filter((review) => {
         if (filter === "None") return true;
-        return review.status === filter;
-    });
+        return filter === "Approved" ? review.status === 1 : review.status === 0;
+    });    
 
     return (
         <Container >
@@ -108,15 +90,15 @@ const ReviewManager = () => {
                     <tbody>
                         {filteredReviews.slice(0, showCount).map((review) => (
                             <tr key={review.id}>
-                                <td>{review.username}</td>
+                                <td>{review.user_name}</td>
                                 <td>
                                     <Container className="rate-container">
-                                        {"★".repeat(review.rate)}{"☆".repeat(5 - review.rate)}
+                                        {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
                                     </Container>
                                 </td>
-                                <td>{review.drama}</td>
-                                <td>{review.comments}</td>
-                                <td>{review.status}</td>
+                                <td>{review.movie_title}</td>
+                                <td>{review.content}</td>
+                                <td>{review.status === 1 ? "Approved" : "Unapproved"}</td>
                                 <td>
                                     <Container className="action-button">
                                         {review.status === "Unapproved" && (

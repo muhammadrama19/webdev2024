@@ -449,7 +449,83 @@ app.get('/featured', (req, res) => {
 }
 );
 
+app.get('/actors', (req, res) => {
+  const query = 'SELECT id, name, actor_picture FROM actors ORDER BY id ASC';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
 
+app.get('/genres', (req, res) => {
+  const query = 'SELECT id, name FROM genres ORDER BY id ASC ';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+app.get('/countries', (req, res) => {
+  const query = 'SELECT id, country_name FROM countries ORDER BY id ASC ';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+app.get('/awards', (req, res) => {
+  const query = 'SELECT id, awards_name FROM awards ORDER BY id ASC ';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+app.get('/reviews', (req, res) => {
+  const query = `
+    SELECT 
+      reviews.id AS review_id,
+      reviews.content,
+      reviews.rating,
+      reviews.status,
+      reviews.created_at,
+      reviews.updated_at,
+      movies.title AS movie_title,
+      users.username AS user_name
+    FROM 
+      reviews
+    JOIN 
+      movies ON reviews.movie_id = movies.id
+    JOIN 
+      users ON reviews.user_id = users.id
+    ORDER BY reviews.id ASC
+  `;
+  
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
 
 
 // Starting the server
@@ -457,3 +533,4 @@ const PORT = 8001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
