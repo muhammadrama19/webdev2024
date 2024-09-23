@@ -114,6 +114,8 @@
   z-index: 1;
 }
 
+
+
 /* Responsive styling */
 @media (max-width: 768px) {
   .small-camera-icon {

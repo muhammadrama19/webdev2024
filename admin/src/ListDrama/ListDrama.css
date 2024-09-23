@@ -35,14 +35,13 @@
 /* Bagian atas yang berisi select dan search diatur dengan flexbox */
 .list-drama-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
 }
 
 .search-input {
   width: 200px;
-  border-radius: 20px;
+  border-radius: 5px;
   padding: 5px 10px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
   border: 1px solid #ced4da;
@@ -103,11 +102,23 @@
 }
 
 /* Responsive for devices with width <= 576px */
+/* Responsive for devices with width <= 576px */
 @media screen and (max-width: 576px) {
   .list-drama-container {
       padding: 5px;
       height: auto;
       border-radius: 5px;
+  }
+
+  /* Mengatur flex direction menjadi kolom */
+  .list-drama-header {
+      flex-direction: column;
+      align-items: flex-start; /* Mengatur posisi elemen di kiri */
+  }
+
+  /* Atur jarak antar elemen agar lebih rapi */
+  .dropdown-toggle {
+      margin-bottom: 10px; /* Tambahkan margin bawah untuk dropdown */
   }
 
   .search-input {
@@ -133,3 +144,4 @@
       font-size: 12px;
   }
 }
+

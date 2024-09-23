@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { Table, Form, Container, Modal, Button, Col, Dropdown } from "react-bootstrap";
-import "../ListDrama/ListDrama.css"; // Pastikan file CSS sudah ada
+import "../ListDrama/ListDrama.css"; 
 
-const ListDrama = () => {
+const ListDrama = ({ trashDramas, setTrashDramas }) => {
   const [filterStatus, setFilterStatus] = useState("Unapproved");
   const [showCount, setShowCount] = useState(10);
   const [dramas, setDramas] = useState([
@@ -30,7 +31,6 @@ const ListDrama = () => {
       synopsis: "A backpacker from Bekasi.",
       status: "Unapproved"
     },
-    // Add more data here
   ]);
 
   const [editingDrama, setEditingDrama] = useState(null);
@@ -42,7 +42,9 @@ const ListDrama = () => {
   };
 
   const handleDelete = (id) => {
-    setDramas(dramas.filter((drama) => drama.id !== id));
+    const deletedDrama = dramas.find((drama) => drama.id === id);
+    setTrashDramas([...trashDramas, deletedDrama]); // Pindahkan movie ke Trash
+    setDramas(dramas.filter((drama) => drama.id !== id)); // Hapus dari list utama
   };
 
   const handleSave = () => {
@@ -62,35 +64,62 @@ const ListDrama = () => {
     });
   };
 
+  const navigate = useNavigate();
+
+  const handleAddMovies = () => {
+    navigate("/movie-input");
+  };
+
+  const handleViewTrash = () => {
+    navigate("/movie-trash");
+  };
+
   return (
     <Container>
       <Container className="App">
         <h1 className="title">Movies List</h1>
       </Container>
-      {/* Header dengan Select dan Search */}
-      <div className="list-drama-header d-flex justify-content-end align-items-center mb-3">
-        <Col xs="auto" className="d-flex me-3">
-          <Dropdown onSelect={setShowCount}>
-            <Dropdown.Toggle variant="light" id="dropdown-show">
-              Shows: {showCount}
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {[10, 20, 50].map((count) => (
-                <Dropdown.Item key={count} eventKey={count}>
-                  {count}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-        </Col>
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Search"
-        />
+
+      <div className="list-drama-header d-flex justify-content-between mb-3">
+        <div className="d-flex">
+          <Col xs="auto" className="d-flex me-3">
+            <Dropdown onSelect={setShowCount}>
+              <Dropdown.Toggle variant="light" id="dropdown-show">
+                Shows: {showCount}
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                {[10, 20, 50].map((count) => (
+                  <Dropdown.Item key={count} eventKey={count}>
+                    {count}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </Col>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search"
+          />
+        </div>
+
+        <div>
+          <Button
+            className="btn btn-danger me-2"
+            onClick={handleViewTrash}
+          >
+            Trash
+          </Button>
+
+          <Button
+            className="btn btn-success"
+            onClick={handleAddMovies}
+          >
+            Add Movies
+          </Button>
+        </div>
       </div>
 
-      {/* Wrapper untuk Tabel */}
       <div className="drama-table-wrapper">
         <Table striped bordered hover className="drama-table">
           <thead>
@@ -133,7 +162,6 @@ const ListDrama = () => {
         </Table>
       </div>
 
-      {/* Modal untuk Edit Drama */}
       {editingDrama && (
         <Modal show={showModal} onHide={() => setShowModal(false)} centered>
           <Modal.Header closeButton>

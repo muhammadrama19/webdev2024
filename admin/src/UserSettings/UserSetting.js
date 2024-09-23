@@ -5,22 +5,23 @@ import "./UserSetting.css";
 
 const UserSetting = () => {
   const [users, setUsers] = useState([
-    { id: 1, username: "anita1", email: "anita@gmail.com" },
-    { id: 2, username: "borang", email: "bora@yahoo.com" },
+    { id: 1, username: "anita1", email: "anita@gmail.com", role: "Admin" },
+    { id: 2, username: "borang", email: "bora@yahoo.com", role: "User" },
   ]);
-  const [newUser, setNewUser] = useState({ username: "", email: "" });
+
+  const [newUser, setNewUser] = useState({ username: "", email: "", role: "User" }); // Tambahkan default role
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   const handleShowModal = () => setShowModal(true);
   const handleCloseModal = () => {
     setShowModal(false);
-    setNewUser({ username: "", email: "" });
+    setNewUser({ username: "", email: "", role: "User" }); // Reset role to default
   };
 
   const handleAddUser = () => {
-    const { username, email } = newUser;
-    if (username.trim() && email.trim()) {
+    const { username, email, role } = newUser;
+    if (username.trim() && email.trim() && role.trim()) {
       if (users.some(user => user.email.toLowerCase() === email.toLowerCase())) {
         alert("Email already exists!");
       } else {
@@ -30,6 +31,7 @@ const UserSetting = () => {
             id: users.length + 1,
             username: username.trim(),
             email: email.trim(),
+            role: role.trim(),
           },
         ]);
         handleCloseModal();
@@ -46,7 +48,7 @@ const UserSetting = () => {
 
   const handleSaveEdit = () => {
     const updatedUsers = users.map(user =>
-      user.id === editing.id ? { ...user, username: editing.username, email: editing.email } : user
+      user.id === editing.id ? { ...user, username: editing.username, email: editing.email, role: editing.role } : user
     );
     setUsers(updatedUsers);
     setEditing(null);
@@ -57,7 +59,7 @@ const UserSetting = () => {
   };
 
   return (
-    <Container >
+    <Container>
       <Container className="App">
         <h1 className="title">User Setting</h1>
       </Container>
@@ -89,6 +91,18 @@ const UserSetting = () => {
                 onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
               />
             </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Role</Form.Label>
+              <Form.Control
+                as="select"
+                value={newUser.role}
+                onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+              >
+                <option>User</option>
+                <option>Admin</option>
+                <option>Editor</option>
+              </Form.Control>
+            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -103,6 +117,7 @@ const UserSetting = () => {
           <tr>
             <th>#</th>
             <th>Username</th>
+            <th>Role</th> {/* Kolom baru untuk Role */}
             <th>Email</th>
             <th>Actions</th>
           </tr>
@@ -120,6 +135,21 @@ const UserSetting = () => {
                   />
                 ) : (
                   user.username
+                )}
+              </td>
+              <td>
+                {editing && editing.id === user.id ? (
+                  <Form.Control
+                    as="select"
+                    value={editing.role}
+                    onChange={(e) => setEditing({ ...editing, role: e.target.value })}
+                  >
+                    <option>User</option>
+                    <option>Admin</option>
+                    <option>Editor</option>
+                  </Form.Control>
+                ) : (
+                  user.role
                 )}
               </td>
               <td>
