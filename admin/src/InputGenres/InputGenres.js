@@ -1,20 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal } from 'react-bootstrap';
 import { FaPlus } from "react-icons/fa";
 import "./InputGenres.css";
 
 const GenreManager = () => {
-    const [genres, setGenres] = useState([
-        { id: 1, name: "Romance" },
-        { id: 2, name: "Drama" },
-        { id: 3, name: "Action" },
-    ]);
+    const [genres, setGenres] = useState([]);
     const [newGenre, setNewGenre] = useState("");
     const [editing, setEditing] = useState(null);
     const [editName, setEditName] = useState("");
     const [showModal, setShowModal] = useState(false);
 
     const handleShowModal = () => setShowModal(true);
+
+    useEffect(() => {
+        const fetchGenres = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/genres');
+                const data = await response.json();
+                setGenres(data);
+            } catch (error) {
+                console.error("Error fetching actors:", error);
+            }
+        };
+        fetchGenres();
+    }, []);
 
     const handleCloseModal = () => {
         setShowModal(false);
@@ -39,7 +48,7 @@ const GenreManager = () => {
                 handleCloseModal();
             }
         } else {
-            alert("Country name cannot be empty or just spaces!");
+            alert("Genre name cannot be empty or just spaces!");
         }
     };
 
@@ -51,7 +60,7 @@ const GenreManager = () => {
         if (editName.trim()) {
             setGenres(
                 genres.map((genre) =>
-                    genre.id === id ? { ...genre, name: editName } : genre
+                    genres.id === id ? { ...genre, name: editName } : genre
                 )
             );
             setEditing(null);
@@ -105,28 +114,28 @@ const GenreManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {genres.map((country, index) => (
-                            <tr key={country.id} className={country.isDefault ? "table-danger" : ""}>
-                                <td>{index + 1}</td>
+                        {genres.map((genre) => (
+                            <tr key={genre.id}>
+                                <td>{genre.id}</td>
                                 <td>
-                                    {editing === country.id ? (
+                                    {editing === genre.id ? (
                                         <Form.Control
                                             type="text"
                                             value={editName}
                                             onChange={(e) => setEditName(e.target.value)}
                                         />
                                     ) : (
-                                        country.name
+                                        genre.name
                                     )}
                                 </td>
                                 <td>
                                     <Container className="action-button">
-                                        {editing === country.id ? (
+                                        {editing === genre.id ? (
                                             <>
                                                 <Button
                                                     variant="success"
                                                     size="sm"
-                                                    onClick={() => handleRenameGenre(country.id)}
+                                                    onClick={() => handleRenameGenre(genre.id)}
                                                     className="me-2"
                                                 >
                                                     Save
@@ -145,8 +154,8 @@ const GenreManager = () => {
                                                     variant="primary"
                                                     size="sm"
                                                     onClick={() => {
-                                                        setEditing(country.id);
-                                                        setEditName(country.name);
+                                                        setEditing(genre.id);
+                                                        setEditName(genre.name);
                                                     }}
                                                     className="me-2"
                                                     disabled={editing !== null}
@@ -156,7 +165,7 @@ const GenreManager = () => {
                                                 <Button
                                                     variant="danger"
                                                     size="sm"
-                                                    onClick={() => handleDeleteGenre(country.id)}
+                                                    onClick={() => handleDeleteGenre(genre.id)}
                                                     className="me-2"
                                                     disabled={editing !== null}
                                                 >

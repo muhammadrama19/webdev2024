@@ -1,19 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal } from 'react-bootstrap';
 import { FaPlus } from "react-icons/fa";
 import "./InputActor.css";
+import Icon from 'admin/public/assets/Oval.svg';
 
 const ActorManager = () => {
-    const [actors, setActors] = useState([
-        { id: 1, country: "Japan", name: "Takuya Kimura", birthDate: "19 Desember 1975", photo: "" },
-        { id: 2, country: "Japan", name: "Yuko Takeuchi", birthDate: "19 Oktober 1977", photo: "" },
-    ]);
-
     const [newActor, setNewActor] = useState({ country: "", name: "", birthDate: "", photo: "" });
     const [editing, setEditing] = useState(null);
     const [editActor, setEditActor] = useState({ country: "", name: "", birthDate: "", photo: "" });
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [actors, setActors] = useState([]);
+
+
+    useEffect(() => {
+        const fetchActors = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/actors');
+                const data = await response.json();
+                setActors(data);
+            } catch (error) {
+                console.error("Error fetching actors:", error);
+            }
+        };
+        fetchActors();
+    }, []);
+
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -24,13 +36,22 @@ const ActorManager = () => {
         }
     };
 
-    const handleAddActor = (e) => {
+    const handleAddActor = async (e) => {
         e.preventDefault();
         if (newActor.name.trim() && newActor.country.trim()) {
-            setActors((prevActors) => [
-                ...prevActors,
-                { ...newActor, id: Date.now() }
-            ]);
+            try {
+                const response = await fetch('http://localhost:8001/actors', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ...newActor, id: Date.now() }),
+                });
+                const data = await response.json();
+                setActors((prevActors) => [...prevActors, data]);
+            } catch (error) {
+                console.error("Error adding actor:", error);
+            }
             setNewActor({ country: "", name: "", birthDate: "", photo: "" });
             setShowModal(false);
         } else {
@@ -38,8 +59,15 @@ const ActorManager = () => {
         }
     };
 
-    const handleDeleteActor = (id) => {
-        setActors((prevActors) => prevActors.filter((actor) => actor.id !== id));
+    const handleDeleteActor = async (id) => {
+        try {
+            await fetch(`http://localhost:8001/actors/${id}`, {
+                method: 'DELETE',
+            });
+            setActors((prevActors) => prevActors.filter((actor) => actor.id !== id));
+        } catch (error) {
+            console.error("Error deleting actor:", error);
+        }
     };
 
     const handleEditActor = (id) => {
@@ -50,14 +78,26 @@ const ActorManager = () => {
         setShowModal(true);
     };
 
-    const handleSaveEdit = (e) => {
+    const handleSaveEdit = async (e) => {
         e.preventDefault();
-        setActors((prevActors) =>
-            prevActors.map((actor) => (actor.id === editing ? editActor : actor))
-        );
-        setEditing(null);
-        setEditActor({ country: "", name: "", birthDate: "", photo: "" });
-        setShowModal(false);
+        try {
+            const response = await fetch(`http://localhost:8001/actors/${editing}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(editActor),
+            });
+            const updatedActor = await response.json();
+            setActors((prevActors) =>
+                prevActors.map((actor) => (actor.id === editing ? updatedActor : actor))
+            );
+            setEditing(null);
+            setEditActor({ country: "", name: "", birthDate: "", photo: "" });
+            setShowModal(false);
+        } catch (error) {
+            console.error("Error saving edit:", error);
+        }
     };
 
     const handleShowModal = () => {
@@ -89,7 +129,6 @@ const ActorManager = () => {
             alert('Please upload a valid image file.');
         }
     };
-
 
     return (
         <Container>
@@ -156,14 +195,14 @@ const ActorManager = () => {
                                 onChange={handlePhotoChange}
                             />
                             {/* Preview Image */}
-                            {isEditing && editActor.photo && (
+                            {isEditing && editActor.actor_picture && (
                                 <div className="mt-2">
-                                    <img src={editActor.photo} alt="Preview" width={100} />
+                                    <img src={editActor.actor_picture} alt="Preview" width={100} />
                                 </div>
                             )}
-                            {!isEditing && newActor.photo && (
+                            {!isEditing && newActor.actor_picture && (
                                 <div className="mt-2">
-                                    <img src={newActor.photo} alt="Preview" width={100} />
+                                    <img src={newActor.actor_picture} alt="Preview" width={100} />
                                 </div>
                             )}
                         </Form.Group>
@@ -204,15 +243,15 @@ const ActorManager = () => {
                     <tbody>
                         {actors.map((actor, index) => (
                             <tr key={actor.id}>
-                                <td>{index + 1}</td>
+                                <td>{actor.id}</td>
                                 <td>{actor.country}</td>
                                 <td>{actor.name}</td>
                                 <td>{actor.birthDate}</td>
                                 <td>
-                                    {actor.photo ? (
-                                        <img src={actor.photo} alt={actor.name} width={50} />
+                                    {actor.actor_picture && actor.actor_picture !== "N/A" ? (
+                                        <img src={actor.actor_picture} alt={actor.name} width={50} />
                                     ) : (
-                                        <div style={{ width: 50, height: 50, backgroundColor: '#ddd' }} />
+                                        <img src={Icon} alt={actor.name} width={50}/>
                                     )}
                                 </td>
                                 <td>

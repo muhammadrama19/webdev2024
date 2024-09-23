@@ -1,20 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal } from 'react-bootstrap';
 import { FaPlus } from "react-icons/fa";
 import "./InputCountry.css";
 
 const CountryManager = () => {
-    const [countries, setCountries] = useState([
-        { id: 1, name: "Japan", isDefault: true },
-        { id: 2, name: "Korea", isDefault: false },
-        { id: 3, name: "China", isDefault: false },
-    ]);
+    const [countries, setCountries] = useState([]);
     const [newCountry, setNewCountry] = useState("");
     const [editing, setEditing] = useState(null);
     const [editName, setEditName] = useState("");
     const [showModal, setShowModal] = useState(false);
 
     const handleShowModal = () => setShowModal(true);
+
+    useEffect(() => {
+        const fetchCountries = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/countries');
+                const data = await response.json();
+                setCountries(data);
+            } catch (error) {
+                console.error("Error fetching countries:", error);
+            }
+        };
+        fetchCountries();
+    }, []);
 
     const handleCloseModal = () => {
         setShowModal(false);
@@ -32,7 +41,7 @@ const CountryManager = () => {
                     ...countries,
                     {
                         id: countries.length + 1,
-                        name: trimmedCountry,
+                        country_name: trimmedCountry,
                         isDefault: false,
                     },
                 ]);
@@ -46,7 +55,7 @@ const CountryManager = () => {
 
 
     const handleDeleteCountry = (id) => {
-        const country = countries.find((country) => country.id === id);
+        const country = countries.find((country) => countries.id === id);
         if (country.isDefault) {
             alert("You cannot delete the default country. Please change the default country first.");
         } else {
@@ -120,9 +129,9 @@ const CountryManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {countries.map((country, index) => (
+                        {countries.map((country) => (
                             <tr key={country.id}>
-                                <td>{index + 1}</td>
+                                <td>{country.id}</td>
                                 <td>
                                     {editing === country.id ? (
                                         <Form.Control
@@ -131,7 +140,7 @@ const CountryManager = () => {
                                             onChange={(e) => setEditName(e.target.value)}
                                         />
                                     ) : (
-                                        country.name
+                                        country.country_name
                                     )}
                                 </td>
                                 <td>
