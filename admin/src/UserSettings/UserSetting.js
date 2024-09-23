@@ -1,61 +1,97 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal } from "react-bootstrap";
 import { FaPlus, FaEnvelope } from "react-icons/fa";
 import "./UserSetting.css";
 
 const UserSetting = () => {
-  const [users, setUsers] = useState([
-    { id: 1, username: "anita1", email: "anita@gmail.com", role: "Admin" },
-    { id: 2, username: "borang", email: "bora@yahoo.com", role: "User" },
-  ]);
-
+  const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({ username: "", email: "", role: "User" }); // Tambahkan default role
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  const handleShowModal = () => setShowModal(true);
+  // Mengambil data dari backend saat komponen dirender
+  useEffect(() => {
+    fetch('http://localhost:8001/users') // Ubah URL sesuai dengan API backend
+      .then((response) => response.json())
+      .then((data) => setUsers(data))
+      .catch((error) => console.error('Error fetching users:', error));
+  }, []);
+
+  // Fungsi untuk menutup modal dan reset form new user
   const handleCloseModal = () => {
     setShowModal(false);
-    setNewUser({ username: "", email: "", role: "User" }); // Reset role to default
+    setNewUser({ username: "", email: "", role: "User" }); // Reset form
   };
 
+  // Fungsi untuk menambah user baru
   const handleAddUser = () => {
     const { username, email, role } = newUser;
     if (username.trim() && email.trim() && role.trim()) {
       if (users.some(user => user.email.toLowerCase() === email.toLowerCase())) {
         alert("Email already exists!");
       } else {
-        setUsers([
-          ...users,
-          {
-            id: users.length + 1,
-            username: username.trim(),
-            email: email.trim(),
-            role: role.trim(),
+        // Mengirim data ke backend
+        fetch('http://localhost:8001/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ]);
-        handleCloseModal();
+          body: JSON.stringify({ username, email, role }),
+        })
+          .then((response) => response.json())
+          .then((newUserFromBackend) => {
+            // Tambahkan user baru ke state
+            setUsers([...users, newUserFromBackend]);
+            handleCloseModal(); // Tutup modal
+          })
+          .catch((error) => console.error('Error adding user:', error));
       }
     } else {
       alert("All fields are required!");
     }
   };
 
+  // Fungsi untuk edit user
   const handleEditUser = (id) => {
     const userToEdit = users.find(user => user.id === id);
     setEditing(userToEdit);
   };
 
+  // Fungsi untuk menyimpan perubahan user yang di-edit
   const handleSaveEdit = () => {
-    const updatedUsers = users.map(user =>
-      user.id === editing.id ? { ...user, username: editing.username, email: editing.email, role: editing.role } : user
-    );
-    setUsers(updatedUsers);
-    setEditing(null);
+    const updatedUser = { ...editing };
+
+    // Mengirim perubahan ke backend
+    fetch(`http://localhost:8001/users/${editing.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedUser),
+    })
+      .then((response) => response.json())
+      .then(() => {
+        // Update state dengan user yang di-edit
+        const updatedUsers = users.map(user =>
+          user.id === editing.id ? editing : user
+        );
+        setUsers(updatedUsers);
+        setEditing(null); // Keluar dari mode edit
+      })
+      .catch((error) => console.error('Error updating user:', error));
   };
 
+  // Fungsi untuk menghapus user
   const handleDeleteUser = (id) => {
-    setUsers(users.filter(user => user.id !== id));
+    // Mengirim permintaan delete ke backend
+    fetch(`http://localhost:8001/users/${id}`, {
+      method: 'DELETE',
+    })
+      .then(() => {
+        // Hapus user dari state
+        setUsers(users.filter(user => user.id !== id));
+      })
+      .catch((error) => console.error('Error deleting user:', error));
   };
 
   return (
@@ -63,10 +99,14 @@ const UserSetting = () => {
       <Container className="App">
         <h1 className="title">User Setting</h1>
       </Container>
-      <Button variant="success" className="d-flex align-items-center ms-auto mb-3" onClick={handleShowModal}>
+
+      {/* Button untuk menampilkan modal */}
+      <Button variant="success" className="d-flex align-items-center ms-auto mb-3" onClick={() => setShowModal(true)}>
         <FaPlus className="me-2" />
         Add User
       </Button>
+
+      {/* Modal untuk menambah user baru */}
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>Add New User</Modal.Title>
@@ -106,18 +146,19 @@ const UserSetting = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" variant="primary" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}>
+          <Button type="submit" variant="primary" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }} onClick={handleAddUser}>
             Submit
           </Button>
         </Modal.Footer>
       </Modal>
 
+      {/* Tabel user */}
       <Table striped bordered hover className="user-table">
         <thead>
           <tr>
             <th>#</th>
             <th>Username</th>
-            <th>Role</th> {/* Kolom baru untuk Role */}
+            <th>Role</th>
             <th>Email</th>
             <th>Actions</th>
           </tr>
@@ -166,45 +207,22 @@ const UserSetting = () => {
               <td>
                 {editing && editing.id === user.id ? (
                   <>
-                    <Button
-                      variant="success"
-                      size="sm"
-                      onClick={handleSaveEdit}
-                      className="me-2"
-                    >
+                    <Button variant="success" size="sm" onClick={handleSaveEdit} className="me-2">
                       Save
                     </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setEditing(null)}
-                    >
+                    <Button variant="secondary" size="sm" onClick={() => setEditing(null)}>
                       Cancel
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleEditUser(user.id)}
-                    >
+                    <Button variant="primary" size="sm" className="me-2" onClick={() => handleEditUser(user.id)}>
                       Edit
                     </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleDeleteUser(user.id)}
-                    >
+                    <Button variant="danger" size="sm" className="me-2" onClick={() => handleDeleteUser(user.id)}>
                       Delete
                     </Button>
-                    <Button
-                      variant="link"
-                      className="action-button"
-                      disabled
-                    >
+                    <Button variant="link" className="action-button" disabled>
                       <FaEnvelope /> Send Email
                     </Button>
                   </>

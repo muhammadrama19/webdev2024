@@ -1,16 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   BsCameraReels,
   BsFilm,
   BsGlobeAmericas,
-  BsFillGrid3X3GapFill,
   BsPeopleFill,
-  BsFillBellFill,
 } from "react-icons/bs";
 import {
   BarChart,
   Bar,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -23,6 +20,21 @@ import {
 import "./Home.css";
 
 function Home() {
+  const [counts, setCounts] = useState({
+    movieCount: 0,
+    genreCount: 0,
+    countryCount: 0,
+    awardCount: 0,
+  });
+
+  // Fetch data from the backend
+  useEffect(() => {
+    fetch('http://localhost:8001/dashboard') // Ganti sesuai URL backend kamu
+      .then(response => response.json())
+      .then(data => setCounts(data))
+      .catch(err => console.error("Error fetching data:", err));
+  }, []);
+
   const data = [
     {
       name: "Page A",
@@ -80,33 +92,33 @@ function Home() {
             <h3>Movies</h3>
             <BsCameraReels className="card_icon" />
           </div>
-          <h1>300</h1>
+          <h1>{counts.movieCount}</h1>
         </div>
         <div className="card">
           <div className="card-inner">
             <h3>Genres</h3>
             <BsFilm className="card_icon" />
           </div>
-          <h1>12</h1>
+          <h1>{counts.genreCount}</h1>
         </div>
         <div className="card">
           <div className="card-inner">
             <h3>Country</h3>
             <BsGlobeAmericas className="card_icon" />
           </div>
-          <h1>33</h1>
+          <h1>{counts.countryCount}</h1>
         </div>
         <div className="card">
           <div className="card-inner">
-            <h3>CUSTOMERS</h3>
+            <h3>Awards</h3>
             <BsPeopleFill className="card_icon" />
           </div>
-          <h1>33</h1>
+          <h1>{counts.awardCount}</h1>
         </div>
       </div>
 
       <div className="charts">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart
             width={500}
             height={300}
@@ -128,7 +140,7 @@ function Home() {
           </BarChart>
         </ResponsiveContainer>
 
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart
             width={500}
             height={300}
