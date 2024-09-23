@@ -42,11 +42,13 @@ const Detailmovie = () => {
             <MovieDetailCard
               title={movieData.title}
               rating={movieData.imdb_score}
-              country={movieData.country_release}
+              country={movieData.countries.map((c) => c.name).join(", ")}
               description={movieData.synopsis}
               creators={[movieData.director]}
               genres={movieData.genre.map((g) => g.name)}
               imageSrc={movieData.poster}
+              availability={movieData.availability}
+              status={movieData.status}
             />
           </Col>
           <Col md={4}>

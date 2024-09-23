@@ -13,6 +13,8 @@ const ActorSlider = ({ actors }) => {
   const listRef = useRef();
   const containerRef = useRef();
 
+  
+
   // Calculate the number of slides that can fit based on container and actor card width
   useEffect(() => {
     const handleResize = () => {

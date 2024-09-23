@@ -12,6 +12,7 @@ const UserReview = ({ userName, userImage, rating, reviewText, createdAt }) => {
 
   // Truncate text if it's too long
   const truncatedText = reviewText.length > 150 ? reviewText.substring(0, 150) + '...' : reviewText;
+  
 
   return (
     <Card className="user-review">
