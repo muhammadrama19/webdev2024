@@ -35,6 +35,12 @@ const SearchBar = () => {
     navigate(`/movies/${id}`); // Navigate to the movie detail page using the movie ID
   };
 
+  const handleViewAllResultsClick = () => {
+    handleClose();
+    navigate(`/searchresult`, { state: { results: searchResults } }); // Pass searchResults to SearchResult page
+    console.log(searchResults); 
+  };
+
   useEffect(() => {
     if (debouncedQuery) {
       const fetchSearchResults = async () => {
@@ -140,7 +146,7 @@ const SearchBar = () => {
                 <Col md={6} sm={12} xs={12} lg={6}>
                   <div
                     className="view-all-results"
-                    onClick={() => (window.location.href = "/searchresult")}
+                    onClick={handleViewAllResultsClick}
                   >
                     View All Results
                   </div>

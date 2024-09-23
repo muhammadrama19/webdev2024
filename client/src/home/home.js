@@ -10,8 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/button/button';
 
 const Home = () => {
-  const status = ["Ongoing", "Completed"];
-  const availability = ["Available", "Not Available"];
+  
   
   const [movies, setMovies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,6 +24,8 @@ const Home = () => {
     awards: [],
     countries: [],
     awards: [],
+    availability: [],
+    status: [],
   });
 
   const [selectedFilters, setSelectedFilters] = useState({
@@ -34,6 +35,8 @@ const Home = () => {
     availability: '',
     country: '',
     awards: '',
+    availability: '',
+    status: '',
   });
   const [sortOrder, setSortOrder] = useState(''); // New state for sort order
   const handleSortChange = (value) => {
@@ -51,6 +54,8 @@ const Home = () => {
           genres: data.genres.map(genre => genre.name),
           awards: data.awards.map(award => award.name),
           countries: data.countries.map(country => country.name),
+          availability: data.availability.map(availability => availability.name),
+          status: data.status.map(status => status.name),
         });
       } catch (error) {
         console.error("Error fetching filters:", error);
@@ -154,9 +159,9 @@ const Home = () => {
           </Col>
           <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
-              label="Year"
+              label="Awards"
               options={filters.awards}
-              onSelect={(option) => handleFilterChange('year', option)}
+              onSelect={(option) => handleFilterChange('awards', option)}
             />
           </Col>
           <Col xs={6} sm={6} md={4} lg={2}>
@@ -176,8 +181,15 @@ const Home = () => {
           <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Availability"
-              options={availability}
+              options={filters.availability}
               onSelect={(option) => handleFilterChange('availability', option)}
+            />
+          </Col>
+          <Col xs={6} sm={6} md={4} lg={2}>
+            <DropdownFilterCustom
+              label="Status"
+              options={filters.status}
+              onSelect={(option) => handleFilterChange('status', option)}
             />
           </Col>
           <Col xs={12} sm={6} md={4} lg={2}>

@@ -9,6 +9,7 @@ const MovieReview = ({ id }) => {
   const [showReviewInput, setShowReviewInput] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+
   useEffect(() => {
     const fetchReviews = async () => {
       try {
