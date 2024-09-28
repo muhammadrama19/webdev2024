@@ -13,7 +13,7 @@ const MovieReview = ({ id }) => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`http://localhost:8001/movies/detail/review/${id}`); // Use backticks for template literals
+        const response = await fetch(`http://localhost:8001/movies/detail/review/${id}`); 
         const data = await response.json();
         console.log(data); // Inspect the API response
         setReviews(data || []); // Ensure `data` is an array

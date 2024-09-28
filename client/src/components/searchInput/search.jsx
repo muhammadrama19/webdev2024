@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useC } from "react";
 import {
   Modal,
   Button,
@@ -13,12 +13,14 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import "./search.scss";
 
+
+
 const SearchBar = () => {
   const [show, setShow] = useState(false);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
-  const navigate = useNavigate(); // Hook to programmatically navigate
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -31,24 +33,26 @@ const SearchBar = () => {
   }, [query]);
 
   const handleResultClick = (id) => {
-    handleClose(); // Close the modal when a result is clicked
-    navigate(`/movies/${id}`); // Navigate to the movie detail page using the movie ID
+    handleClose(); 
+    navigate(`/movies/${id}`); 
   };
 
   const handleViewAllResultsClick = () => {
     handleClose();
-    navigate(`/searchresult`, { state: { results: searchResults } }); // Pass searchResults to SearchResult page
-    console.log(searchResults); 
+    navigate(`/searchresult`, { state: { results: searchResults, query: debouncedQuery } }); // Pass searchResults and debouncedQuery to SearchResult page
+    console.log(searchResults, debouncedQuery); 
   };
 
   useEffect(() => {
     if (debouncedQuery) {
       const fetchSearchResults = async () => {
         try {
+          console.log("debounced for: ", debouncedQuery);
           const response = await axios.get(
             `http://localhost:8001/search?q=${debouncedQuery}`
           );
           setSearchResults(response.data);
+          console.log(response.data);
         } catch (error) {
           console.error("Error fetching search results:", error);
         }
