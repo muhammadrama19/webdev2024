@@ -79,6 +79,11 @@ app.get('/movies/movie', (req, res) => {
     }
   }
 
+  if (req.query.search) {
+    filterConditions.push(`m.title LIKE ?`);
+    queryParams.push(`%${req.query.search}%`); // Use wildcards for searching
+  }
+
   if (awards) {
     filterConditions.push(`a.awards_name = ?`);
     queryParams.push(awards);
@@ -120,6 +125,7 @@ app.get('/movies/movie', (req, res) => {
   if (filterConditions.length) {
     query += ` AND ${filterConditions.join(' AND ')}`;
   }
+  
 
   // Handle genre filtering
   if (genre && genre.trim()) {
@@ -206,11 +212,20 @@ app.get("/search", (req, res) => {
     return res.status(400).send("Search query is required");
   }
 
-  // Use MySQL LIKE to find matches in the title or description
-  const sql = `SELECT id, title, poster, release_year, imdb_score FROM movies WHERE title LIKE ? LIMIT 10`;
+  // Use MySQL LIKE to find matches in the title or description and join with genres
+  const sql = `
+    SELECT m.id, m.title, m.poster, m.release_year, m.imdb_score, 
+           GROUP_CONCAT(g.name SEPARATOR ', ') AS genres, m.view
+    FROM movies m
+    JOIN movie_genres mg ON m.id = mg.movie_id
+    JOIN genres g ON mg.genre_id = g.id
+    WHERE m.title LIKE ?
+    GROUP BY m.id
+    LIMIT 10
+  `;
   const searchTerm = `%${query}%`;
   
-  db.query(sql, [searchTerm, searchTerm], (err, results) => {
+  db.query(sql, [searchTerm], (err, results) => {
     if (err) throw err;
     res.json(results);
   });

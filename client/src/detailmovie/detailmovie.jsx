@@ -17,7 +17,7 @@ const Detailmovie = () => {
   useEffect(() => {
     const fetchMovieDetail = async () => {
       try {
-        const response = await fetch(`http://localhost:8001/movies/detail/${id}`); // Use ID from URL params
+        const response = await fetch(`http://localhost:8001/movies/detail/${id}`); 
         const data = await response.json();
         setMovieData(data);
       } catch (error) {
