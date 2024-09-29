@@ -1,0 +1,33 @@
+.movieDetail {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--main-color);
+    // background-image: url("./Background.svg");
+    border-top: 1px solid;
+    width: 100%;
+    min-height: 100vh; /* Ensures the container takes up the full viewport height */
+    
+    /* Responsive background */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  
+  .movieDetailCard {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    color: white;
+  }
+  
+  .actorSlider, .mediaTrailer, .movieReview {
+    width: 100%;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    color: white;
+    margin-top: 20px;
+  }
+  

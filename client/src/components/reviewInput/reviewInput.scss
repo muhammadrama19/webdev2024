@@ -1,0 +1,70 @@
+.review-input-modal {
+  .modal-content {
+    background-color: #445566;
+    color: white;
+    border-radius: 8px;
+    border-color: #445566;
+  }
+
+  .review-input-container {
+    position: relative;
+    padding: 20px;
+
+    .movie-image {
+      width: 100px;
+      border-radius: 8px;
+      $box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--elevation-2);
+    }
+
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+
+      &:hover {
+        color: var(--warning-color);
+      }
+    }
+
+    .rating-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 15px;
+
+      .rating {
+        display: flex;
+
+        .filled {
+          color: var(--tertary-color);
+        }
+
+        .unfilled {
+          color: #ccc;
+        }
+      }
+
+      .like {
+        cursor: pointer;
+        color: white;
+
+        .liked {
+          color: var(--warning-color);
+        }
+      }
+    }
+
+    .save-button {
+      margin-top: 15px;
+      width: 100%;
+      // background-color: var(--success-color) !important; 
+      border: none;
+    }
+  }
+}

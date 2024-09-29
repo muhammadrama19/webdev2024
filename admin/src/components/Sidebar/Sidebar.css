@@ -1,0 +1,175 @@
+#sidebar {
+  grid-area: sidebar;
+  height: 100%;
+  background-color: #263043;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  width: 250px; /* Default width */
+}
+
+.sidebar-closed #sidebar {
+  width: 0;
+  overflow: hidden; /* Menyembunyikan konten saat ditutup */
+}
+
+.sidebar-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px 0px 30px;
+  margin-bottom: 30px;
+}
+
+.sidebar-title > span {
+  display: none;
+}
+
+.sidebar-brand {
+  margin-top: 15px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sidebar-list {
+  padding: 0;
+  list-style-type: none;
+}
+
+.sidebar-list-item {
+  padding: 20px;
+  font-size: 18px;
+}
+
+.sidebar-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.sidebar-list-item > a {
+  text-decoration: none;
+  color: #9e9ea4;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #9e9ea4;
+  font-size: 18px;
+  padding: 10px;
+  transition: background 0.3s ease;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.sidebar-link span {
+  font-size: 18px;
+  color: inherit; /* Mengikuti warna dari .sidebar-link */
+}
+
+.close-sidebar {
+  display: none;
+}
+
+
+
+.submenu-list-item {
+  padding: 10px 0;
+}
+
+.submenu-link {
+  text-decoration: none;
+  color: #9e9ea4;
+  font-size: 16px;
+  transition: background 0.3s ease;
+}
+
+.submenu-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding-left: 10px;
+}
+
+/* Untuk menu accordion */
+.submenu-list {
+  overflow: hidden;
+  max-height: 0; /* Awalnya disembunyikan */
+  transition: max-height 0.3s ease-in-out; /* Transisi saat unfold/fold */
+}
+
+.submenu-list.open {
+  max-height: 300px; /* Tinggi maksimum submenu, sesuaikan dengan itemnya */
+}
+
+/* Gaya untuk link sidebar yang dipilih */
+.sidebar-list-item .sidebar-link.active {
+  font-weight: bold; /* Membuat teks lebih tebal */
+  color: #ffffff; /* Mengubah warna teks yang dipilih menjadi lebih cerah */
+  background-color: #1d2634; /* Menambahkan background yang sedikit berbeda */
+  border-left: 4px solid #888; /* Menambahkan garis di sebelah kiri sebagai indikator */
+}
+
+/* Gaya untuk submenu yang dipilih */
+.submenu-list-item .submenu-link.active {
+  font-weight: bold; /* Membuat teks submenu lebih tebal */
+  color: #ffffff; /* Warna teks submenu yang dipilih */
+}
+
+
+.accordion-icon {
+  margin-left: auto;
+  transition: transform 0.3s ease; /* Animasi pada icon (panah) */
+}
+
+.accordion-icon.rotate {
+  transform: rotate(180deg); /* Rotasi panah ketika menu terbuka */
+}
+
+/* Style untuk scrollbar */
+#sidebar::-webkit-scrollbar {
+  width: 8px; /* Lebar scrollbar */
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+  background-color: #888; /* Warna scrollbar */
+  border-radius: 10px; /* Membuat scrollbar bulat */
+  border: 2px solid transparent; /* Memberi jarak pada scrollbar */
+}
+
+#sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Warna scrollbar saat di hover */
+}
+
+#sidebar::-webkit-scrollbar-track {
+  background-color: #1d2634; /* Warna track (jalur) scrollbar */
+  border-radius: 10px; /* Membuat jalur scrollbar lebih halus */
+  margin-top: 5px; /* Margin atas bawah untuk estetika */
+  margin-bottom: 5px;
+}
+
+
+/* Medium <= 992px */
+@media screen and (max-width: 992px) {
+  /* Tambahkan styling untuk close sidebar icon */
+  .close-sidebar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 15px;
+  }
+  
+  .close-icon {
+    cursor: pointer;
+    font-size: 24px;
+    color: #9e9ea4;
+  }
+  
+  .close-icon:hover {
+    color: white;
+  }
+
+}
+
