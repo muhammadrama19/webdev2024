@@ -1,0 +1,27 @@
+.search-modal-body {
+  backdrop-filter: blur(10px); /* Adds a blur effect */
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent dark background */
+  border-color: white;
+}
+
+.modal-backdrop {
+  background-color: rgba(var(--main-color), 1); /* Darker background for backdrop */
+}
+
+.modal-content {
+  background-color: rgba(var(--main-color), 1); /* Semi-transparent background for modal content */
+  border-radius: 10px;
+  border-color: white;
+  color: white;
+}
+
+input {
+  font-size: 1.2rem;
+  color: white; /* Text inside the input is white */
+}
+
+
+.search-input::placeholder {
+  color: white !important; /* Makes the placeholder text white */
+  opacity: 1; /* Ensures placeholder text is fully opaque */
+}

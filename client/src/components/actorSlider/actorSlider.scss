@@ -1,0 +1,43 @@
+.list {
+    width: 100%;
+    margin-top: 10px;
+    .listTitle {
+        color: white;
+        font-size: 20px;
+        font-weight: 500;
+        margin-left: 0%;
+    }
+    .wrapper {
+        position: relative;
+        overflow: hidden;
+        border-top: 1px solid var(--primary-color);
+        .sliderArrow {
+            width: 50px;
+            height: 100%;
+            background-color: var(--main-color);
+            color: white;
+            position: absolute;
+            z-index: 99;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            cursor: pointer;
+
+            &.back {
+                left: 0;
+            }
+
+            &.forward {
+                right: 0;
+            }
+        }
+    }
+    .customContainer {
+        display: flex;
+        margin-top: 10px;
+        transition: all 1s ease;
+        width: max-content;
+    }
+}
+
+

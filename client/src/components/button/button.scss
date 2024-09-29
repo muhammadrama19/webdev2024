@@ -1,0 +1,61 @@
+
+  .customButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    
+  
+    &.primary {
+      background-color: var(--primary-color);
+      color: white;
+
+      &:hover {
+        background-color: #5A4AF4;
+      }
+    }
+  
+    &.secondary {
+      background-color: var(--secondary-color);
+      color: white;
+
+      &:hover {
+        background-color: #1EA5FC;
+      }
+    }
+  
+    &.warning {
+      background-color: var(--warning-color);
+      color: black;
+      &:hover {
+        background-color: #CC4E4E;
+      }
+    }
+   &.success {
+    background-color: var(--succes-color);
+
+    &:hover{
+      background-color: #04A574;
+    }
+   }
+  
+    &:hover {
+      opacity: 0.8;
+    }
+  
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+  
+  .button-icon {
+    display: flex;
+    align-items: center;
+  }
+  
