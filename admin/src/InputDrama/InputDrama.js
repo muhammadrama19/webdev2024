@@ -1,5 +1,13 @@
-import React, { useState, useRef } from "react";
-import { Form, Button, Row, Col, Container, Image } from "react-bootstrap";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Form,
+  Button,
+  Row,
+  Col,
+  Container,
+  Image,
+  Badge,
+} from "react-bootstrap";
 import "../InputDrama/InputDrama.css";
 
 const DramaInput = () => {
@@ -13,18 +21,38 @@ const DramaInput = () => {
     genres: [],
     actors: [],
     trailer: "",
-    award: "",
+    award: [],
     image: null,
   });
 
-  const genresList = [
-    "Action",
-    "Adventure",
-    "Romance",
-    "Drama",
-    "Slice of Life",
-  ];
-  const actorsList = Array(10).fill("Actor");
+  const [genresList, setGenresList] = useState([]); // State untuk genres dari backend
+  const [actorsList, setActorsList] = useState([]); // State untuk daftar aktor
+  const [filteredActors, setFilteredActors] = useState([]); // State untuk hasil pencarian aktor
+  const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian aktor
+  const [awardsList, setAwardsList] = useState([]); // State untuk awards dari backend
+
+  // Fetch genres dari backend menggunakan useEffect
+  useEffect(() => {
+    const fetchGenresActorsAwards = async () => {
+      try {
+        const genresResponse = await fetch("http://localhost:8001/genres");
+        const genresData = await genresResponse.json();
+        setGenresList(genresData);
+
+        const actorsResponse = await fetch("http://localhost:8001/actors");
+        const actorsData = await actorsResponse.json();
+        setActorsList(actorsData);
+
+        const awardsResponse = await fetch("http://localhost:8001/awards");
+        const awardsData = await awardsResponse.json();
+        setAwardsList(awardsData); // Set Awards List dengan data dari backend
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchGenresActorsAwards();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -42,14 +70,57 @@ const DramaInput = () => {
     });
   };
 
-  const handleActorChange = (actor) => {
-    setFormData((prevState) => {
-      const actors = prevState.actors.includes(actor)
-        ? prevState.actors.filter((a) => a !== actor)
-        : [...prevState.actors, actor];
-      return { ...prevState, actors };
-    });
+  const handleActorChange = (actorName) => {
+    // Pastikan tidak lebih dari 10 aktor yang dipilih dan aktor belum dipilih
+    if (formData.actors.length < 10 && !formData.actors.includes(actorName)) {
+      setFormData((prevState) => ({
+        ...prevState,
+        actors: [...prevState.actors, actorName],
+      }));
+    }
+    setSearchTerm(""); // Reset pencarian setelah aktor dipilih
+    setFilteredActors([]); // Kosongkan hasil pencarian setelah aktor dipilih
   };
+
+  const removeActor = (actorName) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      actors: prevState.actors.filter((actor) => actor !== actorName),
+    }));
+  };
+
+  const handleSearchActor = (e) => {
+    const searchValue = e.target.value;
+    setSearchTerm(searchValue);
+
+    // Filter aktor berdasarkan input pengguna
+    if (searchValue.length > 0) {
+      const filtered = actorsList.filter((actor) =>
+        actor.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredActors(filtered);
+    } else {
+      setFilteredActors([]); // Kosongkan hasil pencarian jika input kosong
+    }
+  };
+
+  const handleAwardChange = (awardName) => {
+    // Pastikan award belum dipilih
+    if (!formData.awards.includes(awardName)) {
+      setFormData((prevState) => ({
+        ...prevState,
+        awards: [...prevState.awards, awardName],
+      }));
+    }
+  };
+  
+  const removeAward = (awardName) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      awards: prevState.awards.filter((award) => award !== awardName),
+    }));
+  };
+  
 
   // Ref untuk kontainer besar
   const imgRefLarge = useRef(null);
@@ -63,7 +134,6 @@ const DramaInput = () => {
   const textRefSmall = useRef(null);
   const containerRefSmall = useRef(null);
 
-  // Fungsi untuk menangani gambar berdasarkan ukuran kontainer
   const handleImageChange = (event, isSmall) => {
     const file = event.target.files[0];
     if (file) {
@@ -122,11 +192,11 @@ const DramaInput = () => {
           {/* Kontainer kecil */}
           <Col md={2}>
             <div className="small-image-upload-container">
+              <link
+                rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+              ></link>
               <div className="small-camera-icon" ref={containerRefSmall}>
-                <link
-                  rel="stylesheet"
-                  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-                ></link>
                 <Image
                   ref={imgRefSmall}
                   src="#"
@@ -134,7 +204,7 @@ const DramaInput = () => {
                   style={{ display: "none" }}
                 />
                 <i className="fa fa-camera" ref={iconRefSmall}></i>
-                <span ref={textRefLarge} className="upload-text">
+                <span ref={textRefSmall} className="upload-text">
                   Upload Poster Here
                 </span>
               </div>
@@ -209,12 +279,13 @@ const DramaInput = () => {
             <Form.Group className="mb-3">
               <Form.Label>Add Genres</Form.Label>
               <div className="genres">
+                {/* Looping genres dari state genresList */}
                 {genresList.map((genre) => (
                   <Form.Check
-                    key={genre}
+                    key={genre.id}
                     type="checkbox"
-                    label={genre}
-                    onChange={() => handleGenreChange(genre)}
+                    label={genre.name}
+                    onChange={() => handleGenreChange(genre.name)}
                   />
                 ))}
               </div>
@@ -223,14 +294,40 @@ const DramaInput = () => {
 
           {/* Kontainer besar */}
           <Col md={4}>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3" style={{ position: "relative" }}>
               <Form.Label>Add Actors (Up to 10)</Form.Label>
               <Form.Control
                 type="text"
                 name="searchActor"
                 placeholder="Search Actor Names"
-                onChange={handleChange}
+                value={searchTerm}
+                onChange={handleSearchActor}
+                autoComplete="off"
               />
+              {filteredActors.length > 0 && (
+                <ul className="actor-suggestions">
+                  {filteredActors.map((actor) => (
+                    <li
+                      key={actor.id}
+                      onClick={() => handleActorChange(actor.name)}
+                    >
+                      {actor.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="selected-actors">
+                {formData.actors.map((actor, index) => (
+                  <Badge
+                    key={index}
+                    bg="info"
+                    className="actor-badge"
+                    onClick={() => removeActor(actor)}
+                  >
+                    {actor} <span className="remove-actor">x</span>
+                  </Badge>
+                ))}
+              </div>
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Control
@@ -246,19 +343,23 @@ const DramaInput = () => {
                 name="award"
                 value={formData.award}
                 onChange={handleChange}
+                className="select-award"
               >
                 <option value="">Select Award</option>
-                <option value="Award 1">Award 1</option>
-                <option value="Award 2">Award 2</option>
-                <option value="Award 3">Award 3</option>
+                {awardsList.map((award) => (
+                  <option key={award.id} value={award.awards_name}>
+                    {award.awards_name}
+                  </option>
+                ))}
               </Form.Select>
             </Form.Group>
+
             <div className="image-upload-container">
+              <link
+                rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+              ></link>
               <div className="camera-icon" ref={containerRefLarge}>
-                <link
-                  rel="stylesheet"
-                  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-                ></link>
                 <Image
                   ref={imgRefLarge}
                   src="#"

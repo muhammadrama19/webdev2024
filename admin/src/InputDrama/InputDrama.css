@@ -114,6 +114,92 @@
   z-index: 1;
 }
 
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 60px; /* Batas tinggi maksimal, sesuaikan dengan jumlah genre */
+  overflow-y: auto; /* Tambahkan scrollbar jika konten melebihi batas tinggi */
+  padding-right: 10px; /* Tambahkan sedikit padding agar tidak terpotong oleh scrollbar */
+}
+
+.genres .form-check {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+/* Style untuk scrollbar */
+.genres::-webkit-scrollbar {
+  width: 8px;
+}
+
+.genres::-webkit-scrollbar-thumb {
+  background-color: #888; /* Warna scrollbar */
+  border-radius: 10px;
+}
+
+.genres::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Warna background scrollbar */
+}
+
+.actor-suggestions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;
+  max-height: 100px;
+  overflow-y: auto;
+  background-color: #443939;
+  position: absolute;
+  width: 100%; /* Buat selebar elemen input */
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+  white-space: nowrap;
+  max-width: calc(100% - 1px); /* Tambahkan sedikit ruang agar tidak terlalu melebar */
+}
+
+.actor-suggestions li {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.actor-suggestions li:hover {
+  background-color: #181616;
+}
+
+.selected-actors {
+  margin-top: 10px;
+  max-height: 40px; /* Batas tinggi maksimal sebelum muncul scrollbar */
+  overflow-y: auto; /* Scrollbar akan muncul jika konten melebihi batas */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* Style untuk scrollbar (opsional) */
+.selected-actors::-webkit-scrollbar {
+  width: 8px;
+}
+
+.selected-actors::-webkit-scrollbar-thumb {
+  background-color: #888; /* Warna scrollbar */
+  border-radius: 10px;
+}
+
+.selected-actors::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Warna background scrollbar */
+}
+
+.actor-badge {
+  margin-right: 5px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.actor-badge .remove-actor {
+  margin-left: 5px;
+  color: white;
+}
+
 
 
 /* Responsive styling */
@@ -126,6 +212,12 @@
   .small-file-input-container {
     width: 200px; /* Lebar input lebih kecil pada tablet */
   }
+
+  .actor-suggestions {
+    width: 100%; /* Di layar kecil, lebar kontainer akan mengikuti lebar input */
+    max-width: 100%; /* Memastikan lebar tidak melebihi layar */
+    left: 0; /* Posisi tetap */
+  }
 }
 
 @media (max-width: 576px) {
@@ -136,5 +228,11 @@
 
   .small-file-input-container {
     width: 150px; /* Lebar input lebih kecil pada ponsel */
+  }
+
+  .actor-suggestions {
+    width: 100%; /* Di layar kecil, lebar kontainer akan mengikuti lebar input */
+    max-width: 100%; /* Memastikan lebar tidak melebihi layar */
+    left: 0; /* Posisi tetap */
   }
 }
