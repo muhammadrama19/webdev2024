@@ -576,22 +576,29 @@ app.get('/dashboard', (req, res) => {
 
 
 app.get('/movie-list', (req, res) => {
-  const query = `
-    SELECT 
-  m.id, 
-  m.title, 
-  GROUP_CONCAT(DISTINCT ac.name SEPARATOR ', ') AS Actors,  -- Gunakan DISTINCT untuk mencegah duplikasi aktor
-  GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,   -- Gunakan DISTINCT untuk mencegah duplikasi genre
-  m.synopsis
-FROM movies m
-JOIN movie_actors mac ON mac.movie_id = m.id
-JOIN actors ac ON ac.id = mac.actor_id
-JOIN movie_genres mg ON mg.movie_id = m.id
-JOIN genres g ON g.id = mg.genre_id
-GROUP BY m.id;
- 
+  const { status } = req.query; // Ambil query parameter status dari request
 
+  let query = `
+    SELECT
+      m.status, 
+      m.id, 
+      m.title, 
+      GROUP_CONCAT(DISTINCT ac.name SEPARATOR ', ') AS Actors,
+      GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,
+      m.synopsis
+    FROM movies m
+    JOIN movie_actors mac ON mac.movie_id = m.id
+    JOIN actors ac ON ac.id = mac.actor_id
+    JOIN movie_genres mg ON mg.movie_id = m.id
+    JOIN genres g ON g.id = mg.genre_id
   `;
+
+  // Tambahkan filter berdasarkan status jika parameter status ada
+  if (status) {
+    query += ` WHERE m.status = ${db.escape(status)}`; // Escape parameter status untuk menghindari SQL injection
+  }
+
+  query += ` GROUP BY m.id`;
 
   // Eksekusi query dan kirim hasil ke frontend
   db.query(query, (err, results) => {
@@ -603,6 +610,7 @@ GROUP BY m.id;
     res.json(results);  
   });
 });
+
 
 app.get('/users', (req, res) => {
   const query = `
@@ -728,6 +736,58 @@ app.get('/reviews', (req, res) => {
       return;
     }
     res.json(results);
+  });
+});
+
+
+//CRUD
+
+//SET TRASH
+app.put('/movie-delete/:id', (req, res) => {
+  const movieId = req.params.id;
+
+  const query = `UPDATE movies SET status = 0 WHERE id = ?`;
+
+  db.query(query, [movieId], (err, result) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    res.status(200).json({ message: 'Movie moved to trash successfully' });
+  });
+});
+
+//PERMANENT DELETE
+// Endpoint untuk mengubah status menjadi 3 (permanen delete dari trash)
+app.put('/movie-permanent-delete/:id', (req, res) => {
+  const movieId = req.params.id;
+
+  const query = `UPDATE movies SET status = 3 WHERE id = ?`;
+
+  db.query(query, [movieId], (err, result) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    res.status(200).json({ message: 'Movie permanently deleted successfully' });
+  });
+});
+
+
+//RESTORE
+app.put('/movie-restore/:id', (req, res) => {
+  const movieId = req.params.id;
+  const query = `UPDATE movies SET status = 1 WHERE id = ?`;
+
+  db.query(query, [movieId], (err, result) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    res.status(200).json({ message: 'Movie restored successfully' });
   });
 });
 
