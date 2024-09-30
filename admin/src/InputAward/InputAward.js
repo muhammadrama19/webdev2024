@@ -151,7 +151,7 @@ const AwardsManager = () => {
                         {awards.map((award) => (
                             <tr key={award.id}>
                                 <td>{award.id}</td>
-                                <td>{award.country}</td>
+                                <td>{award.country_name}</td>
                                 <td>{award.year}</td>
                                 <td>{award.awards_name}</td>
                                 <td>
