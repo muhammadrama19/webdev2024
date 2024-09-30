@@ -101,7 +101,7 @@ const ReviewManager = () => {
                                 <td>{review.status === 1 ? "Approved" : "Unapproved"}</td>
                                 <td>
                                     <Container className="action-button">
-                                        {review.status === "Unapproved" && (
+                                        {review.status === 0 && (
                                             <Button
                                                 variant="success"
                                                 className="me-2"

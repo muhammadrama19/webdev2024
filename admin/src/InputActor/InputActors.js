@@ -241,17 +241,24 @@ const ActorManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {actors.map((actor, index) => (
+                        {actors.map((actor) => (
                             <tr key={actor.id}>
                                 <td>{actor.id}</td>
-                                <td>{actor.country}</td>
+                                <td>{actor.country_name}</td>
                                 <td>{actor.name}</td>
-                                <td>{actor.birthDate}</td>
+                                <td>
+                                    {new Date(actor.birthdate).toLocaleDateString('id-ID', {
+                                        day: '2-digit',
+                                        month: 'long',
+                                        year: 'numeric'
+                                    })}
+                                </td>
+
                                 <td>
                                     {actor.actor_picture && actor.actor_picture !== "N/A" ? (
                                         <img src={actor.actor_picture} alt={actor.name} width={50} />
                                     ) : (
-                                        <img src={Icon} alt={actor.name} width={50}/>
+                                        <img src={Icon} alt={actor.name} width={50} />
                                     )}
                                 </td>
                                 <td>
