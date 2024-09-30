@@ -1,26 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Table, Button, Dropdown } from 'react-bootstrap';
 import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import "./ValidateDrama.css";
 
 function ValidateDrama({ validatedDramas, setValidatedDramas }) {
-  const [dramas, setDramas] = useState([
-    {
-      id: 1,
-      username: "Nara",
-      drama: "[2024] Japan - Eye Love You",
-      status: "Unapproved",
-    },
-    {
-      id: 2,
-      username: "Luffy",
-      drama: "[2024] One Piece",
-      status: "Unapproved",
-    },
-  ]);
-
+  const [dramas, setDramas] = useState([]);
   const [showCount, setShowCount] = useState(10);
+  const [loading, setLoading] = useState(true); // Loading state
   const navigate = useNavigate(); // Initialize navigate for redirection
+
+  // Fetch movie data with status 3
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await fetch("http://localhost:8001/movie-list?status=3"); // Ambil data movie dengan status 3
+        const data = await response.json();
+        setDramas(data);
+        setLoading(false); // Matikan loading setelah data didapat
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchMovies(); // Panggil fungsi untuk mengambil data
+  }, []);
 
   const handleApproveDrama = (id) => {
     const approvedDrama = dramas.find((drama) => drama.id === id);
@@ -95,47 +99,51 @@ function ValidateDrama({ validatedDramas, setValidatedDramas }) {
         </Col>
       </Row>
 
-      {/* Table Section */}
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Drama</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dramas.slice(0, showCount).map((drama) => (
-            <tr key={drama.id}>
-              <td>{drama.username}</td>
-              <td>{drama.drama}</td>
-              <td>{drama.status}</td>
-              <td>
-                {drama.status === "Unapproved" && (
-                  <>
-                    <Button
-                      variant="success"
-                      className="me-2"
-                      size="sm"
-                      onClick={() => handleApproveDrama(drama.id)}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleRejectDrama(drama.id)}
-                    >
-                      Reject
-                    </Button>
-                  </>
-                )}
-              </td>
+      {/* Tampilkan data yang diambil dari backend */}
+      {loading ? (
+        <p>Loading data...</p>
+      ) : (
+        <Table striped bordered hover responsive>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Drama</th>
+              <th>Status</th>
+              <th>Action</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {dramas.slice(0, showCount).map((drama) => (
+              <tr key={drama.id}>
+                <td>{drama.username}</td>
+                <td>{drama.title}</td>
+                <td>{drama.status}</td>
+                <td>
+                  {drama.status === 3 && (
+                    <>
+                      <Button
+                        variant="success"
+                        className="me-2"
+                        size="sm"
+                        onClick={() => handleApproveDrama(drama.id)}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleRejectDrama(drama.id)}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
     </Container>
   );
 }

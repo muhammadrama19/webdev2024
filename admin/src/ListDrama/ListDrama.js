@@ -1,40 +1,59 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Table, Form, Container, Modal, Button, Col, Dropdown } from "react-bootstrap";
+import { Table, Form, Container, Modal, Button, Col, Dropdown, Pagination } from "react-bootstrap";
 import "../ListDrama/ListDrama.css";
 
-const ListDrama = ({ trashDramas, setTrashDramas }) => {
-  const [showCount, setShowCount] = useState(10);
+const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
+  const [showCount, setShowCount] = useState(10); // Items per page
+  const [currentPage, setCurrentPage] = useState(1); // State for current page
   const [dramas, setDramas] = useState([]);
   const [loading, setLoading] = useState(true); // To handle loading state
   const [editingDrama, setEditingDrama] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
 
   // useEffect to fetch data from backend
   useEffect(() => {
-    fetch('http://localhost:8001/movie-list') // Pastikan URL sesuai dengan backend kamu
-      .then((response) => response.json())
-      .then((data) => {
-        // Set data yang diambil langsung ke state dramas
+    const fetchMovies = async () => {
+      try {
+        // Jika di halaman trash, ambil movie dengan status 0
+        const response = await fetch(`http://localhost:8001/movie-list?status=${viewTrash ? 0 : 1}`);
+        const data = await response.json();
         setDramas(data);
-        setLoading(false); // Data has been loaded
-      })
-      .catch((error) => {
+        setLoading(false);
+      } catch (error) {
         console.error("Error fetching data:", error);
-        setLoading(false); // Stop loading on error
-      });
-  }, []);
+        setLoading(false);
+      }
+    };
+
+    fetchMovies();
+  }, [viewTrash]); // Menjalankan ulang useEffect jika viewTrash berubah
 
   const handleEdit = (drama) => {
     setEditingDrama(drama);
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    const deletedDrama = dramas.find((drama) => drama.id === id);
-    setTrashDramas([...trashDramas, deletedDrama]);
-    setDramas(dramas.filter((drama) => drama.id !== id));
+  // Mengubah status movie menjadi 0 (delete soft)
+  const handleDelete = async (id) => {
+    try {
+      // Lakukan request PUT ke backend untuk mengubah status menjadi 0
+      await fetch(`http://localhost:8001/movie-delete/${id}`, {
+        method: 'PUT', // Mengubah status menggunakan metode PUT
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 0 }) // Mengirimkan status 0 untuk soft delete
+      });
+      
+      // Hapus movie dari state setelah soft delete berhasil
+      setDramas(dramas.filter((drama) => drama.id !== id));
+    } catch (error) {
+      console.error("Error deleting movie:", error);
+    }
   };
+  
 
   const handleSave = () => {
     setDramas(
@@ -63,10 +82,54 @@ const ListDrama = ({ trashDramas, setTrashDramas }) => {
     navigate("/movie-trash");
   };
 
+  // Function untuk filter drama berdasarkan search term (sebelum pagination)
+  const filteredDramas = dramas.filter((drama) => 
+    drama.title && drama.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (drama.Actors && drama.Actors.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (drama.Genres && drama.Genres.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Pagination logic (setelah pencarian)
+  const indexOfLastDrama = currentPage * showCount;
+  const indexOfFirstDrama = indexOfLastDrama - showCount;
+  const currentDramas = filteredDramas.slice(indexOfFirstDrama, indexOfLastDrama); // Paginate hasil pencarian
+  const totalPages = Math.ceil(filteredDramas.length / showCount);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Logic to show only 3 pages (current, previous, next)
+  const renderPagination = () => {
+    let items = [];
+    const startPage = Math.max(1, currentPage - 1);
+    const endPage = Math.min(totalPages, currentPage + 1);
+
+    for (let number = startPage; number <= endPage; number++) {
+      items.push(
+        <Pagination.Item key={number} active={number === currentPage} onClick={() => handlePageChange(number)}>
+          {number}
+        </Pagination.Item>
+      );
+    }
+
+    return (
+      <div className="d-flex justify-content-end"> 
+      <Pagination>
+        <Pagination.First onClick={() => setCurrentPage(1)} />
+        <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
+        {items}
+        <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
+        <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
+      </Pagination>
+      </div>
+    );
+  };
+
   return (
     <Container>
       <Container className="App">
-        <h1 className="title">Movies List</h1>
+        <h1 className="title">{viewTrash ? "Movies Trash" : "Movies List"}</h1>
       </Container>
 
       <div className="list-drama-header d-flex justify-content-between mb-3">
@@ -89,13 +152,17 @@ const ListDrama = ({ trashDramas, setTrashDramas }) => {
             type="text"
             className="search-input"
             placeholder="Search"
+            value={searchTerm} // Menghubungkan input pencarian dengan state searchTerm
+            onChange={(e) => setSearchTerm(e.target.value)} // Update state saat pengguna mengetik
           />
         </div>
 
         <div>
-          <Button className="btn btn-danger me-2" onClick={handleViewTrash}>
-            Trash
-          </Button>
+          {!viewTrash && (
+            <Button className="btn btn-danger me-2" onClick={handleViewTrash}>
+              Trash
+            </Button>
+          )}
 
           <Button className="btn btn-success" onClick={handleAddMovies}>
             Add Movies
@@ -106,47 +173,52 @@ const ListDrama = ({ trashDramas, setTrashDramas }) => {
       {loading ? (
         <p>Loading data...</p>
       ) : (
-        <div className="drama-table-wrapper">
-          <Table striped bordered hover className="drama-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Drama</th>
-                <th>Actors</th>
-                <th>Genres</th>
-                <th>Synopsis</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dramas.slice(0, showCount).map((drama, index) => (
-                <tr key={drama.id}>
-                  <td>{index + 1}</td>
-                  <td>{drama.title}</td>
-                  <td>{drama.Actors}</td> {/* Menggunakan data Actors langsung */}
-                  <td>{drama.Genres}</td> {/* Menggunakan data Genres langsung */}
-                  <td>{drama.synopsis}</td>
-                  <td>
-                    <Container className="action-button">
-                      <Button
-                        className="btn btn-sm btn-primary me-2"
-                        onClick={() => handleEdit(drama)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(drama.id)}
-                      >
-                        Delete
-                      </Button>
-                    </Container>
-                  </td>
+        <>
+          <div className="drama-table-wrapper">
+            <Table striped bordered hover className="drama-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Drama</th>
+                  <th>Actors</th>
+                  <th>Genres</th>
+                  <th>Synopsis</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-        </div>
+              </thead>
+              <tbody>
+                {currentDramas.map((drama, index) => (
+                  <tr key={drama.id}>
+                    <td>{indexOfFirstDrama + index + 1}</td> {/* Adjusting index to show proper numbering */}
+                    <td>{drama.title}</td>
+                    <td>{drama.Actors}</td>
+                    <td>{drama.Genres}</td>
+                    <td>{drama.synopsis}</td>
+                    <td>
+                      <Container className="action-button">
+                        <Button
+                          className="btn btn-sm btn-primary me-2"
+                          onClick={() => handleEdit(drama)}
+                        >
+                          Edit
+                        </Button>
+                        {!viewTrash && (
+                          <Button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => handleDelete(drama.id)}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </Container>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+          {renderPagination()}
+        </>
       )}
 
       {editingDrama && (
