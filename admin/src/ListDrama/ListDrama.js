@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Table, Form, Container, Modal, Button, Col, Dropdown, Pagination } from "react-bootstrap";
+import { Table, Form, Container, Modal, Button, Col, Dropdown, Pagination} from "react-bootstrap";
+import { FaPlus, FaTrash } from "react-icons/fa";
 import "../ListDrama/ListDrama.css";
 
 const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
@@ -46,14 +47,14 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
         },
         body: JSON.stringify({ status: 0 }) // Mengirimkan status 0 untuk soft delete
       });
-      
+
       // Hapus movie dari state setelah soft delete berhasil
       setDramas(dramas.filter((drama) => drama.id !== id));
     } catch (error) {
       console.error("Error deleting movie:", error);
     }
   };
-  
+
 
   const handleSave = () => {
     setDramas(
@@ -83,7 +84,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   };
 
   // Function untuk filter drama berdasarkan search term (sebelum pagination)
-  const filteredDramas = dramas.filter((drama) => 
+  const filteredDramas = dramas.filter((drama) =>
     drama.title && drama.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (drama.Actors && drama.Actors.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (drama.Genres && drama.Genres.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -114,14 +115,14 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
     }
 
     return (
-      <div className="d-flex justify-content-end"> 
-      <Pagination>
-        <Pagination.First onClick={() => setCurrentPage(1)} />
-        <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
-        {items}
-        <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
-        <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
-      </Pagination>
+      <div className="d-flex justify-content-end">
+        <Pagination>
+          <Pagination.First onClick={() => setCurrentPage(1)} />
+          <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
+          {items}
+          <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
+          <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
+        </Pagination>
       </div>
     );
   };
@@ -160,11 +161,13 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
         <div>
           {!viewTrash && (
             <Button className="btn btn-danger me-2" onClick={handleViewTrash}>
+              <FaTrash className="me-2"/>
               Trash
             </Button>
           )}
 
           <Button className="btn btn-success" onClick={handleAddMovies}>
+            <FaPlus className="me-2" />
             Add Movies
           </Button>
         </div>
