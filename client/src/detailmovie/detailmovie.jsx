@@ -17,7 +17,7 @@ const Detailmovie = () => {
   useEffect(() => {
     const fetchMovieDetail = async () => {
       try {
-        const response = await fetch(`http://localhost:8001/movies/detail/${id}`); // Use ID from URL params
+        const response = await fetch(`http://localhost:8001/movies/detail/${id}`); 
         const data = await response.json();
         setMovieData(data);
       } catch (error) {
@@ -42,11 +42,13 @@ const Detailmovie = () => {
             <MovieDetailCard
               title={movieData.title}
               rating={movieData.imdb_score}
-              country={movieData.country_release}
+              country={movieData.countries.map((c) => c.name).join(", ")}
               description={movieData.synopsis}
               creators={[movieData.director]}
               genres={movieData.genre.map((g) => g.name)}
               imageSrc={movieData.poster}
+              availability={movieData.availability}
+              status={movieData.status}
             />
           </Col>
           <Col md={4}>

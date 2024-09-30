@@ -52,7 +52,6 @@ const List = ({ title, movies }) => {
 
   return (
     <div className="lists">
-      <span className="listsTitle">{title}</span>
       <div className="wrapperList">
         <ArrowBackIosIcon
           className="sliderArrow back"
