@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Table, Button, Dropdown } from 'react-bootstrap';
+import { Container, Row, Col, Table, Button, Dropdown, Pagination } from 'react-bootstrap';
 import "./ReviewManager.css";
 
 const ReviewManager = () => {
     const [reviews, setReviews] = useState([]);
     const [filter, setFilter] = useState("None");
     const [showCount, setShowCount] = useState(10);
+    const [loading, setLoading] = useState(true); // To handle loading state
+    const [currentPage, setCurrentPage] = useState(1); // State for current page
+
 
     useEffect(() => {
         const Reviews = async () => {
@@ -13,8 +16,12 @@ const ReviewManager = () => {
                 const response = await fetch('http://localhost:8001/reviews');
                 const data = await response.json();
                 setReviews(data);
+                setLoading(false);
+
             } catch (error) {
                 console.error("Error fetching actors:", error);
+                setLoading(false);
+
             }
         };
         Reviews();
@@ -36,7 +43,44 @@ const ReviewManager = () => {
     const filteredReviews = reviews.filter((review) => {
         if (filter === "None") return true;
         return filter === "Approved" ? review.status === 1 : review.status === 0;
-    });    
+    });
+
+    // Pagination logic (setelah pencarian)
+    const indexOfLastReview = currentPage * showCount;
+    const indexOfFirstReview = indexOfLastReview - showCount;
+    const currentReviews = filteredReviews.slice(indexOfFirstReview, indexOfLastReview); // Paginate hasil pencarian
+    const totalPages = Math.ceil(filteredReviews.length / showCount);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
+    // Logic to show only 3 pages (current, previous, next)
+    const renderPagination = () => {
+        let items = [];
+        const startPage = Math.max(1, currentPage - 1);
+        const endPage = Math.min(totalPages, currentPage + 1);
+
+        for (let number = startPage; number <= endPage; number++) {
+            items.push(
+                <Pagination.Item key={number} active={number === currentPage} onClick={() => handlePageChange(number)}>
+                    {number}
+                </Pagination.Item>
+            );
+        }
+
+        return (
+            <div className="d-flex justify-content-end">
+                <Pagination>
+                    <Pagination.First onClick={() => setCurrentPage(1)} />
+                    <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
+                    {items}
+                    <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
+                    <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
+                </Pagination>
+            </div>
+        );
+    };
 
     return (
         <Container >
@@ -73,58 +117,66 @@ const ReviewManager = () => {
                 </Col>
             </Row>
 
+            {loading ? (
+                <p>Loading data...</p>
+            ) : (
+                <>
 
-            {/* Table Section */}
-            <Container className="review-table-wrapper">
-                <Table striped bordered hover>
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Rate</th>
-                            <th>Drama</th>
-                            <th>Comments</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredReviews.slice(0, showCount).map((review) => (
-                            <tr key={review.id}>
-                                <td>{review.user_name}</td>
-                                <td>
-                                    <Container className="rate-container">
-                                        {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
-                                    </Container>
-                                </td>
-                                <td>{review.movie_title}</td>
-                                <td>{review.content}</td>
-                                <td>{review.status === 1 ? "Approved" : "Unapproved"}</td>
-                                <td>
-                                    <Container className="action-button">
-                                        {review.status === 0 && (
-                                            <Button
-                                                variant="success"
-                                                className="me-2"
-                                                size="sm"
-                                                onClick={() => handleApproveReview(review.id)}
-                                            >
-                                                Approve
-                                            </Button>
-                                        )}
-                                        <Button
-                                            variant="danger"
-                                            size="sm"
-                                            onClick={() => handleDeleteReview(review.id)}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </Container>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            </Container>
+                    {/* Table Section */}
+                    <Container className="review-table-wrapper">
+                        <Table striped bordered hover>
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Rate</th>
+                                    <th>Drama</th>
+                                    <th>Comments</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentReviews.map((review) => (
+                                    <tr key={review.id}>
+                                        <td>{review.user_name}</td>
+                                        <td>
+                                            <Container className="rate-container">
+                                                {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                                            </Container>
+                                        </td>
+                                        <td>{review.movie_title}</td>
+                                        <td>{review.content}</td>
+                                        <td>{review.status === 1 ? "Approved" : "Unapproved"}</td>
+                                        <td>
+                                            <Container className="action-button">
+                                                {review.status === 0 && (
+                                                    <Button
+                                                        variant="success"
+                                                        className="me-2"
+                                                        size="sm"
+                                                        onClick={() => handleApproveReview(review.id)}
+                                                    >
+                                                        Approve
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteReview(review.id)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </Container>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Container>
+
+                    {renderPagination()}
+                </>
+            )}
         </Container>
     );
 };
