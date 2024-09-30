@@ -61,7 +61,7 @@ db.connect((err) => {
 //   });
 // });
 app.get('/movies/movie', (req, res) => {
-  const { page = 1, limit = 10, yearRange, genre, status, availability, country_release, sort } = req.query;
+  const { page = 1, limit = 10, yearRange, genre, status, availability, country_release, sort, awards } = req.query;
   const offset = (page - 1) * limit;
 
   let filterConditions = [];
@@ -79,16 +79,26 @@ app.get('/movies/movie', (req, res) => {
     }
   }
 
+  if (req.query.search) {
+    filterConditions.push(`m.title LIKE ?`);
+    queryParams.push(`%${req.query.search}%`); // Use wildcards for searching
+  }
+
+  if (awards) {
+    filterConditions.push(`a.awards_name = ?`);
+    queryParams.push(awards);
+  }
+
   if (status) {
-    filterConditions.push(`m.status = ?`);
+    filterConditions.push(`s.name = ?`);
     queryParams.push(status);
   }
 
+
   if (availability) {
-    filterConditions.push(`m.availability = ?`);
+    filterConditions.push(`av.platform_name = ?`);
     queryParams.push(availability);
   }
-
   if (country_release) {
     filterConditions.push(`c.country_name = ?`);
     queryParams.push(country_release);
@@ -98,12 +108,16 @@ app.get('/movies/movie', (req, res) => {
   let query = ` 
     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
            GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS genres, 
-           m.imdb_score AS rating, m.view, c.country_name AS country
+           m.imdb_score AS rating, m.view, c.country_name AS country, a.awards_name AS awards, s.name AS status, av.platform_name AS availability
     FROM movies m
     JOIN movie_genres mg ON m.id = mg.movie_id
     JOIN genres g ON mg.genre_id = g.id
     JOIN movie_countries mc ON m.id = mc.movie_id
     JOIN countries c ON mc.country_id = c.id
+    JOIN movie_awards ma ON m.id = ma.movie_id
+    JOIN awards a ON ma.awards_id = a.id
+    JOIN status s ON m.status_id = s.id
+    JOIN availability av ON m.availability_id = av.id
     WHERE 1=1
   `;
 
@@ -111,6 +125,7 @@ app.get('/movies/movie', (req, res) => {
   if (filterConditions.length) {
     query += ` AND ${filterConditions.join(' AND ')}`;
   }
+  
 
   // Handle genre filtering
   if (genre && genre.trim()) {
@@ -153,6 +168,10 @@ app.get('/movies/movie', (req, res) => {
       JOIN genres g ON mg.genre_id = g.id
       JOIN movie_countries mc ON m.id = mc.movie_id
       JOIN countries c ON mc.country_id = c.id
+      JOIN movie_awards ma ON m.id = ma.movie_id
+      JOIN awards a ON ma.awards_id = a.id
+      JOIN status s ON m.status_id = s.id 
+      JOIN availability av ON m.availability_id = av.id
       WHERE 1=1
     `;
 
@@ -161,7 +180,6 @@ app.get('/movies/movie', (req, res) => {
       countQuery += ` AND ${filterConditions.join(' AND ')}`;
     }
 
-    // Handle genre filtering in count query as well
     if (genre && genre.trim()) {
       countQuery += ` AND m.id IN (
         SELECT mg.movie_id 
@@ -188,8 +206,31 @@ app.get('/movies/movie', (req, res) => {
 });
 
 
+app.get("/search", (req, res) => {
+  const query = req.query.q;
+  if (!query) {
+    return res.status(400).send("Search query is required");
+  }
 
-//fetch movie detail based on its id
+  // Use MySQL LIKE to find matches in the title or description and join with genres
+  const sql = `
+    SELECT m.id, m.title, m.poster, m.release_year, m.imdb_score, 
+           GROUP_CONCAT(g.name SEPARATOR ', ') AS genres, m.view
+    FROM movies m
+    JOIN movie_genres mg ON m.id = mg.movie_id
+    JOIN genres g ON mg.genre_id = g.id
+    WHERE m.title LIKE ?
+    GROUP BY m.id
+    LIMIT 10
+  `;
+  const searchTerm = `%${query}%`;
+  
+  db.query(sql, [searchTerm], (err, results) => {
+    if (err) throw err;
+    res.json(results);
+  });
+});
+
 app.get('/movies/detail/:id', (req, res) => {
   const { id } = req.params;
   const query = `
@@ -214,7 +255,9 @@ app.get('/movies/detail/:id', (req, res) => {
       genres.id AS genre_id,
       genres.name AS genre_name,
       awards.id AS awards_id,
-      awards.awards_name
+      awards.awards_name,
+      availability.platform_name AS availability_platform_name,
+      status.name AS status_name
     FROM
       movies
     LEFT JOIN
@@ -233,6 +276,10 @@ app.get('/movies/detail/:id', (req, res) => {
       movie_awards ON movies.id = movie_awards.movie_id
     LEFT JOIN
       awards ON movie_awards.awards_id = awards.id
+    LEFT JOIN
+    availability ON movies.availability_id = availability.id 
+    LEFT JOIN
+    status ON movies.status_id = status.id
     WHERE
       movies.id = ?
   `;
@@ -253,8 +300,6 @@ app.get('/movies/detail/:id', (req, res) => {
       id: results[0].movie_id,
       title: results[0].title,
       alt_title: results[0].alt_title,
-      country_release: results[0].country_name,
-      genre: [],
       release_year: results[0].release_year,
       imdb_score: results[0].imdb_score,
       synopsis: results[0].synopsis,
@@ -263,52 +308,64 @@ app.get('/movies/detail/:id', (req, res) => {
       background: results[0].background,
       trailer: results[0].trailer,
       director: results[0].director,
+      genre: [],
+      countries: [],
       actors: [],
-      awards: []
+      awards: [],
+      availability: results[0].availability_platform_name,
+      status: results[0].status_name
     };
 
     const genreMap = new Map();
+    const countryMap = new Map();  // Added for country
     const actorMap = new Map();
     const awardMap = new Map();
 
     results.forEach(row => {
-      if (row.genre_id) {
-        if (!genreMap.has(row.genre_id)) {
-          genreMap.set(row.genre_id, {
-            id: row.genre_id,
-            name: row.genre_name
-          });
-        }
-      }
-      
-      if (row.awards_id) {
-        if (!awardMap.has(row.awards_id)) {
-          awardMap.set(row.awards_id, {
-            id: row.awards_id,
-            name: row.awards_name
-          });
-        }
+      // Handle genres
+      if (row.genre_id && !genreMap.has(row.genre_id)) {
+        genreMap.set(row.genre_id, {
+          id: row.genre_id,
+          name: row.genre_name
+        });
       }
 
-      if (row.actor_id) {
-        if (!actorMap.has(row.actor_id)) {
-          actorMap.set(row.actor_id, {
-            id: row.actor_id,
-            name: row.actor_name,
-            role: row.role,
-            actor_picture: row.actor_picture
-          });
-        }
+      // Handle countries (many-to-many)
+      if (row.country_id && !countryMap.has(row.country_id)) {
+        countryMap.set(row.country_id, {
+          id: row.country_id,
+          name: row.country_name
+        });
+      }
+
+      // Handle actors
+      if (row.actor_id && !actorMap.has(row.actor_id)) {
+        actorMap.set(row.actor_id, {
+          id: row.actor_id,
+          name: row.actor_name,
+          role: row.role,
+          actor_picture: row.actor_picture
+        });
+      }
+
+      // Handle awards
+      if (row.awards_id && !awardMap.has(row.awards_id)) {
+        awardMap.set(row.awards_id, {
+          id: row.awards_id,
+          name: row.awards_name
+        });
       }
     });
 
     movie.genre = Array.from(genreMap.values());
+    movie.countries = Array.from(countryMap.values()); // Added for country
     movie.actors = Array.from(actorMap.values());
     movie.awards = Array.from(awardMap.values());
 
     res.json(movie);
   });
 });
+
 
 
 
@@ -358,6 +415,8 @@ app.get('/filters', async (req, res) => {
     genres: 'SELECT id, name FROM genres ORDER BY name ASC',
     awards: 'SELECT id, awards_name FROM awards ORDER BY awards_name ASC',
     countries: 'SELECT id, country_name FROM countries ORDER BY country_name ASC',
+    availability: 'SELECT id, platform_name FROM availability ORDER BY platform_name ASC',
+    status: 'SELECT id, name FROM status ORDER BY name ASC',
   };
 
   const results = {};
@@ -370,7 +429,7 @@ app.get('/filters', async (req, res) => {
       const minYear = yearRows[0].minYear;
       const maxYear = yearRows[0].maxYear;
       
-      // Calculate decades based on minYear and maxYear
+     
       const different = minYear % 10;
       const normalizedMinYear = minYear - different; 
       const decades = [];
@@ -378,11 +437,11 @@ app.get('/filters', async (req, res) => {
       for (let year = normalizedMinYear; year <= maxYear; year += 10) {
         decades.push({
           start: year,
-          end: year + 10, // Decade ends at +9
+          end: year + 10, 
         });
       }
 
-      results.years = decades; // Add the calculated decades to the results
+      results.years = decades; 
     } else {
       results.years = [];
     }
@@ -408,8 +467,21 @@ app.get('/filters', async (req, res) => {
       name: row.country_name,
     }));
 
-    res.json(results); // Send the final response
+    // Fetch availability
+    const [availabilityRows] = await db.promise().query(queries.availability);
+    results.availability = availabilityRows.map(row => ({
+      id: row.id,
+      name: row.platform_name,
+    }));
 
+    // Fetch status
+    const [statusRows] = await db.promise().query(queries.status);
+    results.status = statusRows.map(row => ({
+      id: row.id,
+      name: row.name,
+    }));
+
+    res.json(results); 
   } catch (error) {
     console.error('Error fetching filters:', error.message);
     res.status(500).json({ error: 'Internal Server Error' });

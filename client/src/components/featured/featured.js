@@ -21,7 +21,7 @@ const Featured = () => {
   const [fadeClass, setFadeClass] = useState("fade-in"); // Handle fade animation
   const [loading, setLoading] = useState(true); // Loading state for lazy loading
 
-  const navigate = useNavigate(); // Navigate to movie details page
+  const navigate = useNavigate(); 
 
   // Fetch movie data and preload images once
   useEffect(() => {
