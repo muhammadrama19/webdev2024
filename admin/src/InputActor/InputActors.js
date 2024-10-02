@@ -3,6 +3,8 @@ import { Container, Table, Form, Button, Modal, Col, Dropdown, Pagination } from
 import { FaPlus } from "react-icons/fa";
 import "./InputActor.css";
 import Icon from 'admin/public/assets/Oval.svg';
+import DatePicker from "admin/node_modules/react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const ActorManager = () => {
     const [newActor, setNewActor] = useState({ country_name: "", name: "", birthdate: "", actor_picture: "" });
@@ -58,7 +60,7 @@ const ActorManager = () => {
             } catch (error) {
                 console.error("Error adding actor:", error);
             }
-            setNewActor({ country: "", name: "", birthDate: "", photo: "" });
+            setNewActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
             setShowModal(false);
         } else {
             alert("All fields must be filled!");
@@ -99,7 +101,7 @@ const ActorManager = () => {
                 prevActors.map((actor) => (actor.id === editing ? updatedActor : actor))
             );
             setEditing(null);
-            setEditActor({ country: "", name: "", birthDate: "", photo: "" });
+            setEditActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
             setShowModal(false);
         } catch (error) {
             console.error("Error saving edit:", error);
@@ -113,6 +115,14 @@ const ActorManager = () => {
 
     const handleCloseModal = () => {
         setShowModal(false);
+        if (isEditing) {
+            // Reset the editing state and clear editActor data
+            setEditActor({ country_name: "", name: "", birthdate: null, actor_picture: "" });
+            setEditing(null);
+        } else {
+            // Reset the newActor state
+            setNewActor({ country_name: "", name: "", birthdate: null, actor_picture: "" });
+        }
     };
 
     const handlePhotoChange = (e) => {
@@ -136,9 +146,18 @@ const ActorManager = () => {
         }
     };
 
+    const handleDateChange = (date) => {
+        const formattedDate = date.toISOString().split("T")[0]; // Format to YYYY-MM-DD
+        if (isEditing) {
+            setEditActor((prev) => ({ ...prev, birthdate: formattedDate }));
+        } else {
+            setNewActor((prev) => ({ ...prev, birthdate: formattedDate }));
+        }
+    };
+
     // Function untuk filter drama berdasarkan search term (sebelum pagination)
     const filteredActors = actors.filter((actor) =>
-        actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
@@ -252,13 +271,14 @@ const ActorManager = () => {
 
                         <Form.Group className="mb-3">
                             <Form.Label>Birth Date</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="birthDate"
-                                value={isEditing ? editActor.birthdate : newActor.birthdate}
-                                onChange={handleInputChange}
-                                placeholder="Enter birth date"
+                            <DatePicker
+                                selected={isEditing ? (editActor.birthdate ? new Date(editActor.birthdate) : null) : (newActor.birthdate ? new Date(newActor.birthdate) : null)}
+                                onChange={handleDateChange}
+                                dateFormat="dd-MM-yyyy"
+                                className="form-control ms-2"
+                                placeholderText="Select Birth Date"
                             />
+
                         </Form.Group>
 
                         <Form.Group className="mb-3">
@@ -287,7 +307,7 @@ const ActorManager = () => {
                     <Button
                         variant="secondary"
                         className="mt-2"
-                        onClick={() => setShowModal(false)}>
+                        onClick={handleCloseModal}>
                         Cancel
                     </Button>
                     <Button
