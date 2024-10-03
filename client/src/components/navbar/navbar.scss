@@ -8,6 +8,13 @@
   background: linear-gradient(to top, transparent 10%, rgb(0, 0, 0, 0.3) 50%);
   
 
+  .user-profile-pic {
+    width: 40px; // Set width
+    height: 40px; // Set height
+    border-radius: 50%; // Make it circular
+    margin-left: 10px; // Spacing from the text
+  }
+  
   &.scrolled {
     background-color: var(--main-color);
   }

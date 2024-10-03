@@ -11,14 +11,13 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [countries, setCountries] = useState(["Indonesia", "Japan"]); // Fallback data
   const [selectedCountry, setSelectedCountry] = useState("Indonesia");
-  const [searchVisible, setSearchVisible] = useState(false); // State to control search visibility
-  const [sidebarVisible, setSidebarVisible] = useState(false); // State to control sidebar visibility
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [user, setUser] = useState(null); // State to hold user info
 
-  // Simulate fetching countries from backend
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        // Replace this URL with your actual endpoint
         const response = await fetch("/api/countries");
         const data = await response.json();
         setCountries(data);
@@ -28,6 +27,14 @@ const Navbar = () => {
     };
 
     fetchCountries();
+    
+    // Retrieve user data from local storage
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      setUser(JSON.parse(userData));
+      console.log(userData);
+      console.log("masuk gak local nyah");
+    }
   }, []);
 
   const handleCountryChange = (country) => {
@@ -42,7 +49,6 @@ const Navbar = () => {
     setSidebarVisible(!sidebarVisible);
   };
 
-  // Close sidebar when screen size is larger than 960px
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth > 960) {
@@ -51,8 +57,6 @@ const Navbar = () => {
     };
 
     window.addEventListener("resize", handleResize);
-
-    // Cleanup event listener on component unmount
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -68,13 +72,23 @@ const Navbar = () => {
           <span className="logo-brand mt-2 me-3 mb-2">Lalajo Euy!</span>
           <div className="nav-links">
             <span>Home</span>
-            <span>Login</span>
-            <span>Register</span>
+            {!user ? ( // Show Login/Register if not logged in
+              <>
+                <span>Login</span>
+                <span>Register</span>
+              </>
+            ) : (
+              <img
+                src={user.profile_picture} // Display user's profile picture
+                alt="User"
+                className="user-profile-pic"
+              />
+            )}
           </div>
         </div>
         <div className="right">
           <SearchBar />
-          <MenuIcon className="hamburger" onClick={toggleSidebar} /> {/* Add this */}
+          <MenuIcon className="hamburger" onClick={toggleSidebar} />
         </div>
       </div>
 
@@ -85,8 +99,12 @@ const Navbar = () => {
           <CloseIcon className="close-icon" onClick={toggleSidebar} />
         </div>
         <span>Home</span>
-        <span>Login</span>
-        <span>Register</span>
+        {!user ? ( // Show Login/Register in sidebar if not logged in
+          <>
+            <span>Login</span>
+            <span>Register</span>
+          </>
+        ) : null}
         <div className="country">
           <div className="options">
             {countries.map((country, index) => (

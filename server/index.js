@@ -1,10 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
 
 const app = express();
 app.use(cors()); 
 app.use(express.json()); 
+app.use(bodyParser.json());
 
 // MySQL connection setup
 const db = mysql.createConnection({
@@ -20,6 +24,41 @@ db.connect((err) => {
     return;
   }
   console.log('Connected to MySQL!');
+});
+
+
+
+app.post('/api/signup', async (req, res) => {
+  const { username, email, password, profile_pic } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  console.log("masyk gak")
+  db.query('INSERT INTO users (username, email, password, profile_picture) VALUES (?, ?, ?, ?)',
+      [username, email, hashedPassword, profile_pic],
+      (err, result) => {
+          if (err) {
+              return res.status(500).json({ error: err.message });
+          }
+          res.status(201).json({ message: 'User created successfully!' });
+      });
+});
+
+// Sign-in Route
+app.post('/api/signin', (req, res) => {
+  const { email, password } = req.body;
+  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
+      if (err || results.length === 0) {
+          return res.status(401).json({ message: 'Authentication failed!' });
+      }
+      const user = results[0];
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+          return res.status(401).json({ message: 'Authentication failed!' });
+      }
+      const token = jwt.sign({ id: user.id }, 'aa8506bc4234ccbcb029ee9a7ee6e3280afe57a76925aca872ecabe108aa4f0f', { expiresIn: '1h' });
+      res.status(200).json({ message: 'Authentication successful!', token, user: { username: user.username, profile_picture: user.profile_picture } });
+      console.log(user)
+
+  });
 });
 
 // // Fetch movies with pagination
