@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Form } from 'react-bootstrap';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import './formInput.scss';
-
 const FormInput = ({ label, type, name, placeholder, value, onChange }) => {
+
   const [inputType, setInputType] = useState(type);
 
   // Fungsi untuk mengubah visibility password
@@ -21,6 +21,7 @@ const FormInput = ({ label, type, name, placeholder, value, onChange }) => {
           placeholder={placeholder}
           value={value} // Mengikat nilai input dengan state dari komponen induk
           onChange={onChange} // Event handler untuk menangani perubahan input
+
         />
         {type === 'password' && (
           <span className="toggle-password" onClick={togglePasswordVisibility}>

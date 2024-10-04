@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import AuthForm from "../components/authform/authForm";
 import FormInput from "../components/forminput/formInput";
 import { Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import GoogleLogin from "../components/googleButton/googleButton";
 
 import "./login.scss";
 
@@ -49,11 +51,13 @@ const LoginForm = () => {
       ...values,
       [e.target.name]: e.target.value // Menetapkan nilai email/password berdasarkan input
     });
+
   };
 
   return (
     <AuthForm title="Login" linkText="Don't have an account?" linkHref="/register">
       <form onSubmit={handleSubmit}>
+
         {/* Input email */}
         <FormInput
           label="Email"
@@ -81,6 +85,7 @@ const LoginForm = () => {
         >
           Login
         </Button>
+
       </form>
     </AuthForm>
   );

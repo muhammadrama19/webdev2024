@@ -38,6 +38,7 @@ const Navbar = ({ loggedInUsername }) => {
     };
 
     fetchCountries();
+
   }, []);
 
   const handleCountryChange = (country) => {
@@ -57,11 +58,13 @@ const Navbar = ({ loggedInUsername }) => {
   };
 
   // Event scroll untuk mengubah navbar jika halaman di-scroll
+
   useEffect(() => {
     window.onscroll = () => {
       setIsScrolled(window.scrollY === 0 ? false : true);
       return () => (window.onscroll = null);
     };
+
   }, []);
 
   const handleLogout = () => {
@@ -83,6 +86,7 @@ const Navbar = ({ loggedInUsername }) => {
             Lalajo Euy!
           </span>
           <div className="nav-links">
+
             <span onClick={() => navigate("/")}>Home</span>
             {!username ? (
               <>
@@ -93,12 +97,14 @@ const Navbar = ({ loggedInUsername }) => {
               <>
                 <span>Welcome, {username}</span>
                 <span onClick={handleLogout}>Logout</span>
+
               </>
             )}
           </div>
         </div>
         <div className="right">
           <SearchBar />
+
           <BsPersonCircle className="icon" onClick={toggleDropdown} />
           {showDropdown && (
             <div className="profile-dropdown">
@@ -118,6 +124,7 @@ const Navbar = ({ loggedInUsername }) => {
               </div>
             </div>
           )}
+
           <MenuIcon className="hamburger" onClick={toggleSidebar} />
         </div>
       </div>
@@ -130,6 +137,7 @@ const Navbar = ({ loggedInUsername }) => {
           </span>
           <CloseIcon className="close-icon" onClick={toggleSidebar} />
         </div>
+
         <span onClick={() => navigate("/")}>Home</span>
         {!username ? (
           <>
@@ -141,6 +149,7 @@ const Navbar = ({ loggedInUsername }) => {
             <span>Welcome, {username}</span>
             <span onClick={handleLogout}>Logout</span>
           </>
+
         )}
         <div className="country">
           <div className="options">
