@@ -51,11 +51,6 @@ db.connect((err) => {
 });
 
 
-app.use(cors({
-  origin: 'http://localhost:3000', // Adjust based on your frontend port
-  credentials: true,
-}));
-
 app.use(session({
   secret: process.env.JWT_SECRET,
   resave: false,
@@ -74,10 +69,18 @@ app.get('/auth/google', passport.authenticate('google', {
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    console.log('Google authentication successful, redirecting to profile.');
-    res.redirect('http://localhost:3000/');
+    // Mengambil user dari request setelah autentikasi
+    const user = req.user;
+
+    // Simpan user ke dalam cookie atau kirim ke frontend melalui URL
+    const username = user.username;
+    const email = user.email;
+
+    // Redirect ke frontend setelah login dengan parameter username dan email
+    res.redirect(`http://localhost:3001/?username=${username}&email=${email}`);
   }
 );
+
 
 // Logout route
 app.get('/logout', (req, res) => {

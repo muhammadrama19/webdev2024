@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "../searchInput/search";
-import { BsPersonCircle } from "react-icons/bs"; // pastikan kamu install react-icons
+import { BsPersonCircle } from "react-icons/bs"; 
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import "./navbar.scss";
@@ -12,18 +12,38 @@ const Navbar = ({ loggedInUsername }) => {
   const [selectedCountry, setSelectedCountry] = useState("Indonesia");
   const [searchVisible, setSearchVisible] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false); // Untuk toggle dropdown profil
+  const [showDropdown, setShowDropdown] = useState(false); 
   const [username, setUsername] = useState(loggedInUsername || localStorage.getItem("username"));
   const [email, setEmail] = useState(localStorage.getItem("email"));
   const [role, setRole] = useState(localStorage.getItem("role"));
 
   const navigate = useNavigate();
 
+  // Fungsi untuk menangkap query parameter dari URL
+  const getQueryParams = (param) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  };
+
+  // Menyimpan username dan email dari Google OAuth ke localStorage
   useEffect(() => {
-    if (loggedInUsername) {
-      setUsername(loggedInUsername);
+    const usernameFromGoogle = getQueryParams("username");
+    const emailFromGoogle = getQueryParams("email");
+
+
+    if (usernameFromGoogle && emailFromGoogle) {
+      localStorage.setItem("username", usernameFromGoogle);
+      localStorage.setItem("email", emailFromGoogle);
+      localStorage.setItem("role", "User");
+
+      setUsername(usernameFromGoogle);
+      setEmail(emailFromGoogle);
+      setRole("User");
+
+      // Clear query params after saving to localStorage
+      window.history.replaceState(null, null, window.location.pathname); 
     }
-  }, [loggedInUsername]);
+  }, []);
 
   // Mengambil data negara dari API
   useEffect(() => {
@@ -54,10 +74,8 @@ const Navbar = ({ loggedInUsername }) => {
   };
 
   const toggleDropdown = () => {
-    setShowDropdown(!showDropdown); // Toggle dropdown saat ikon diklik
+    setShowDropdown(!showDropdown); 
   };
-
-  // Event scroll untuk mengubah navbar jika halaman di-scroll
 
   useEffect(() => {
     window.onscroll = () => {
@@ -106,15 +124,18 @@ const Navbar = ({ loggedInUsername }) => {
           <SearchBar />
 
           <BsPersonCircle className="icon" onClick={toggleDropdown} />
+          <span className="user-name" onClick={toggleDropdown}>
+          {username || "Guest"}
+        </span>
           {showDropdown && (
             <div className="profile-dropdown">
               <div className="profile-header">
                 <img
-                  src="https://via.placeholder.com/100" // Ganti dengan URL gambar profil
+                  src="https://via.placeholder.com/100" 
                   alt="profile"
                   className="profile-image"
                 />
-                <h4>{username || "Guest"}</h4> {/* Menampilkan nama user */}
+                <h4>{username || "Guest"}</h4> 
                 <span className="profile-email">{email || "Unknown ID"}</span>
                 <span className="profile-role">{role || "Guest Role"}</span>
               </div>

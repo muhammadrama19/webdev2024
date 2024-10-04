@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import AuthForm from "../components/authform/authForm";
 import FormInput from "../components/forminput/formInput";
 import { Button } from "react-bootstrap";
-import GoogleLogin from "../components/googleButton/googleButton"; /
+import GoogleLogin from "../components/googleButton/googleButton"; 
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import "./register.scss";
