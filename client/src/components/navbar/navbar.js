@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
-import SearchIcon from "@mui/icons-material/Search";
+import { useNavigate } from "react-router-dom";
+import SearchBar from "../searchInput/search";
+import { BsPersonCircle } from "react-icons/bs"; // pastikan kamu install react-icons
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
-import SearchBar from "../searchInput/search";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import "./navbar.scss";
 
 const Navbar = ({ loggedInUsername }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [countries, setCountries] = useState(["Indonesia", "Japan"]); 
+  const [countries, setCountries] = useState(["Indonesia", "Japan"]);
   const [selectedCountry, setSelectedCountry] = useState("Indonesia");
   const [searchVisible, setSearchVisible] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [ username, setUsername] = useState(loggedInUsername || localStorage.getItem("username"));
+  const [showDropdown, setShowDropdown] = useState(false); // Untuk toggle dropdown profil
+  const [username, setUsername] = useState(loggedInUsername || localStorage.getItem("username"));
+  const [email, setEmail] = useState(localStorage.getItem("email"));
+  const [role, setRole] = useState(localStorage.getItem("role"));
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (loggedInUsername) {
@@ -23,6 +25,7 @@ const Navbar = ({ loggedInUsername }) => {
     }
   }, [loggedInUsername]);
 
+  // Mengambil data negara dari API
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -49,28 +52,27 @@ const Navbar = ({ loggedInUsername }) => {
     setSidebarVisible(!sidebarVisible);
   };
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 960) {
-        setSidebarVisible(false);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  window.onscroll = () => {
-    setIsScrolled(window.scrollY === 0 ? false : true);
-    return () => (window.onscroll = null);
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown); // Toggle dropdown saat ikon diklik
   };
 
+  // Event scroll untuk mengubah navbar jika halaman di-scroll
+  useEffect(() => {
+    window.onscroll = () => {
+      setIsScrolled(window.scrollY === 0 ? false : true);
+      return () => (window.onscroll = null);
+    };
+  }, []);
+
   const handleLogout = () => {
-    localStorage.removeItem('username');
-    localStorage.removeItem('token');
+    localStorage.removeItem("username");
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
+    localStorage.removeItem("token");
     setUsername(null);
-    navigate('/login');
+    setEmail(null);
+    setRole(null);
+    navigate("/login");
   };
 
   return (
@@ -97,16 +99,30 @@ const Navbar = ({ loggedInUsername }) => {
         </div>
         <div className="right">
           <SearchBar />
-          {username && (
-            <div className="user-info">
-              <span className="profile-name">{username}</span>
-              <AccountCircleIcon className="profile-icon" />
+          <BsPersonCircle className="icon" onClick={toggleDropdown} />
+          {showDropdown && (
+            <div className="profile-dropdown">
+              <div className="profile-header">
+                <img
+                  src="https://via.placeholder.com/100" // Ganti dengan URL gambar profil
+                  alt="profile"
+                  className="profile-image"
+                />
+                <h4>{username || "Guest"}</h4> {/* Menampilkan nama user */}
+                <span className="profile-email">{email || "Unknown ID"}</span>
+                <span className="profile-role">{role || "Guest Role"}</span>
+              </div>
+              <div className="profile-actions">
+                <button className="btn-profile">Profile</button>
+                <button className="btn-signout" onClick={handleLogout}>Sign out</button>
+              </div>
             </div>
           )}
           <MenuIcon className="hamburger" onClick={toggleSidebar} />
         </div>
       </div>
 
+      {/* Sidebar Menu */}
       <div className={`sidebar ${sidebarVisible ? "active" : ""}`}>
         <div className="sidebar-header">
           <span className="logo-brand" onClick={() => navigate("/")}>
