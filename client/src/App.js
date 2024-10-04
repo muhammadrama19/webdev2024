@@ -1,6 +1,5 @@
 import './app.scss';
 import Home from './home/home';
-import Moviedetail from './detailmovie/detailmovie';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/navbar/navbar';
 import Register from './register/register';
@@ -22,6 +21,8 @@ function App() {
           <Route path="/testFetch" element={<TestFetch />} />
           <Route path="/movies/:id" element={<Detailmovie />} />
           <Route path="/searchresult" element={<SearchResult />} />
+
+          
         </Routes>
       </Router>
     </SearchProvider>

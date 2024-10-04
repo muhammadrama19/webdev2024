@@ -11,7 +11,7 @@ const Card = ({ onClick,src, title, year, genres, rating, views }) => {
         <p className="year">{year}</p>
         <p className="genres">{genres}</p> {/* Display genres as it comes (string) */}
         <div className="footer">
-          <span className="rating">Rate {rating}/10</span>
+          <span className="rating">Rate {rating}/5</span>
           <span className="views">{views} views</span>
         </div>
       </div>

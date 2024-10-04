@@ -1,8 +1,14 @@
+require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
 const cors = require('cors');
 const mysql = require('mysql2');
+const bodyParser = require('body-parser');
+// const googleAuth = require('./routes/googleAuth');
+const passport= require('./middleware/passport-setup')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+
 
 const app = express();
 const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
@@ -22,6 +28,10 @@ app.use(cors({
   credentials: true // Untuk mengizinkan penggunaan cookie
 }));
 app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+
 
 // MySQL connection setup
 const db = mysql.createConnection({
@@ -31,6 +41,7 @@ const db = mysql.createConnection({
   database: "lalajoeuydb"
 });
 
+
 db.connect((err) => {
   if (err) {
     console.error('Error connecting to MySQL:', err);
@@ -39,44 +50,42 @@ db.connect((err) => {
   console.log('Connected to MySQL!');
 });
 
-// // Fetch movies with pagination
-// app.get('/movies/movie', (req, res) => {
-//   const { page = 1, limit = 10 } = req.query;
-//   const offset = (page - 1) * limit;
 
-//   const query = `
-//     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
-//            GROUP_CONCAT(g.name SEPARATOR ', ') AS genres, 
-//            m.imdb_score AS rating, m.view 
-//     FROM movies m
-//     JOIN movie_genres mg ON m.id = mg.movie_id
-//     JOIN genres g ON mg.genre_id = g.id
-//     GROUP BY m.id
-//     LIMIT ? OFFSET ?;
-//   `;
+app.use(cors({
+  origin: 'http://localhost:3000', // Adjust based on your frontend port
+  credentials: true,
+}));
 
-//   db.query(query, [parseInt(limit), parseInt(offset)], (err, results) => {
-//     if (err) {
-//       res.status(500).json({ error: 'Database query failed' });
-//       return;
-//     }
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+}));
 
-//     const countQuery = 'SELECT COUNT(*) AS totalCount FROM movies';
-    
-//     db.query(countQuery, (countErr, countResults) => {
-//       if (countErr) {
-//         res.status(500).json({ error: 'Failed to get movie count' });
-//         return;
-//       }
+app.use(passport.initialize());
+app.use(passport.session());
 
-//       const totalCount = countResults[0].totalCount;
-//       res.json({
-//         movies: results, 
-//         totalCount,
-//       });
-//     });
-//   });
-// });
+// Google OAuth login
+app.get('/auth/google', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+}));
+
+// Google OAuth callback
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    console.log('Google authentication successful, redirecting to profile.');
+    res.redirect('http://localhost:3000/');
+  }
+);
+
+// Logout route
+app.get('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/');
+});
+
+
 app.get('/movies/movie', (req, res) => {
   const { page = 1, limit = 10, yearRange, genre, status, availability, country_release, sort, awards } = req.query;
   const offset = (page - 1) * limit;
