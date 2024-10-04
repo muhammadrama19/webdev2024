@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import SearchIcon from "@mui/icons-material/Search";
 import LoginIcon from "@mui/icons-material/Login";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -13,6 +14,8 @@ const Navbar = () => {
   const [selectedCountry, setSelectedCountry] = useState("Indonesia");
   const [searchVisible, setSearchVisible] = useState(false); // State to control search visibility
   const [sidebarVisible, setSidebarVisible] = useState(false); // State to control sidebar visibility
+
+  const navigate = useNavigate(); // Initialize useNavigate for navigation
 
   // Simulate fetching countries from backend
   useEffect(() => {
@@ -65,11 +68,15 @@ const Navbar = () => {
     <div className={isScrolled ? "navbar scrolled" : "navbar"}>
       <div className="container">
         <div className="left">
-          <span className="logo-brand mt-2 me-3 mb-2">Lalajo Euy!</span>
+          {/* Add onClick for redirecting to home on logo click */}
+          <span className="logo-brand mt-2 me-3 mb-2" onClick={() => navigate("/")}>
+            Lalajo Euy!
+          </span>
           <div className="nav-links">
-            <span>Home</span>
-            <span>Login</span>
-            <span>Register</span>
+            {/* Add onClick for each navigation link */}
+            <span onClick={() => navigate("/")}>Home</span>
+            <span onClick={() => navigate("/login")}>Login</span>
+            <span onClick={() => navigate("/register")}>Register</span>
           </div>
         </div>
         <div className="right">
@@ -81,12 +88,14 @@ const Navbar = () => {
       {/* Sidebar Menu */}
       <div className={`sidebar ${sidebarVisible ? "active" : ""}`}>
         <div className="sidebar-header">
-          <span className="logo-brand">Lalajo Euy!</span>
+          <span className="logo-brand" onClick={() => navigate("/")}>
+            Lalajo Euy!
+          </span>
           <CloseIcon className="close-icon" onClick={toggleSidebar} />
         </div>
-        <span>Home</span>
-        <span>Login</span>
-        <span>Register</span>
+        <span onClick={() => navigate("/")}>Home</span>
+        <span onClick={() => navigate("/login")}>Login</span>
+        <span onClick={() => navigate("/register")}>Register</span>
         <div className="country">
           <div className="options">
             {countries.map((country, index) => (
