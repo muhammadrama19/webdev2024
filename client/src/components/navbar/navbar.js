@@ -16,24 +16,10 @@ const Navbar = () => {
   const [user, setUser] = useState(null); // State to hold user info
 
   useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const response = await fetch("/api/countries");
-        const data = await response.json();
-        setCountries(data);
-      } catch (error) {
-        console.error("Error fetching countries:", error);
-      }
-    };
-
-    fetchCountries();
-    
-    // Retrieve user data from local storage
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-      setUser(JSON.parse(userData));
-      console.log(userData);
-      console.log("masuk gak local nyah");
+    // Retrieve the email from local storage when the component mounts
+    const email = localStorage.getItem('email');
+    if (email) {
+      setUser(email); // Set the user state to the retrieved email
     }
   }, []);
 
@@ -72,17 +58,13 @@ const Navbar = () => {
           <span className="logo-brand mt-2 me-3 mb-2">Lalajo Euy!</span>
           <div className="nav-links">
             <span>Home</span>
-            {!user ? ( // Show Login/Register if not logged in
+            {user ? ( // Display email if user is logged in
+              <span>{user}</span>
+            ) : (
               <>
                 <span>Login</span>
                 <span>Register</span>
               </>
-            ) : (
-              <img
-                src={user.profile_picture} // Display user's profile picture
-                alt="User"
-                className="user-profile-pic"
-              />
             )}
           </div>
         </div>
@@ -104,7 +86,9 @@ const Navbar = () => {
             <span>Login</span>
             <span>Register</span>
           </>
-        ) : null}
+        ) : (
+          <span>{user}</span> // Show email in sidebar if logged in
+        )}
         <div className="country">
           <div className="options">
             {countries.map((country, index) => (
