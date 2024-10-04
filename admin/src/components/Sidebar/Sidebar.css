@@ -1,4 +1,5 @@
 #sidebar {
+  position: fixed;
   grid-area: sidebar;
   height: 100%;
   background-color: #263043;
