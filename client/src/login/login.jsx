@@ -25,8 +25,14 @@ const LoginForm = () => {
     axios.post('http://localhost:8001/login', values)
       .then(res => {
         if (res.data.Status === "Login Success") {
-          // Jika login sukses, navigasikan ke halaman home
+          // Menyimpan nama user dan token di localStorage
+          localStorage.setItem('username', res.data.username); // menyimpan nama pengguna
+          localStorage.setItem('token', res.data.token); // menyimpan token JWT
+                  
+          // Navigasikan ke halaman home setelah login sukses
           navigate('/');
+          window.location.reload();
+
         } else {
           // Jika login gagal, tampilkan pesan kesalahan
           alert(res.data.Message);
