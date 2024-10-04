@@ -711,6 +711,36 @@ app.get('/reviews', (req, res) => {
 
 //CRUD
 
+//ADD MOVIES
+app.post('/add-drama', (req, res) => {
+  const {
+    poster,
+    title,
+    alt_title,
+    release_year,
+    country,
+    synopsis,
+    availability,
+    genres,
+    actors,
+    trailer,
+    award,
+    background,
+  } = req.body;
+
+  const query = `INSERT INTO dramas (poster, title, alt_title, release_year, country, synopsis, availability, genres, actors, trailer, award, background) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  db.query(query, [poster, title, alt_title, release_year, country, synopsis, availability, genres.join(', '), actors.join(', '), trailer, award.join(', '), background], (err, result) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.status(200).json({ message: 'Drama added successfully' });
+  });
+});
+
+
 //SET TRASH
 app.put('/movie-delete/:id', (req, res) => {
   const movieId = req.params.id;
