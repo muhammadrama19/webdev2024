@@ -156,6 +156,81 @@
     }
   }
 
+  .profile-dropdown {
+    position: absolute;
+    top: 70px;
+    right: 10px;
+    width: 250px;
+    background-color: #304058; /* Sesuaikan warna */
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    z-index: 100;
+    text-align: center;
+  }
+  
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .profile-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+  
+  .profile-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+  
+  .profile-email {
+    font-size: 14px;
+    color: #ffffff;
+  }
+  
+  .profile-role {
+    font-size: 14px;
+    color: #ffffff;
+    margin-bottom: 15px;
+  }
+  
+  .profile-actions {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .btn-profile,
+  .btn-signout {
+    padding: 10px;
+    border: none;
+    background-color: #fff;
+    color: #ff5722;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 45%;
+  }
+  
+  .btn-profile:hover,
+  .btn-signout:hover {
+    background-color: #ff5722;
+    color: #fff;
+  }
+  
+  .icon {
+    vertical-align: middle;
+    line-height: 1px;
+    font-size: 26px;
+    cursor: pointer;
+  }
+
   @media screen and (max-width: 960px) {
     .logo-brand {
       font-size: 5vw;

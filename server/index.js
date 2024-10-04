@@ -5,12 +5,22 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 const app = express();
-app.use(cors(
-  {
-    origin: 'http://localhost:3001',
-    credentials: true,
-  }
-)); 
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Check if the request origin is in the allowedOrigins array
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true // Untuk mengizinkan penggunaan cookie
+}));
 app.use(express.json()); 
 
 // MySQL connection setup
@@ -528,6 +538,9 @@ app.get('/featured', (req, res) => {
 }
 );
 
+
+//CMS
+
 app.get('/dashboard', (req, res) => {
   const queryMovies = 'SELECT COUNT(*) AS movieCount FROM movies';
   const queryGenres = 'SELECT COUNT(*) AS genreCount FROM genres';
@@ -846,10 +859,21 @@ app.post('/login', (req, res) => {
         }
 
         if (result) {
-          const token = jwt.sign({ name: user.username, email: user.email }, "our-jsonwebtoken-secret-key", { expiresIn: '1d' });
+          const token = jwt.sign(
+            { username: user.username, email: user.email, role: user.role }, // Tambahkan role ke JWT
+            "our-jsonwebtoken-secret-key",
+            { expiresIn: '1d' }
+          );
 
           res.cookie('token', token, { httpOnly: true, sameSite: 'strict' });
-          return res.json({ Status: "Login Success", username: user.username });
+
+          // Kirim username, email, dan role ke frontend
+          return res.json({
+            Status: "Login Success",
+            username: user.username,
+            email: user.email,
+            role: user.role
+          });
         } else {
           return res.json({ Message: "Incorrect Password" });
         }
@@ -859,6 +883,7 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
 
 
 //REGISTER
