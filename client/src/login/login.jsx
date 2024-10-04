@@ -28,6 +28,8 @@ const LoginForm = () => {
           // Menyimpan nama user dan token di localStorage
           localStorage.setItem('username', res.data.username); // menyimpan nama pengguna
           localStorage.setItem('token', res.data.token); // menyimpan token JWT
+          localStorage.setItem('email', res.data.email);
+          localStorage.setItem('role', res.data.role);
                   
           // Navigasikan ke halaman home setelah login sukses
           navigate('/');
