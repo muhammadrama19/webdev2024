@@ -1,26 +1,44 @@
 import React, { useState, useEffect } from "react";
-import SearchIcon from "@mui/icons-material/Search";
-import LoginIcon from "@mui/icons-material/Login";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { useNavigate } from "react-router-dom";
+import SearchBar from "../searchInput/search";
+import { BsPersonCircle } from "react-icons/bs"; // pastikan kamu install react-icons
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
-import SearchBar from "../searchInput/search";
 import "./navbar.scss";
 
-const Navbar = () => {
+const Navbar = ({ loggedInUsername }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [countries, setCountries] = useState(["Indonesia", "Japan"]); // Fallback data
+  const [countries, setCountries] = useState(["Indonesia", "Japan"]);
   const [selectedCountry, setSelectedCountry] = useState("Indonesia");
   const [searchVisible, setSearchVisible] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [user, setUser] = useState(null); // State to hold user info
+  const [showDropdown, setShowDropdown] = useState(false); // Untuk toggle dropdown profil
+  const [username, setUsername] = useState(loggedInUsername || localStorage.getItem("username"));
+  const [email, setEmail] = useState(localStorage.getItem("email"));
+  const [role, setRole] = useState(localStorage.getItem("role"));
+
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Retrieve the email from local storage when the component mounts
-    const email = localStorage.getItem('email');
-    if (email) {
-      setUser(email); // Set the user state to the retrieved email
+    if (loggedInUsername) {
+      setUsername(loggedInUsername);
     }
+  }, [loggedInUsername]);
+
+  // Mengambil data negara dari API
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch("/api/countries");
+        const data = await response.json();
+        setCountries(data);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+      }
+    };
+
+    fetchCountries();
+
   }, []);
 
   const handleCountryChange = (country) => {
@@ -35,41 +53,78 @@ const Navbar = () => {
     setSidebarVisible(!sidebarVisible);
   };
 
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown); // Toggle dropdown saat ikon diklik
+  };
+
+  // Event scroll untuk mengubah navbar jika halaman di-scroll
+
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 960) {
-        setSidebarVisible(false);
-      }
+    window.onscroll = () => {
+      setIsScrolled(window.scrollY === 0 ? false : true);
+      return () => (window.onscroll = null);
     };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  window.onscroll = () => {
-    setIsScrolled(window.scrollY === 0 ? false : true);
-    return () => (window.onscroll = null);
+  const handleLogout = () => {
+    localStorage.removeItem("username");
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
+    localStorage.removeItem("token");
+    setUsername(null);
+    setEmail(null);
+    setRole(null);
+    navigate("/login");
   };
 
   return (
     <div className={isScrolled ? "navbar scrolled" : "navbar"}>
       <div className="container">
         <div className="left">
-          <span className="logo-brand mt-2 me-3 mb-2">Lalajo Euy!</span>
+          <span className="logo-brand mt-2 me-3 mb-2" onClick={() => navigate("/")}>
+            Lalajo Euy!
+          </span>
           <div className="nav-links">
-            <span>Home</span>
-            {user ? ( // Display email if user is logged in
-              <span>{user}</span>
+
+            <span onClick={() => navigate("/")}>Home</span>
+            {!username ? (
+              <>
+                <span onClick={() => navigate("/login")}>Login</span>
+                <span onClick={() => navigate("/register")}>Register</span>
+              </>
             ) : (
               <>
-                <span>Login</span>
-                <span>Register</span>
+                <span>Welcome, {username}</span>
+                <span onClick={handleLogout}>Logout</span>
+
               </>
             )}
           </div>
         </div>
         <div className="right">
           <SearchBar />
+
+          <BsPersonCircle className="icon" onClick={toggleDropdown} />
+          {showDropdown && (
+            <div className="profile-dropdown">
+              <div className="profile-header">
+                <img
+                  src="https://via.placeholder.com/100" // Ganti dengan URL gambar profil
+                  alt="profile"
+                  className="profile-image"
+                />
+                <h4>{username || "Guest"}</h4> {/* Menampilkan nama user */}
+                <span className="profile-email">{email || "Unknown ID"}</span>
+                <span className="profile-role">{role || "Guest Role"}</span>
+              </div>
+              <div className="profile-actions">
+                <button className="btn-profile">Profile</button>
+                <button className="btn-signout" onClick={handleLogout}>Sign out</button>
+              </div>
+            </div>
+          )}
+
           <MenuIcon className="hamburger" onClick={toggleSidebar} />
         </div>
       </div>
@@ -77,17 +132,24 @@ const Navbar = () => {
       {/* Sidebar Menu */}
       <div className={`sidebar ${sidebarVisible ? "active" : ""}`}>
         <div className="sidebar-header">
-          <span className="logo-brand">Lalajo Euy!</span>
+          <span className="logo-brand" onClick={() => navigate("/")}>
+            Lalajo Euy!
+          </span>
           <CloseIcon className="close-icon" onClick={toggleSidebar} />
         </div>
-        <span>Home</span>
-        {!user ? ( // Show Login/Register in sidebar if not logged in
+
+        <span onClick={() => navigate("/")}>Home</span>
+        {!username ? (
           <>
-            <span>Login</span>
-            <span>Register</span>
+            <span onClick={() => navigate("/login")}>Login</span>
+            <span onClick={() => navigate("/register")}>Register</span>
           </>
         ) : (
-          <span>{user}</span> // Show email in sidebar if logged in
+          <>
+            <span>Welcome, {username}</span>
+            <span onClick={handleLogout}>Logout</span>
+          </>
+
         )}
         <div className="country">
           <div className="options">

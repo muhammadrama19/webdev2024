@@ -1,65 +1,91 @@
-import React, { useState } from "react";
+
+import React, { useState } from 'react';
 import AuthForm from "../components/authform/authForm";
 import FormInput from "../components/forminput/formInput";
 import { Button } from "react-bootstrap";
-import "./login.scss";
-import { useAuth } from "../hooks/useAuth"; // Import the custom hook
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 import GoogleLogin from "../components/googleButton/googleButton";
 
+import "./login.scss";
+
 const LoginForm = () => {
-  const { setToken } = useAuth(); // Use the custom hook for token handling
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [values, setValues] = useState({
+    email: '',
+    password: ''
+  });
+
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Mengaktifkan kredensial untuk memungkinkan pengiriman cookie dari backend
+  axios.defaults.withCredentials = true;
 
-    try {
-      const response = await fetch("http://localhost:8001/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Mencegah reload halaman
 
-      const data = await response.json();
-      console.log("Response data:", data);
-      if (response.ok) {
-        setToken(data.token); // Store the token
-        alert("Login successful");
-        localStorage.setItem('email', data.email); 
-        navigate("/");
-      } else {
-        alert(data.message || "Login failed");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred");
-    }
+    // Melakukan POST request ke backend dengan data login
+    axios.post('http://localhost:8001/login', values)
+      .then(res => {
+        if (res.data.Status === "Login Success") {
+          // Menyimpan nama user dan token di localStorage
+          localStorage.setItem('username', res.data.username); // menyimpan nama pengguna
+          localStorage.setItem('token', res.data.token); // menyimpan token JWT
+          localStorage.setItem('email', res.data.email);
+          localStorage.setItem('role', res.data.role);
+                  
+          // Navigasikan ke halaman home setelah login sukses
+          navigate('/');
+          window.location.reload();
+
+        } else {
+          // Jika login gagal, tampilkan pesan kesalahan
+          alert(res.data.Message);
+        }
+      })
+      .catch(err => console.log("Login Error:", err));
+  };
+
+  // Handler untuk perubahan input
+  const handleInputChange = (e) => {
+    setValues({
+      ...values,
+      [e.target.name]: e.target.value // Menetapkan nilai email/password berdasarkan input
+    });
+
   };
 
   return (
     <AuthForm title="Login" linkText="Don't have an account?" linkHref="/register">
       <form onSubmit={handleSubmit}>
+
+        {/* Input email */}
         <FormInput
           label="Email"
           type="email"
+          name="email"
           placeholder="user@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={values.email}
+          onChange={handleInputChange}
         />
+        
+        {/* Input password */}
         <FormInput
           label="Password"
           type="password"
+          name="password"
           placeholder="********"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={values.password}
+          onChange={handleInputChange}
         />
-        <Button type="submit" className="loginButton">
+        
+        {/* Tombol submit */}
+        <Button
+          type="submit"
+          className="loginButton"
+        >
           Login
         </Button>
-        <GoogleLogin/>
+
       </form>
     </AuthForm>
   );

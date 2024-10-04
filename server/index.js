@@ -3,21 +3,30 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const mysql = require('mysql2');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-// const authRoutes = require('./routes/auth');
-// const protectedRoutes = require('./routes/protected');
 const bodyParser = require('body-parser');
 // const googleAuth = require('./routes/googleAuth');
 const passport= require('./middleware/passport-setup')
-
-
-// const authRoutes = require('./routes/auth');
-
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 
 const app = express();
-app.use(cors()); 
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Check if the request origin is in the allowedOrigins array
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true // Untuk mengizinkan penggunaan cookie
+}));
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -539,6 +548,379 @@ app.get('/featured', (req, res) => {
 );
 
 
+//CMS
+
+app.get('/dashboard', (req, res) => {
+  const queryMovies = 'SELECT COUNT(*) AS movieCount FROM movies';
+  const queryGenres = 'SELECT COUNT(*) AS genreCount FROM genres';
+  const queryCountries = 'SELECT COUNT(*) AS countryCount FROM countries';
+  const queryAwards = 'SELECT COUNT(*) AS awardCount FROM users';
+
+  // Menjalankan query secara berurutan menggunakan promise
+  const getMoviesCount = () => new Promise((resolve, reject) => {
+    db.query(queryMovies, (err, results) => {
+      if (err) reject(err);
+      else resolve(results[0].movieCount);
+    });
+  });
+
+  const getGenresCount = () => new Promise((resolve, reject) => {
+    db.query(queryGenres, (err, results) => {
+      if (err) reject(err);
+      else resolve(results[0].genreCount);
+    });
+  });
+
+  const getCountriesCount = () => new Promise((resolve, reject) => {
+    db.query(queryCountries, (err, results) => {
+      if (err) reject(err);
+      else resolve(results[0].countryCount);
+    });
+  });
+
+  const getAwardsCount = () => new Promise((resolve, reject) => {
+    db.query(queryAwards, (err, results) => {
+      if (err) reject(err);
+      else resolve(results[0].awardCount);
+    });
+  });
+
+  // Menggunakan Promise.all untuk menjalankan semua query secara paralel
+  Promise.all([getMoviesCount(), getGenresCount(), getCountriesCount(), getAwardsCount()])
+    .then(([movieCount, genreCount, countryCount, awardCount]) => {
+      const response = {
+        movieCount,
+        genreCount,
+        countryCount,
+        awardCount,
+      };
+      res.json(response);
+    })
+    .catch(err => {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+    });
+});
+
+
+
+app.get('/movie-list', (req, res) => {
+  const { status } = req.query; // Ambil query parameter status dari request
+
+  let query = `
+    SELECT
+      m.status, 
+      m.id, 
+      m.title, 
+      GROUP_CONCAT(DISTINCT ac.name SEPARATOR ', ') AS Actors,
+      GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,
+      m.synopsis
+    FROM movies m
+    JOIN movie_actors mac ON mac.movie_id = m.id
+    JOIN actors ac ON ac.id = mac.actor_id
+    JOIN movie_genres mg ON mg.movie_id = m.id
+    JOIN genres g ON g.id = mg.genre_id
+  `;
+
+  // Tambahkan filter berdasarkan status jika parameter status ada
+  if (status) {
+    query += ` WHERE m.status = ${db.escape(status)}`; // Escape parameter status untuk menghindari SQL injection
+  }
+
+  query += ` GROUP BY m.id`;
+
+  // Eksekusi query dan kirim hasil ke frontend
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);  
+  });
+});
+
+
+app.get('/users', (req, res) => {
+  const query = `
+    SELECT id, username, role, email FROM users
+  `;
+
+  // Eksekusi query dan kirim hasil ke frontend
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);  
+  });
+});
+
+
+
+app.get('/actors', (req, res) => {
+  const query = `
+    SELECT 
+      a.id, 
+      a.name, 
+      a.birthdate, 
+      c.country_name, 
+      a.actor_picture 
+    FROM 
+      actors a
+    JOIN 
+      countries c
+    ON 
+      a.country_birth_id = c.id
+    ORDER BY 
+      a.id ASC;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+app.get('/genres', (req, res) => {
+  const query = 'SELECT id, name FROM genres ORDER BY id ASC ';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+app.get('/countries', (req, res) => {
+  const query = 'SELECT id, country_name FROM countries ORDER BY id ASC ';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+app.get('/awards', (req, res) => {
+  const query = `
+    SELECT 
+      a.id, 
+      a.awards_name, 
+      c.country_name 
+    FROM 
+      awards a 
+    JOIN 
+      countries c 
+    ON 
+      a.country_id = c.id 
+    ORDER BY 
+      a.id ASC;
+  `;
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+app.get('/reviews', (req, res) => {
+  const query = `
+    SELECT 
+      reviews.id AS review_id,
+      reviews.content,
+      reviews.rating,
+      reviews.status,
+      reviews.created_at,
+      reviews.updated_at,
+      movies.title AS movie_title,
+      users.username AS user_name
+    FROM 
+      reviews
+    JOIN 
+      movies ON reviews.movie_id = movies.id
+    JOIN 
+      users ON reviews.user_id = users.id
+    ORDER BY reviews.id ASC
+  `;
+  
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+//CRUD
+
+//ADD MOVIES
+app.post('/add-drama', (req, res) => {
+  const {
+    poster,
+    title,
+    alt_title,
+    release_year,
+    country,
+    synopsis,
+    availability,
+    genres,
+    actors,
+    trailer,
+    award,
+    background,
+  } = req.body;
+
+  const query = `INSERT INTO dramas (poster, title, alt_title, release_year, country, synopsis, availability, genres, actors, trailer, award, background) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  db.query(query, [poster, title, alt_title, release_year, country, synopsis, availability, genres.join(', '), actors.join(', '), trailer, award.join(', '), background], (err, result) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.status(200).json({ message: 'Drama added successfully' });
+  });
+});
+
+
+//SET TRASH
+app.put('/movie-delete/:id', (req, res) => {
+  const movieId = req.params.id;
+
+  const query = `UPDATE movies SET status = 0 WHERE id = ?`;
+
+  db.query(query, [movieId], (err, result) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    res.status(200).json({ message: 'Movie moved to trash successfully' });
+  });
+});
+
+//PERMANENT DELETE
+// Endpoint untuk mengubah status menjadi 3 (permanen delete dari trash)
+app.put('/movie-permanent-delete/:id', (req, res) => {
+  const movieId = req.params.id;
+
+  const query = `UPDATE movies SET status = 3 WHERE id = ?`;
+
+  db.query(query, [movieId], (err, result) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    res.status(200).json({ message: 'Movie permanently deleted successfully' });
+  });
+});
+
+
+//RESTORE
+app.put('/movie-restore/:id', (req, res) => {
+  const movieId = req.params.id;
+  const query = `UPDATE movies SET status = 1 WHERE id = ?`;
+
+  db.query(query, [movieId], (err, result) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    res.status(200).json({ message: 'Movie restored successfully' });
+  });
+});
+
+//LOGIN 
+app.post('/login', (req, res) => {
+  const query = "SELECT * FROM users WHERE email = ?";
+  
+  db.query(query, [req.body.email], (err, data) => {
+    if (err) {
+      return res.json({ Message: "Server Side Error" });
+    }
+
+    if (data.length > 0) {
+      const user = data[0];
+
+      bcrypt.compare(req.body.password, user.password, (err, result) => {
+        if (err) {
+          return res.json({ Message: "Error comparing password" });
+        }
+
+        if (result) {
+          const token = jwt.sign(
+            { username: user.username, email: user.email, role: user.role }, // Tambahkan role ke JWT
+            "our-jsonwebtoken-secret-key",
+            { expiresIn: '1d' }
+          );
+
+          res.cookie('token', token, { httpOnly: true, sameSite: 'strict' });
+
+          // Kirim username, email, dan role ke frontend
+          return res.json({
+            Status: "Login Success",
+            username: user.username,
+            email: user.email,
+            role: user.role
+          });
+        } else {
+          return res.json({ Message: "Incorrect Password" });
+        }
+      });
+    } else {
+      return res.json({ Message: "No Records existed" });
+    }
+  });
+});
+
+
+
+//REGISTER
+app.post('/register', (req, res) => {
+  console.log("Incoming request body:", req.body); // Debugging
+
+  const sql = "INSERT INTO users (`username`, `email`, `password`) VALUES (?)";
+  const saltRounds = 10;
+
+  bcrypt.hash(req.body.password, saltRounds, (err, hashedPassword) => {
+    if (err) {
+      return res.json({ message: "Error hashing password", success: false });
+    }
+
+    const values = [req.body.username, req.body.email, hashedPassword];
+
+    db.query(sql, [values], (err, data) => {
+      if (err) {
+        console.error("Error saving user:", err); // Debugging
+        return res.json({ message: "Username/Password Sudah Terdaftar, silahkan buat yang lain", success: false });
+      }
+      console.log("User registered successfully:", data); // Debugging
+      return res.json({ message: "Registration successful", success: true });
+    });
+  });
+});
+
+
 
 
 // Starting the server
@@ -546,3 +928,4 @@ const PORT = 8001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+

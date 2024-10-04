@@ -1,0 +1,43 @@
+.user-setting-container {
+    padding: 20px;
+    height: 100vh;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .user-table th,
+  .user-table td {
+    vertical-align: middle;
+  }
+  
+  .table-danger {
+    background-color: #f8d7da;
+  }
+  
+  .action-button {
+    text-decoration: none;
+    padding: 0;
+    margin-right: 10px;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .action-button .fa-envelope,
+  .action-button .fa-edit,
+  .action-button .fa-trash {
+    margin-right: 5px;
+  }
+  
+  .action-button:hover {
+    text-decoration: none;
+  }
+  
+  .text-danger {
+    color: #dc3545 !important;
+  }
+  
+  .text-danger:hover {
+    color: #c82333 !important;
+  }
+  
