@@ -6,21 +6,13 @@
   width: 100%;
   z-index: 100;
   background: linear-gradient(to top, transparent 10%, rgb(0, 0, 0, 0.3) 50%);
-  
 
-  .user-profile-pic {
-    width: 40px; // Set width
-    height: 40px; // Set height
-    border-radius: 50%; // Make it circular
-    margin-left: 10px; // Spacing from the text
-  }
-  
   &.scrolled {
     background-color: var(--main-color);
   }
 
   .container {
-    padding: 0px 50px;
+    padding: 0px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -33,6 +25,7 @@
         font-family: "Bebas Neue", sans-serif;
         font-size: 2vw;
         color: var(--primary-color);
+        cursor: pointer;
       }
 
       .nav-links {
@@ -51,56 +44,35 @@
             transition: all ease-in;
           }
         }
-
-        .country {
-          display: flex;
-          align-items: center;
-          position: relative;
-
-          span {
-            margin-right: 5px;
-          }
-
-          .icon {
-            margin-left: 0;
-          }
-
-          .options {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background-color: black;
-            color: white;
-            z-index: 100;
-            min-width: 120px;
-
-            span {
-              display: block;
-              padding: 5px 10px;
-              cursor: pointer;
-
-              &:hover {
-                background-color: black !important;
-                font-weight: bold;
-              }
-            }
-          }
-
-          &:hover .options {
-            display: block;
-          }
-        }
       }
     }
 
     .right {
       display: flex;
       align-items: center;
+      justify-content: flex-end;
 
       .icon {
         margin: 0px 15px;
         cursor: pointer;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        margin-left: 10px; /* Margin between search icon and user */
+        color: white;
+        font-size: 16px;
+
+        .profile-name {
+          margin-right: 10px;
+          font-weight: bold;
+        }
+
+        .profile-icon {
+          margin-right: 10px;
+          font-size: 1.5rem;
+        }
       }
 
       .hamburger {
@@ -128,24 +100,27 @@
       display: flex;
       flex-direction: column;
       transform: translateX(0);
+
       .sidebar-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+
         .close-icon {
           cursor: pointer;
           margin-bottom: 20px;
         }
       }
     }
+
     .logo-brand {
       font-weight: bold;
       font-size: 1.5rem;
       margin-bottom: 20px;
     }
+
     span {
       display: block;
-      // margin-bottom: 20px;
       cursor: pointer;
       margin: 20px 20px;
       font-weight: 500;
@@ -162,10 +137,12 @@
         display: none;
         position: static;
         background-color: transparent;
+
         span {
           display: block;
           padding: 5px 0;
           cursor: pointer;
+
           &:hover {
             background-color: transparent !important;
             font-weight: bold;
@@ -179,6 +156,81 @@
     }
   }
 
+  .profile-dropdown {
+    position: absolute;
+    top: 70px;
+    right: 10px;
+    width: 250px;
+    background-color: #304058; /* Sesuaikan warna */
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    z-index: 100;
+    text-align: center;
+  }
+  
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .profile-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+  
+  .profile-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+  
+  .profile-email {
+    font-size: 14px;
+    color: #ffffff;
+  }
+  
+  .profile-role {
+    font-size: 14px;
+    color: #ffffff;
+    margin-bottom: 15px;
+  }
+  
+  .profile-actions {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .btn-profile,
+  .btn-signout {
+    padding: 10px;
+    border: none;
+    background-color: #fff;
+    color: #ff5722;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 45%;
+  }
+  
+  .btn-profile:hover,
+  .btn-signout:hover {
+    background-color: #ff5722;
+    color: #fff;
+  }
+  
+  .icon {
+    vertical-align: middle;
+    line-height: 1px;
+    font-size: 26px;
+    cursor: pointer;
+  }
+
   @media screen and (max-width: 960px) {
     .logo-brand {
       font-size: 5vw;
@@ -188,16 +240,20 @@
 
     .container {
       padding: 0 20px;
+      
       .left {
         .nav-links {
           display: none;
         }
-
       }
 
       .right {
         .hamburger {
           display: block;
+        }
+
+        .user-info {
+          display: none; /* Hide user info on small screens */
         }
       }
     }

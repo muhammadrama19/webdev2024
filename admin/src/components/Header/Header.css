@@ -1,0 +1,132 @@
+.header {
+  grid-area: header;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px 0 30px;
+  box-shadow: 0 6px 7px -3px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.menu-icon {
+  display: none;
+}
+
+.icon_header {
+  vertical-align: middle;
+  line-height: 1px;
+  font-size: 26px;
+  margin-right: 5px;
+}
+
+.close_icon {
+  color: red;
+  margin-left: 30px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+/* Dropdown styling */
+.profile-dropdown {
+  position: absolute;
+  top: 70px;
+  right: 10px;
+  width: 250px;
+  background-color: #304058; /* Sesuaikan warna */
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  z-index: 100;
+  text-align: center;
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.profile-header h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.profile-id {
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.profile-degree {
+  font-size: 14px;
+  color: #ffffff;
+  margin-bottom: 15px;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-profile,
+.btn-signout {
+  padding: 10px;
+  border: none;
+  background-color: #fff;
+  color: #ff5722;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 45%;
+}
+
+.btn-profile:hover,
+.btn-signout:hover {
+  background-color: #ff5722;
+  color: #fff;
+}
+
+.icon {
+  vertical-align: middle;
+  line-height: 1px;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+/* Media queries */
+@media screen and (max-width: 992px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.2fr 3fr;
+    grid-template-areas:
+      'header'
+      'main';
+  }
+
+  .sidebar-title > span {
+    display: inline;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .main-cards {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .charts {
+    grid-template-columns: 1fr;
+    margin-top: 30px;
+  }
+}
