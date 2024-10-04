@@ -1,14 +1,28 @@
+require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
 const cors = require('cors');
 const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+// const authRoutes = require('./routes/auth');
+// const protectedRoutes = require('./routes/protected');
 const bodyParser = require('body-parser');
+// const googleAuth = require('./routes/googleAuth');
+const passport= require('./middleware/passport-setup')
+
+
+// const authRoutes = require('./routes/auth');
+
+
 
 const app = express();
 app.use(cors()); 
 app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+
 
 // MySQL connection setup
 const db = mysql.createConnection({
@@ -17,6 +31,7 @@ const db = mysql.createConnection({
   password: "", 
   database: "lalajoeuydb"
 });
+
 
 db.connect((err) => {
   if (err) {
@@ -27,78 +42,41 @@ db.connect((err) => {
 });
 
 
+app.use(cors({
+  origin: 'http://localhost:3000', // Adjust based on your frontend port
+  credentials: true,
+}));
 
-app.post('/api/signup', async (req, res) => {
-  const { username, email, password, profile_pic } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  console.log("masyk gak")
-  db.query('INSERT INTO users (username, email, password, profile_picture) VALUES (?, ?, ?, ?)',
-      [username, email, hashedPassword, profile_pic],
-      (err, result) => {
-          if (err) {
-              return res.status(500).json({ error: err.message });
-          }
-          res.status(201).json({ message: 'User created successfully!' });
-      });
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Google OAuth login
+app.get('/auth/google', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+}));
+
+// Google OAuth callback
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    console.log('Google authentication successful, redirecting to profile.');
+    res.redirect('http://localhost:3000/');
+  }
+);
+
+// Logout route
+app.get('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/');
 });
 
-// Sign-in Route
-app.post('/api/signin', (req, res) => {
-  const { email, password } = req.body;
-  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
-      if (err || results.length === 0) {
-          return res.status(401).json({ message: 'Authentication failed!' });
-      }
-      const user = results[0];
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) {
-          return res.status(401).json({ message: 'Authentication failed!' });
-      }
-      const token = jwt.sign({ id: user.id }, 'aa8506bc4234ccbcb029ee9a7ee6e3280afe57a76925aca872ecabe108aa4f0f', { expiresIn: '1h' });
-      res.status(200).json({ message: 'Authentication successful!', token, user: { username: user.username, profile_picture: user.profile_picture } });
-      console.log(user)
 
-  });
-});
-
-// // Fetch movies with pagination
-// app.get('/movies/movie', (req, res) => {
-//   const { page = 1, limit = 10 } = req.query;
-//   const offset = (page - 1) * limit;
-
-//   const query = `
-//     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
-//            GROUP_CONCAT(g.name SEPARATOR ', ') AS genres, 
-//            m.imdb_score AS rating, m.view 
-//     FROM movies m
-//     JOIN movie_genres mg ON m.id = mg.movie_id
-//     JOIN genres g ON mg.genre_id = g.id
-//     GROUP BY m.id
-//     LIMIT ? OFFSET ?;
-//   `;
-
-//   db.query(query, [parseInt(limit), parseInt(offset)], (err, results) => {
-//     if (err) {
-//       res.status(500).json({ error: 'Database query failed' });
-//       return;
-//     }
-
-//     const countQuery = 'SELECT COUNT(*) AS totalCount FROM movies';
-    
-//     db.query(countQuery, (countErr, countResults) => {
-//       if (countErr) {
-//         res.status(500).json({ error: 'Failed to get movie count' });
-//         return;
-//       }
-
-//       const totalCount = countResults[0].totalCount;
-//       res.json({
-//         movies: results, 
-//         totalCount,
-//       });
-//     });
-//   });
-// });
 app.get('/movies/movie', (req, res) => {
   const { page = 1, limit = 10, yearRange, genre, status, availability, country_release, sort, awards } = req.query;
   const offset = (page - 1) * limit;

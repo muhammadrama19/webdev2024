@@ -166,7 +166,7 @@ useEffect(() => {
             <span>Filter by:</span>
           </Col>
         </Row>
-        <Row className="align-items-center" style={{ borderTop: "1px solid var(--primary-color)" }}>
+        <Row className="g-3 align-items-center" style={{ borderTop: "1px solid var(--primary-color)",  gap: "1rem"  }}>
           <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
               label="Year"

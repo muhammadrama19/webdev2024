@@ -1,6 +1,5 @@
 .dropdown-filter {
-  // Style the entire dropdown container
-  margin: 10px 10px;
+  margin: 10px;
   min-width: 100px;
 
   .dropdown-toggle {
@@ -9,10 +8,11 @@
     border: none;
     color: white;
     font-weight: bold;
-    padding: 10px 15px;
+
     border-radius: 4px;
-    margin: 10px 10px;
-    min-width: 100px;
+    margin: 10px;
+    min-width: 120px;
+    
     &:hover {
       background-color: var(--primary-on-hover); // Hover effect
     }
