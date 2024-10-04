@@ -100,6 +100,9 @@ const Navbar = ({ loggedInUsername }) => {
         <div className="right">
           <SearchBar />
           <BsPersonCircle className="icon" onClick={toggleDropdown} />
+          <span className="user-name" onClick={toggleDropdown}>
+          {username || "Guest"}
+        </span>
           {showDropdown && (
             <div className="profile-dropdown">
               <div className="profile-header">
