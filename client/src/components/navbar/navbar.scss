@@ -7,13 +7,12 @@
   z-index: 100;
   background: linear-gradient(to top, transparent 10%, rgb(0, 0, 0, 0.3) 50%);
   
-
   &.scrolled {
     background-color: var(--main-color);
   }
 
   .container {
-    padding: 0px 50px;
+    padding: 0px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -26,6 +25,7 @@
         font-family: "Bebas Neue", sans-serif;
         font-size: 2vw;
         color: var(--primary-color);
+        cursor: pointer;
       }
 
       .nav-links {
@@ -44,56 +44,35 @@
             transition: all ease-in;
           }
         }
-
-        .country {
-          display: flex;
-          align-items: center;
-          position: relative;
-
-          span {
-            margin-right: 5px;
-          }
-
-          .icon {
-            margin-left: 0;
-          }
-
-          .options {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background-color: black;
-            color: white;
-            z-index: 100;
-            min-width: 120px;
-
-            span {
-              display: block;
-              padding: 5px 10px;
-              cursor: pointer;
-
-              &:hover {
-                background-color: black !important;
-                font-weight: bold;
-              }
-            }
-          }
-
-          &:hover .options {
-            display: block;
-          }
-        }
       }
     }
 
     .right {
       display: flex;
       align-items: center;
+      justify-content: flex-end;
 
       .icon {
         margin: 0px 15px;
         cursor: pointer;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        margin-left: 10px; /* Margin between search icon and user */
+        color: white;
+        font-size: 16px;
+
+        .profile-name {
+          margin-right: 10px;
+          font-weight: bold;
+        }
+
+        .profile-icon {
+          margin-right: 10px;
+          font-size: 1.5rem;
+        }
       }
 
       .hamburger {
@@ -121,24 +100,27 @@
       display: flex;
       flex-direction: column;
       transform: translateX(0);
+
       .sidebar-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+
         .close-icon {
           cursor: pointer;
           margin-bottom: 20px;
         }
       }
     }
+
     .logo-brand {
       font-weight: bold;
       font-size: 1.5rem;
       margin-bottom: 20px;
     }
+
     span {
       display: block;
-      // margin-bottom: 20px;
       cursor: pointer;
       margin: 20px 20px;
       font-weight: 500;
@@ -155,10 +137,12 @@
         display: none;
         position: static;
         background-color: transparent;
+
         span {
           display: block;
           padding: 5px 0;
           cursor: pointer;
+
           &:hover {
             background-color: transparent !important;
             font-weight: bold;
@@ -181,16 +165,20 @@
 
     .container {
       padding: 0 20px;
+      
       .left {
         .nav-links {
           display: none;
         }
-
       }
 
       .right {
         .hamburger {
           display: block;
+        }
+
+        .user-info {
+          display: none; /* Hide user info on small screens */
         }
       }
     }

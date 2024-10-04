@@ -832,35 +832,25 @@ app.put('/movie-restore/:id', (req, res) => {
 app.post('/login', (req, res) => {
   const query = "SELECT * FROM users WHERE email = ?";
   
-  // Mencari user berdasarkan email
   db.query(query, [req.body.email], (err, data) => {
     if (err) {
       return res.json({ Message: "Server Side Error" });
     }
 
-    // Jika email ditemukan di database
     if (data.length > 0) {
       const user = data[0];
 
-      // Membandingkan password yang dimasukkan dengan password hash di database
       bcrypt.compare(req.body.password, user.password, (err, result) => {
         if (err) {
           return res.json({ Message: "Error comparing password" });
         }
 
-        // Jika password cocok
         if (result) {
-          const name = user.name;
+          const token = jwt.sign({ name: user.username, email: user.email }, "our-jsonwebtoken-secret-key", { expiresIn: '1d' });
 
-          // Membuat token JWT
-          const token = jwt.sign({ name }, "our-jsonwebtoken-secret-key", { expiresIn: '1d' });
-
-          // Menyimpan token dalam cookie
           res.cookie('token', token, { httpOnly: true, sameSite: 'strict' });
-
-          return res.json({ Status: "Login Success" });
+          return res.json({ Status: "Login Success", username: user.username });
         } else {
-          // Jika password tidak cocok
           return res.json({ Message: "Incorrect Password" });
         }
       });
@@ -869,6 +859,7 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
 
 //REGISTER
 app.post('/register', (req, res) => {
@@ -887,7 +878,7 @@ app.post('/register', (req, res) => {
     db.query(sql, [values], (err, data) => {
       if (err) {
         console.error("Error saving user:", err); // Debugging
-        return res.json({ message: "Error saving user", success: false });
+        return res.json({ message: "Username/Password Sudah Terdaftar, silahkan buat yang lain", success: false });
       }
       console.log("User registered successfully:", data); // Debugging
       return res.json({ message: "Registration successful", success: true });

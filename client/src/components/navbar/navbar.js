@@ -1,27 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import { useNavigate } from "react-router-dom"; 
 import SearchIcon from "@mui/icons-material/Search";
-import LoginIcon from "@mui/icons-material/Login";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchBar from "../searchInput/search";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import "./navbar.scss";
 
-const Navbar = () => {
+const Navbar = ({ loggedInUsername }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [countries, setCountries] = useState(["Indonesia", "Japan"]); // Fallback data
+  const [countries, setCountries] = useState(["Indonesia", "Japan"]); 
   const [selectedCountry, setSelectedCountry] = useState("Indonesia");
-  const [searchVisible, setSearchVisible] = useState(false); // State to control search visibility
-  const [sidebarVisible, setSidebarVisible] = useState(false); // State to control sidebar visibility
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [ username, setUsername] = useState(loggedInUsername || localStorage.getItem("username"));
 
-  const navigate = useNavigate(); // Initialize useNavigate for navigation
+  const navigate = useNavigate(); 
 
-  // Simulate fetching countries from backend
+  useEffect(() => {
+    if (loggedInUsername) {
+      setUsername(loggedInUsername);
+    }
+  }, [loggedInUsername]);
+
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        // Replace this URL with your actual endpoint
         const response = await fetch("/api/countries");
         const data = await response.json();
         setCountries(data);
@@ -45,7 +49,6 @@ const Navbar = () => {
     setSidebarVisible(!sidebarVisible);
   };
 
-  // Close sidebar when screen size is larger than 960px
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth > 960) {
@@ -55,7 +58,6 @@ const Navbar = () => {
 
     window.addEventListener("resize", handleResize);
 
-    // Cleanup event listener on component unmount
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -64,28 +66,47 @@ const Navbar = () => {
     return () => (window.onscroll = null);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('username');
+    localStorage.removeItem('token');
+    setUsername(null);
+    navigate('/login');
+  };
+
   return (
     <div className={isScrolled ? "navbar scrolled" : "navbar"}>
       <div className="container">
         <div className="left">
-          {/* Add onClick for redirecting to home on logo click */}
           <span className="logo-brand mt-2 me-3 mb-2" onClick={() => navigate("/")}>
             Lalajo Euy!
           </span>
           <div className="nav-links">
-            {/* Add onClick for each navigation link */}
             <span onClick={() => navigate("/")}>Home</span>
-            <span onClick={() => navigate("/login")}>Login</span>
-            <span onClick={() => navigate("/register")}>Register</span>
+            {!username ? (
+              <>
+                <span onClick={() => navigate("/login")}>Login</span>
+                <span onClick={() => navigate("/register")}>Register</span>
+              </>
+            ) : (
+              <>
+                <span>Welcome, {username}</span>
+                <span onClick={handleLogout}>Logout</span>
+              </>
+            )}
           </div>
         </div>
         <div className="right">
           <SearchBar />
-          <MenuIcon className="hamburger" onClick={toggleSidebar} /> {/* Add this */}
+          {username && (
+            <div className="user-info">
+              <span className="profile-name">{username}</span>
+              <AccountCircleIcon className="profile-icon" />
+            </div>
+          )}
+          <MenuIcon className="hamburger" onClick={toggleSidebar} />
         </div>
       </div>
 
-      {/* Sidebar Menu */}
       <div className={`sidebar ${sidebarVisible ? "active" : ""}`}>
         <div className="sidebar-header">
           <span className="logo-brand" onClick={() => navigate("/")}>
@@ -94,8 +115,17 @@ const Navbar = () => {
           <CloseIcon className="close-icon" onClick={toggleSidebar} />
         </div>
         <span onClick={() => navigate("/")}>Home</span>
-        <span onClick={() => navigate("/login")}>Login</span>
-        <span onClick={() => navigate("/register")}>Register</span>
+        {!username ? (
+          <>
+            <span onClick={() => navigate("/login")}>Login</span>
+            <span onClick={() => navigate("/register")}>Register</span>
+          </>
+        ) : (
+          <>
+            <span>Welcome, {username}</span>
+            <span onClick={handleLogout}>Logout</span>
+          </>
+        )}
         <div className="country">
           <div className="options">
             {countries.map((country, index) => (
