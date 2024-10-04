@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import './Sidebar.css';
+import React, { useState, useEffect } from "react";
+import "./Sidebar.css";
 import {
   BsHeadsetVr,
   BsGrid1X2Fill,
@@ -7,13 +7,13 @@ import {
   BsFillFolderFill,
   BsBook,
   BsPeopleFill,
-  BsMenuButtonWideFill,
+  BsArrowLeftRight,
   BsFillGearFill,
   BsJustify,
-  BsChevronDown, 
-  BsChevronUp
-} from 'react-icons/bs';
-import { NavLink, useLocation } from 'react-router-dom'; // Import useLocation untuk memeriksa rute saat ini
+  BsChevronDown,
+  BsChevronUp,
+} from "react-icons/bs";
+import { NavLink, useLocation } from "react-router-dom"; // Import useLocation untuk memeriksa rute saat ini
 
 function Sidebar({ openSidebarToggle, OpenSidebar }) {
   const location = useLocation(); // Mengambil rute saat ini
@@ -66,14 +66,30 @@ function Sidebar({ openSidebarToggle, OpenSidebar }) {
         <li className="sidebar-list-item">
           <div className="sidebar-link" onClick={toggleMoviesMenu}>
             <BsFillArchiveFill className="icon" /> <span>Movies</span>
-            {isMoviesOpen ? <BsChevronUp className="accordion-icon" /> : <BsChevronDown className="accordion-icon" />}
+            {isMoviesOpen ? (
+              <BsChevronUp className="accordion-icon" />
+            ) : (
+              <BsChevronDown className="accordion-icon" />
+            )}
           </div>
           <ul className={`submenu-list ${isMoviesOpen ? "open" : "closed"}`}>
             <li className="submenu-list-item">
-              <NavLink to="/movie-list" className="submenu-link" activeClassName="active">Movie List</NavLink>
+              <NavLink
+                to="/movie-list"
+                className="submenu-link"
+                activeClassName="active"
+              >
+                Movie List
+              </NavLink>
             </li>
             <li className="submenu-list-item">
-              <NavLink to="/movie-validation" className="submenu-link" activeClassName="active">Movie Validation</NavLink>
+              <NavLink
+                to="/movie-validation"
+                className="submenu-link"
+                activeClassName="active"
+              >
+                Movie Validation
+              </NavLink>
             </li>
           </ul>
         </li>
@@ -82,43 +98,95 @@ function Sidebar({ openSidebarToggle, OpenSidebar }) {
         <li className="sidebar-list-item">
           <div className="sidebar-link" onClick={toggleAttributesMenu}>
             <BsFillFolderFill className="icon" /> <span>Attributes</span>
-            {isAttributesOpen ? <BsChevronUp className="accordion-icon" /> : <BsChevronDown className="accordion-icon" />}
+            {isAttributesOpen ? (
+              <BsChevronUp className="accordion-icon" />
+            ) : (
+              <BsChevronDown className="accordion-icon" />
+            )}
           </div>
-          <ul className={`submenu-list ${isAttributesOpen ? "open" : "closed"}`}>
+          <ul
+            className={`submenu-list ${isAttributesOpen ? "open" : "closed"}`}
+          >
             <li className="submenu-list-item">
-              <NavLink to="/attribute-actor" className="submenu-link" activeClassName="active">Input Actor</NavLink>
+              <NavLink
+                to="/attribute-actor"
+                className="submenu-link"
+                activeClassName="active"
+              >
+                Input Actor
+              </NavLink>
             </li>
             <li className="submenu-list-item">
-              <NavLink to="/attribute-genre" className="submenu-link" activeClassName="active">Input Genre</NavLink>
+              <NavLink
+                to="/attribute-genre"
+                className="submenu-link"
+                activeClassName="active"
+              >
+                Input Genre
+              </NavLink>
             </li>
             <li className="submenu-list-item">
-              <NavLink to="/attribute-country" className="submenu-link" activeClassName="active">Input Country</NavLink>
+              <NavLink
+                to="/attribute-country"
+                className="submenu-link"
+                activeClassName="active"
+              >
+                Input Country
+              </NavLink>
             </li>
             <li className="submenu-list-item">
-              <NavLink to="/attribute-award" className="submenu-link" activeClassName="active">Input Award</NavLink>
+              <NavLink
+                to="/attribute-award"
+                className="submenu-link"
+                activeClassName="active"
+              >
+                Input Award
+              </NavLink>
             </li>
           </ul>
         </li>
 
         <li className="sidebar-list-item">
-          <NavLink to="/review-list" className="sidebar-link" activeClassName="active">
+          <NavLink
+            to="/review-list"
+            className="sidebar-link"
+            activeClassName="active"
+          >
             <BsBook className="icon" /> <span>Reviews</span>
           </NavLink>
         </li>
         <li className="sidebar-list-item">
-          <NavLink to="/users" className="sidebar-link" activeClassName="active">
+          <NavLink
+            to="/users"
+            className="sidebar-link"
+            activeClassName="active"
+          >
             <BsPeopleFill className="icon" /> <span>Users</span>
           </NavLink>
         </li>
         <li className="sidebar-list-item">
-          <NavLink to="/reports" className="sidebar-link" activeClassName="active">
-            <BsMenuButtonWideFill className="icon" /> <span>Reports</span>
-          </NavLink>
-        </li>
-        <li className="sidebar-list-item">
-          <NavLink to="/settings" className="sidebar-link" activeClassName="active">
+          <NavLink
+            to="/settings"
+            className="sidebar-link"
+            activeClassName="active"
+          >
             <BsFillGearFill className="icon" /> <span>Settings</span>
           </NavLink>
+        </li>
+        <br />
+        <li className="sidebar-list-item">
+          <span
+            onClick={() => {
+              const newTab = window.open("http://localhost:3001/", "clientTab");
+              if (newTab) {
+                newTab.focus(); // Memfokuskan ke tab jika sudah terbuka
+              }
+            }}
+            className="sidebar-link"
+            style={{ cursor: "pointer" }} 
+          >
+            <BsArrowLeftRight className="icon" /> <span>Switch to Client</span>
+          </span>
         </li>
       </ul>
     </aside>

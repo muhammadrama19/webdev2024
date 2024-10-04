@@ -1,9 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
-const app = express();0
-app.use(cors()); 
+const app = express();
+app.use(cors(
+  {
+    origin: 'http://localhost:3001',
+    credentials: true,
+  }
+)); 
 app.use(express.json()); 
 
 // MySQL connection setup
@@ -820,6 +827,75 @@ app.put('/movie-restore/:id', (req, res) => {
     res.status(200).json({ message: 'Movie restored successfully' });
   });
 });
+
+//LOGIN 
+app.post('/login', (req, res) => {
+  const query = "SELECT * FROM users WHERE email = ?";
+  
+  // Mencari user berdasarkan email
+  db.query(query, [req.body.email], (err, data) => {
+    if (err) {
+      return res.json({ Message: "Server Side Error" });
+    }
+
+    // Jika email ditemukan di database
+    if (data.length > 0) {
+      const user = data[0];
+
+      // Membandingkan password yang dimasukkan dengan password hash di database
+      bcrypt.compare(req.body.password, user.password, (err, result) => {
+        if (err) {
+          return res.json({ Message: "Error comparing password" });
+        }
+
+        // Jika password cocok
+        if (result) {
+          const name = user.name;
+
+          // Membuat token JWT
+          const token = jwt.sign({ name }, "our-jsonwebtoken-secret-key", { expiresIn: '1d' });
+
+          // Menyimpan token dalam cookie
+          res.cookie('token', token, { httpOnly: true, sameSite: 'strict' });
+
+          return res.json({ Status: "Login Success" });
+        } else {
+          // Jika password tidak cocok
+          return res.json({ Message: "Incorrect Password" });
+        }
+      });
+    } else {
+      return res.json({ Message: "No Records existed" });
+    }
+  });
+});
+
+//REGISTER
+app.post('/register', (req, res) => {
+  console.log("Incoming request body:", req.body); // Debugging
+
+  const sql = "INSERT INTO users (`username`, `email`, `password`) VALUES (?)";
+  const saltRounds = 10;
+
+  bcrypt.hash(req.body.password, saltRounds, (err, hashedPassword) => {
+    if (err) {
+      return res.json({ message: "Error hashing password", success: false });
+    }
+
+    const values = [req.body.username, req.body.email, hashedPassword];
+
+    db.query(sql, [values], (err, data) => {
+      if (err) {
+        console.error("Error saving user:", err); // Debugging
+        return res.json({ message: "Error saving user", success: false });
+      }
+      console.log("User registered successfully:", data); // Debugging
+      return res.json({ message: "Registration successful", success: true });
+    });
+  });
+});
+
+
 
 
 // Starting the server
