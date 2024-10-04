@@ -607,7 +607,7 @@ app.get('/movie-list', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    res.json(results);  // Mengembalikan data film beserta aktor dan genre
+    res.json(results);  
   });
 });
 
@@ -624,14 +624,30 @@ app.get('/users', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    res.json(results);  // Mengembalikan data film beserta aktor dan genre
+    res.json(results);  
   });
 });
 
 
 
 app.get('/actors', (req, res) => {
-  const query = 'SELECT id, name, actor_picture FROM actors ORDER BY id ASC';
+  const query = `
+    SELECT 
+      a.id, 
+      a.name, 
+      a.birthdate, 
+      c.country_name, 
+      a.actor_picture 
+    FROM 
+      actors a
+    JOIN 
+      countries c
+    ON 
+      a.country_birth_id = c.id
+    ORDER BY 
+      a.id ASC;
+  `;
+
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error executing query:', err.message);
@@ -641,6 +657,7 @@ app.get('/actors', (req, res) => {
     res.json(results);
   });
 });
+
 
 app.get('/genres', (req, res) => {
   const query = 'SELECT id, name FROM genres ORDER BY id ASC ';
@@ -667,7 +684,20 @@ app.get('/countries', (req, res) => {
 });
 
 app.get('/awards', (req, res) => {
-  const query = 'SELECT id, awards_name FROM awards ORDER BY id ASC ';
+  const query = `
+    SELECT 
+      a.id, 
+      a.awards_name, 
+      c.country_name 
+    FROM 
+      awards a 
+    JOIN 
+      countries c 
+    ON 
+      a.country_id = c.id 
+    ORDER BY 
+      a.id ASC;
+  `;
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error executing query:', err.message);
@@ -677,6 +707,7 @@ app.get('/awards', (req, res) => {
     res.json(results);
   });
 });
+
 
 app.get('/reviews', (req, res) => {
   const query = `
