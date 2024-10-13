@@ -898,20 +898,30 @@ app.get('/auth/google', passport.authenticate('google', {
 }));
 
 // Google OAuth callback
+// Google OAuth callback
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    // Mengambil user dari request setelah autentikasi
+    // Get user from request after authentication
     const user = req.user;
 
-    // Simpan user ke dalam cookie atau kirim ke frontend melalui URL
-    const username = user.username;
-    const email = user.email;
+    // Generate a JWT token or session for the user
+    const token = generateToken(user); // Implement your token generation logic
 
-    // Redirect ke frontend setelah login dengan parameter username dan email
-    res.redirect(`http://localhost:3001/?username=${username}&email=${email}`);
+    // Set token in a cookie
+    res.cookie('token', token, { httpOnly: true, secure: true }); // Set secure flag if using HTTPS
+
+    // Redirect to the frontend
+    res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
   }
-);app.post('/token', (req, res) => {
+);
+;
+
+function generateToken(user) {
+  return jwt.sign({ id: user.id, username: user.username, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+}
+
+app.post('/token', (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) return res.sendStatus(401); // No token sent

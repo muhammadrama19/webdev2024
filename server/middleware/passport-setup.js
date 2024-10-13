@@ -8,18 +8,29 @@ passport.use(new GoogleStrategy({
   callbackURL: 'http://localhost:8001/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    // Check for existing user
-    const [existingUser] = await db.promise().query(
+    // Check for existing user by Google ID
+    const [existingUserById] = await db.promise().query(
       'SELECT * FROM users WHERE googleId = ?', [profile.id]
     );
 
-    if (existingUser.length > 0) {
+    if (existingUserById.length > 0) {
       // User exists, log them in
-      console.log('User already exists:', existingUser[0]);
-      return done(null, existingUser[0]);
+      console.log('User already exists by Google ID:', existingUserById[0]);
+      return done(null, existingUserById[0]);
     }
 
-    // Create a new user
+    // Check for existing user by email to avoid duplicates
+    const [existingUserByEmail] = await db.promise().query(
+      'SELECT * FROM users WHERE email = ?', [profile.emails[0].value]
+    );
+
+    if (existingUserByEmail.length > 0) {
+      // If the user exists by email, log them in (considering they signed up via email before)
+      console.log('User already exists by email:', existingUserByEmail[0]);
+      return done(null, existingUserByEmail[0]);
+    }
+
+    // Create a new user if no existing user was found
     const [newUser] = await db.promise().query(
       'INSERT INTO users (googleId, email, username, role) VALUES (?, ?, ?, ?)',
       [profile.id, profile.emails[0].value, profile.displayName, 'User']
