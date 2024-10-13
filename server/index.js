@@ -57,29 +57,7 @@ app.use(session({
   saveUninitialized: false,
 }));
 
-app.use(passport.initialize());
-app.use(passport.session());
 
-// Google OAuth login
-app.get('/auth/google', passport.authenticate('google', {
-  scope: ['profile', 'email'],
-}));
-
-// Google OAuth callback
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    // Mengambil user dari request setelah autentikasi
-    const user = req.user;
-
-    // Simpan user ke dalam cookie atau kirim ke frontend melalui URL
-    const username = user.username;
-    const email = user.email;
-
-    // Redirect ke frontend setelah login dengan parameter username dan email
-    res.redirect(`http://localhost:3001/?username=${username}&email=${email}`);
-  }
-);
 
 
 // Logout route
@@ -557,7 +535,7 @@ app.get('/dashboard', (req, res) => {
   const queryMovies = 'SELECT COUNT(*) AS movieCount FROM movies';
   const queryGenres = 'SELECT COUNT(*) AS genreCount FROM genres';
   const queryCountries = 'SELECT COUNT(*) AS countryCount FROM countries';
-  const queryAwards = 'SELECT COUNT(*) AS awardCount FROM users';
+  const queryAwards = 'SELECT COUNT(*) AS awardCount FROM awards';
 
   // Menjalankan query secara berurutan menggunakan promise
   const getMoviesCount = () => new Promise((resolve, reject) => {
@@ -896,7 +874,30 @@ app.post('/login', (req, res) => {
   });
 });
 
+//Login with Google
+app.use(passport.initialize());
+app.use(passport.session());
 
+// Google OAuth login
+app.get('/auth/google', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+}));
+
+// Google OAuth callback
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    // Mengambil user dari request setelah autentikasi
+    const user = req.user;
+
+    // Simpan user ke dalam cookie atau kirim ke frontend melalui URL
+    const username = user.username;
+    const email = user.email;
+
+    // Redirect ke frontend setelah login dengan parameter username dan email
+    res.redirect(`http://localhost:3001/?username=${username}&email=${email}`);
+  }
+);
 
 //REGISTER
 app.post('/register', (req, res) => {
