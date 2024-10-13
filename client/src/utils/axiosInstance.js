@@ -2,7 +2,6 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { refreshAccessToken } from './authService'; // Import refresh token service
 
-// Create an axios instance
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:8001',
   withCredentials: true,
@@ -22,7 +21,6 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Response interceptor to refresh the access token when it expires
 axiosInstance.interceptors.response.use(
   (response) => {
     return response;
