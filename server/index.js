@@ -940,10 +940,6 @@ app.get('/auth/google/callback',
 
 
 
-//REGISTER
-app.post('/register', (req, res) => {
-  console.log("Incoming request body:", req.body); // Debugging
-
 app.get('/confirm-email/:token', (req, res) => {
   const { token } = req.params;
 
