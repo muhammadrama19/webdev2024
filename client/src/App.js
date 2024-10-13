@@ -7,6 +7,7 @@ import Login from './login/login';
 import TestFetch from './test/testFetch';
 import Detailmovie from './detailmovie/detailmovie';
 import SearchResult from './search/searchResult';
+import ForgotPassword from './forgotPassword/forgotPassword';
 import { SearchProvider } from './context/searchContext'; // Import SearchProvider
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Route path="/testFetch" element={<TestFetch />} />
           <Route path="/movies/:id" element={<Detailmovie />} />
           <Route path="/searchresult" element={<SearchResult />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           
         </Routes>

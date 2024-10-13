@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import AuthForm from "../components/authform/authForm";
 import FormInput from "../components/forminput/formInput";
 import { Button } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import GoogleLogin from "../components/googleButton/googleButton";
 
+import GoogleLogin from "../components/googleButton/googleButton";
 
 import "./login.scss";
 
@@ -29,14 +29,14 @@ const LoginForm = () => {
     axios.post('http://localhost:8001/login', values)
       .then(res => {
         if (res.data.Status === "Login Success") {
-          // Save accessToken and refreshToken to cookies
-          Cookies.set('accessToken', res.data.accessToken, { expires: 1, secure: true });
-          Cookies.set('refreshToken', res.data.refreshToken, { expires: 7, secure: true }); // Refresh token lasts longer
-          Cookies.set('username', res.data.username, { expires: 1 });
-          Cookies.set('email', res.data.email, { expires: 1 });
-          Cookies.set('role', res.data.role, { expires: 1 });
 
-          // Redirect to home page
+          // Simpan data ke dalam cookie dengan js-cookie
+          Cookies.set('username', res.data.username, { expires: 1 }); // Set cookie username dengan kadaluarsa 1 hari
+          Cookies.set('email', res.data.email, { expires: 1 }); // Set cookie email
+          Cookies.set('role', res.data.role, { expires: 1 }); // Set cookie role
+          Cookies.set('token', res.data.token, { expires: 1, secure: true, sameSite: 'Strict' }); // Set cookie JWT token
+          Cookies.set('user_id', res.data.id, { expires: 1 }); // Set cookie user_id
+
           navigate('/');
           window.location.reload();
         } else {
@@ -54,9 +54,11 @@ const LoginForm = () => {
   };
 
   return (
+
     <div className='login'>
       <AuthForm title="Login" linkText="Don't have an account?" linkHref="/register">
       <form onSubmit={handleSubmit}>
+
         <FormInput
           label="Email"
           type="email"
@@ -73,11 +75,13 @@ const LoginForm = () => {
           value={values.password}
           onChange={handleInputChange}
         />
+
         <Button type="submit" className="loginButton">
           Login
         </Button>
         <GoogleLogin label={"Login with Google"} />
         
+
       </form>
     </AuthForm>
     </div>
