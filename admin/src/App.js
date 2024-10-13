@@ -18,26 +18,7 @@ import MovieTrash from './MovieTrash/movieTrash'; // Import MovieTrash component
 
 function App() {
   const [openSidebarToggle, setOpenSidebarToggle] = useState(false); // Default tutup di mobile
-  const [dramas, setDramas] = useState([ // State untuk menyimpan movie aktif
-    {
-      id: 1,
-      title: "[2024] Japan - Eye Love You",
-      actors: "Takuya Kimura, Takeuchi Yuko, Neinen Reina",
-      genres: "Romance, Adventures, Comedy",
-      synopsis: "I love this drama. It taught me a lot about money and finance. Love is not everything. We need to face the reality too. Being stoic is the best.",
-      status: "Unapproved"
-    },
-    {
-      id: 2,
-      title: "Rama - Pemuda Ciamis",
-      actors: "M. Rama Nurimani",
-      genres: "Romance, Adventures, Comedy",
-      synopsis: "A lovely boy from Ciamis.",
-      status: "Unapproved"
-    }
-    // Tambahkan lebih banyak movie sesuai kebutuhan
-  ]); // State yang menyimpan movie di ListDrama
-
+  const [dramas, setDramas] = useState([]); // State untuk menyimpan movie yang diinput
   const [trashDramas, setTrashDramas] = useState([]); // State untuk menyimpan movie yang dihapus
   const [validatedDramas, setValidatedDramas] = useState([]); // State untuk menyimpan drama yang sudah divalidasi
 

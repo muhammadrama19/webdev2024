@@ -71,10 +71,11 @@ const AwardsManager = () => {
         setAwards(awards.filter((entry) => entry.id !== id));
     };
 
-    // Function untuk filter drama berdasarkan search term (sebelum pagination)
+    // Function untuk filter award berdasarkan search term (sebelum pagination)
     const filteredAwards = awards.filter((award) =>
-        award.awards_name && award.awards_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        award.country_name && award.country_name.toLowerCase().includes(searchTerm.toLowerCase())
+        (award.awards_name && award.awards_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (award.country_name && award.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (award.awards_years && award.awards_years.toString().includes(searchTerm))
     );
 
     const indexOfLastAward = currentPage * showCount;
