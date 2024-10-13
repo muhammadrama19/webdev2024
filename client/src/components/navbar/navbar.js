@@ -7,6 +7,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import "./navbar.scss";
 import Cookies from 'js-cookie';
 
+
 const Navbar = ({ loggedInUsername }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [countries, setCountries] = useState(["Indonesia", "Japan"]);
@@ -94,6 +95,8 @@ const Navbar = ({ loggedInUsername }) => {
     Cookies.remove("email");
     Cookies.remove("role");
     Cookies.remove("token");
+    Cookies.remove("user_id");
+    Cookies.remove("profilePicture");
   
     setUsername(null);
     setEmail(null);

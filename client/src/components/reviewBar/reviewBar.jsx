@@ -3,20 +3,19 @@ import { Button, Container, Row, Col } from "react-bootstrap";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
 import ReviewInput from "../reviewInput/reviewInput";
 import "./reviewBar.scss";
 
-const ReviewBar = ({srcImg, title}) => {
+const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tambahkan movieId dan userId sebagai props
   // State management for icons and text
   const [watchClicked, setWatchClicked] = useState(false);
   const [likeClicked, setLikeClicked] = useState(false);
   const [watchlistClicked, setWatchlistClicked] = useState(false);
   const [showReviewInput, setShowReviewInput] = useState(false);
-  
+
   const [hoverText, setHoverText] = useState({
     watch: false,
     like: false,
@@ -44,6 +43,10 @@ const ReviewBar = ({srcImg, title}) => {
   const handleMouseLeave = (icon) => {
     setHoverText({ ...hoverText, [icon]: false });
   };
+
+  if (!isLoggedIn) {
+    return null; // Jika pengguna tidak login, tidak menampilkan review bar
+  }
 
   return (
     <Container fluid className="review-bar">
@@ -96,9 +99,9 @@ const ReviewBar = ({srcImg, title}) => {
       </Row>
       <Row className="text-center">
         <Col>
-          <Button 
-            variant="outline-light" 
-            className='addReviewButton' 
+          <Button
+            variant="outline-light"
+            className="addReviewButton"
             onClick={handleAddReviewClick}
           >
             Add Review
@@ -106,10 +109,12 @@ const ReviewBar = ({srcImg, title}) => {
         </Col>
       </Row>
       {showReviewInput && (
-        <ReviewInput 
+        <ReviewInput
           movieImage={srcImg}
           title={title}
-          onClose={handleCloseReviewInput} 
+          movieId={movieId}    // Kirim movieId ke ReviewInput
+          userId={userId}      // Kirim userId ke ReviewInput
+          onClose={handleCloseReviewInput}
         />
       )}
     </Container>

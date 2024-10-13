@@ -8,10 +8,14 @@ const bodyParser = require('body-parser');
 const passport= require('./middleware/passport-setup')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const router = express.Router();
 
 
 const app = express();
 const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -851,19 +855,22 @@ app.post('/login', (req, res) => {
 
         if (result) {
           const token = jwt.sign(
-            { username: user.username, email: user.email, role: user.role }, // Tambahkan role ke JWT
+            { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
             "our-jsonwebtoken-secret-key",
             { expiresIn: '1d' }
           );
 
-          res.cookie('token', token, { httpOnly: true, sameSite: 'strict' });
+          // Kirim token dan user_id ke cookie
+          res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
+          res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
 
-          // Kirim username, email, dan role ke frontend
           return res.json({
             Status: "Login Success",
+            id: user.id,
             username: user.username,
             email: user.email,
-            role: user.role
+            role: user.role,
+            token: token // Kirim token ke client
           });
         } else {
           return res.json({ Message: "Incorrect Password" });
@@ -875,30 +882,46 @@ app.post('/login', (req, res) => {
   });
 });
 
+
+
 //Login with Google
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Google OAuth login
+// Google OAuth login route
 app.get('/auth/google', passport.authenticate('google', {
   scope: ['profile', 'email'],
 }));
 
-// Google OAuth callback
+// Google OAuth callback route
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    // Mengambil user dari request setelah autentikasi
+    // Mengambil user dari request setelah autentikasi Google
     const user = req.user;
 
-    // Simpan user ke dalam cookie atau kirim ke frontend melalui URL
-    const username = user.username;
-    const email = user.email;
+    // Buat token JWT dengan informasi user
+    const token = jwt.sign(
+      { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
+      "our-jsonwebtoken-secret-key", 
+      { expiresIn: '1d' }
+    );
 
-    // Redirect ke frontend setelah login dengan parameter username dan email
-    res.redirect(`http://localhost:3001/?username=${username}&email=${email}`);
+    // Simpan token ke cookie
+    res.cookie('token', token, { 
+      httpOnly: false,  // Set ke false jika token perlu diakses client-side
+      sameSite: 'Strict',
+      secure: false, // Gunakan true di production dengan HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // Cookie berlaku selama 1 hari
+    });
+
+    res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
+
+    // Redirect ke frontend setelah login berhasil
+    res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
   }
 );
+
 
 //REGISTER
 app.post('/register', (req, res) => {
@@ -926,6 +949,77 @@ app.post('/register', (req, res) => {
 });
 
 
+// Forgot Password route
+router.post('/forgot-password', (req, res) => {
+  const { email } = req.body;
+
+  // Find user by email
+  const query = 'SELECT * FROM users WHERE email = ?';
+  db.query(query, [email], (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(400).json({ message: 'No user with that email address' });
+    }
+
+    const user = results[0];
+
+    // Create reset token and save to DB
+    const token = crypto.randomBytes(20).toString('hex');
+    const expires = Date.now() + 3600000; // 1 hour from now
+    const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
+    db.query(updateTokenQuery, [token, expires, email], (err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Error setting reset token' });
+      }
+
+      // Send email with reset link
+      const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: 'your-email@gmail.com',
+          pass: 'your-email-password',
+        },
+      });
+
+      const mailOptions = {
+        to: email,
+        from: 'password-reset@yourapp.com',
+        subject: 'Password Reset',
+        text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
+               Please click on the following link, or paste this into your browser to complete the process:
+               http://localhost:3001/reset-password/${token}
+               If you did not request this, please ignore this email and your password will remain unchanged.`,
+      };
+
+      transporter.sendMail(mailOptions, (err) => {
+        if (err) {
+          return res.status(500).json({ message: 'Error sending email' });
+        }
+
+        res.status(200).json({ message: 'Password reset link sent!' });
+      });
+    });
+  });
+});
+
+module.exports = router;
+
+
+//Input Review
+app.post('/reviews', (req, res) => {
+  const { movie_id, user_id, content, rating } = req.body;
+
+  const query = `
+    INSERT INTO reviews (movie_id, user_id, content, rating, status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, 0, NOW(), NOW())
+  `;
+
+  db.query(query, [movie_id, user_id, content, rating], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Error inserting review", error: err });
+    }
+    res.status(201).json({ message: "Review saved successfully!" });
+  });
+});
 
 
 // Starting the server
