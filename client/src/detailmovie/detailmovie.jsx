@@ -8,10 +8,13 @@ import CoverDetail from "../components/coverdetail/coverDetail";
 import ActorSlider from "../components/actorSlider/actorSlider";
 import MediaPlayer from "../components/media/media";
 import { useParams } from 'react-router-dom'; 
+import Cookies from 'js-cookie';
 
 const Detailmovie = () => {
   const [movieData, setMovieData] = useState(null);
-  const { id } = useParams(); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { id } = useParams(); // Mengambil movieId dari URL
+  const [userId, setUserId] = useState(null); // Tambahkan userId
 
   // Fetch movie details
   useEffect(() => {
@@ -28,8 +31,31 @@ const Detailmovie = () => {
     fetchMovieDetail();
   }, [id]); 
 
+  // Cek apakah pengguna sudah login
+  useEffect(() => {
+    const token = Cookies.get("token");
+    const user_id = Cookies.get("user_id");
+    console.log('Token from cookie:', token); // Debug: Pastikan token dicetak di console
+    console.log('User ID from cookie:', user_id); // Debug: Pastikan user_id dicetak di console
+  
+    if (token && user_id) {
+      try {
+        const decoded = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
+        console.log('Decoded JWT token:', decoded); // Debug: Lihat isi token yang didecode
+  
+        setIsLoggedIn(true);
+        setUserId(user_id); // Set userId dari cookie
+      } catch (error) {
+        console.error('Error decoding token:', error); // Jika ada error saat decoding
+      }
+    } else {
+      console.log("Token or user_id not found"); // Jika token atau user_id tidak ditemukan
+    }
+  }, []);
+  
+
   if (!movieData) {
-    return <div>Loading...</div>; // Show loading while data is fetched
+    return <div>Loading...</div>;
   }
 
   return (
@@ -52,12 +78,18 @@ const Detailmovie = () => {
             />
           </Col>
           <Col md={4}>
-            <ReviewBar srcImg={movieData.poster} title={movieData.title}/>
+            <ReviewBar 
+              srcImg={movieData.poster} 
+              title={movieData.title} 
+              isLoggedIn={isLoggedIn} 
+              movieId={id} // Kirim movieId ke ReviewBar
+              userId={userId} // Kirim userId ke ReviewBar
+            />
           </Col>
         </Row>
         <Row className="justify-content-center mt-4">
           <Col md={8}>
-          <ActorSlider actors={movieData.actors} />
+            <ActorSlider actors={movieData.actors} />
           </Col>
         </Row>
         <Row className="justify-content-center mt-4">
