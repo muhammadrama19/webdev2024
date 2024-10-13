@@ -5,6 +5,23 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ClerkProvider } from '@clerk/clerk-react';
 
+if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.createPolicy) {
+  try {
+    // Mengecek jika kebijakan 'default' belum ada, barulah dibuat
+    if (!window.trustedTypes.getPolicyNames || 
+        (window.trustedTypes.getPolicyNames && !window.trustedTypes.getPolicyNames().includes('default'))) {
+      window.trustedTypes.createPolicy('default', {
+        createHTML: (input) => input,
+        createScriptURL: (url) => url,
+        createScript: (script) => script
+      });
+    }
+  } catch (error) {
+    console.error("Error creating Trusted Types policy:", error);
+  }
+}
+
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

@@ -1,14 +1,10 @@
 
-.register{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  
-
-  .registerButton {
-    margin-top: 20px;
+.buttonAuth {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+    margin-top: 20px;
     background-color: var(--primary-color);
     color: white;
     border: none;
@@ -22,7 +18,3 @@
       background-color: #5A4AF4;
     }
   }
-
-
-}
-

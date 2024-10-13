@@ -11,8 +11,10 @@ import ResetPassword from "./login/Reset";
 import TestFetch from './test/testFetch';
 import Detailmovie from './detailmovie/detailmovie';
 import SearchResult from './search/searchResult';
+
 import Profile from './profile/profile';
 
+import ForgotPassword from './forgotPassword/forgotPassword';
 import { SearchProvider } from './context/searchContext'; // Import SearchProvider
 export const RecoveryContext = createContext();
 
@@ -39,6 +41,20 @@ function App() {
           </Routes>
         </Router>
       </RecoveryContext.Provider>
+      {/* <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/Register" element={<Register />} />
+          <Route path="/Login" element={<Login />} />
+          <Route path="/testFetch" element={<TestFetch />} />
+          <Route path="/movies/:id" element={<Detailmovie />} />
+          <Route path="/searchresult" element={<SearchResult />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          
+        </Routes>
+      </Router> */}
     </SearchProvider>
   );
 }
