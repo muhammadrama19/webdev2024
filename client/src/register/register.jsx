@@ -112,12 +112,19 @@ const RegisterForm = () => {
   };
 
   return (
+    <div className='register'
+    >
     <AuthForm
       title="Sign up"
       linkText="Already have an account?"
       linkHref="/login"
+      style={{marginTop: '50px'}}
+      
+      
+      
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}
+        >
         <FormInput
           label="Username"
           type="text"
@@ -162,13 +169,14 @@ const RegisterForm = () => {
           {isLoading ? 'Registering...' : 'Register'}
         </Button>
         
-        <GoogleLogin />
+        <GoogleLogin label={"Register with Google"} />
       </form>
 
       {confirmationMessage && (
         <p className="confirmation-message">{confirmationMessage}</p>
       )}
     </AuthForm>
+    </div>
   );
 };
 

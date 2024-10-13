@@ -5,7 +5,8 @@ import { Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import GoogleLogin from "../components/googleButton/googleButton"; 
+import GoogleLogin from "../components/googleButton/googleButton";
+
 
 import "./login.scss";
 
@@ -18,10 +19,8 @@ const LoginForm = () => {
   const navigate = useNavigate();
 
   axios.defaults.withCredentials = true;
-  const redirectToGoogleLogin = () => {
-    // Redirecting to Google login
-    window.open('http://localhost:8001/auth/google', '_self');
-  };
+
+
 
   const handleSubmit = (e) => {
     e.preventDefault(); 
@@ -55,7 +54,8 @@ const LoginForm = () => {
   };
 
   return (
-    <AuthForm title="Login" linkText="Don't have an account?" linkHref="/register">
+    <div className='login'>
+      <AuthForm title="Login" linkText="Don't have an account?" linkHref="/register">
       <form onSubmit={handleSubmit}>
         <FormInput
           label="Email"
@@ -76,14 +76,12 @@ const LoginForm = () => {
         <Button type="submit" className="loginButton">
           Login
         </Button>
-
- 
-         <Button className='loginButtin' onClick={redirectToGoogleLogin}>
-          Login with Google
-        </Button>
+        <GoogleLogin label={"Login with Google"} />
         
       </form>
     </AuthForm>
+    </div>
+    
   );
 };
 
