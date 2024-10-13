@@ -231,7 +231,7 @@ const AwardsManager = () => {
                                     <tr key={award.id}>
                                         <td>{award.id}</td>
                                         <td>{award.country_name}</td>
-                                        <td>{award.year}</td>
+                                        <td>{award.awards_years}</td>
                                         <td>{award.awards_name}</td>
                                         <td>
                                             <Container className="action-button">
