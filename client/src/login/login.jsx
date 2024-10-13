@@ -5,6 +5,7 @@ import FormInput from "../components/forminput/formInput";
 import { Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import GoogleLogin from "../components/googleButton/googleButton";
 
 import "./login.scss";
@@ -22,21 +23,21 @@ const LoginForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault(); // Mencegah reload halaman
-
+  
     // Melakukan POST request ke backend dengan data login
     axios.post('http://localhost:8001/login', values)
       .then(res => {
         if (res.data.Status === "Login Success") {
-          // Menyimpan nama user dan token di localStorage
-          localStorage.setItem('username', res.data.username); // menyimpan nama pengguna
-          localStorage.setItem('token', res.data.token); // menyimpan token JWT
-          localStorage.setItem('email', res.data.email);
-          localStorage.setItem('role', res.data.role);
-                  
+          // Simpan data ke dalam cookie dengan js-cookie
+          Cookies.set('username', res.data.username, { expires: 1 }); // Set cookie username dengan kadaluarsa 1 hari
+          Cookies.set('email', res.data.email, { expires: 1 }); // Set cookie email
+          Cookies.set('role', res.data.role, { expires: 1 }); // Set cookie role
+          Cookies.set('token', res.data.token, { expires: 1, secure: true, sameSite: 'Strict' }); // Set cookie JWT token
+  
           // Navigasikan ke halaman home setelah login sukses
           navigate('/');
           window.location.reload();
-
+  
         } else {
           // Jika login gagal, tampilkan pesan kesalahan
           alert(res.data.Message);
@@ -44,6 +45,8 @@ const LoginForm = () => {
       })
       .catch(err => console.log("Login Error:", err));
   };
+  
+  
 
   // Handler untuk perubahan input
   const handleInputChange = (e) => {

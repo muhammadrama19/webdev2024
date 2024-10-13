@@ -71,10 +71,11 @@ const AwardsManager = () => {
         setAwards(awards.filter((entry) => entry.id !== id));
     };
 
-    // Function untuk filter drama berdasarkan search term (sebelum pagination)
+    // Function untuk filter award berdasarkan search term (sebelum pagination)
     const filteredAwards = awards.filter((award) =>
-        award.awards_name && award.awards_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        award.country_name && award.country_name.toLowerCase().includes(searchTerm.toLowerCase())
+        (award.awards_name && award.awards_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (award.country_name && award.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (award.awards_years && award.awards_years.toString().includes(searchTerm))
     );
 
     const indexOfLastAward = currentPage * showCount;
@@ -231,7 +232,7 @@ const AwardsManager = () => {
                                     <tr key={award.id}>
                                         <td>{award.id}</td>
                                         <td>{award.country_name}</td>
-                                        <td>{award.year}</td>
+                                        <td>{award.awards_years}</td>
                                         <td>{award.awards_name}</td>
                                         <td>
                                             <Container className="action-button">
