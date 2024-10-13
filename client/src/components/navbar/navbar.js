@@ -5,6 +5,7 @@ import { BsPersonCircle } from "react-icons/bs";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import "./navbar.scss";
+import Cookies from 'js-cookie';
 
 const Navbar = ({ loggedInUsername }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -13,9 +14,10 @@ const Navbar = ({ loggedInUsername }) => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false); 
-  const [username, setUsername] = useState(loggedInUsername || localStorage.getItem("username"));
-  const [email, setEmail] = useState(localStorage.getItem("email"));
-  const [role, setRole] = useState(localStorage.getItem("role"));
+  const [username, setUsername] = useState(loggedInUsername || Cookies.get("username"));
+  const [email, setEmail] = useState(Cookies.get("email"));
+  const [role, setRole] = useState(Cookies.get("role"));
+
 
   const navigate = useNavigate();
 
@@ -29,21 +31,22 @@ const Navbar = ({ loggedInUsername }) => {
   useEffect(() => {
     const usernameFromGoogle = getQueryParams("username");
     const emailFromGoogle = getQueryParams("email");
-
-
+  
     if (usernameFromGoogle && emailFromGoogle) {
-      localStorage.setItem("username", usernameFromGoogle);
-      localStorage.setItem("email", emailFromGoogle);
-      localStorage.setItem("role", "User");
-
+      // Simpan data ke cookie
+      Cookies.set("username", usernameFromGoogle, { expires: 1 });
+      Cookies.set("email", emailFromGoogle, { expires: 1 });
+      Cookies.set("role", "User", { expires: 1 });
+  
       setUsername(usernameFromGoogle);
       setEmail(emailFromGoogle);
       setRole("User");
-
-      // Clear query params after saving to localStorage
+  
+      // Clear query params after saving to cookies
       window.history.replaceState(null, null, window.location.pathname); 
     }
   }, []);
+  
 
   // Mengambil data negara dari API
   useEffect(() => {
@@ -86,15 +89,19 @@ const Navbar = ({ loggedInUsername }) => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("username");
-    localStorage.removeItem("email");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
+    // Hapus data dari cookie
+    Cookies.remove("username");
+    Cookies.remove("email");
+    Cookies.remove("role");
+    Cookies.remove("token");
+  
     setUsername(null);
     setEmail(null);
     setRole(null);
+  
     navigate("/login");
   };
+  
 
   return (
     <div className={isScrolled ? "navbar scrolled" : "navbar"}>
