@@ -5,14 +5,18 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 // const googleAuth = require('./routes/googleAuth');
-const passport= require('./middleware/passport-setup')
+const passport = require('./middleware/passport-setup')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
+
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+
 const crypto = require('crypto');
 const router = express.Router();
-const path = require('path'); 
+const path = require('path');
 const fs = require('fs');
+
 
 
 const app = express();
@@ -33,7 +37,7 @@ app.use(cors({
   },
   credentials: true // Untuk mengizinkan penggunaan cookie
 }));
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -43,7 +47,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "", 
+  password: "",
   database: "lalajoeuydb"
 });
 
@@ -146,7 +150,7 @@ app.get('/movies/movie', (req, res) => {
   if (filterConditions.length) {
     query += ` AND ${filterConditions.join(' AND ')}`;
   }
-  
+
 
   // Handle genre filtering
   if (genre && genre.trim()) {
@@ -162,9 +166,9 @@ app.get('/movies/movie', (req, res) => {
   query += ` GROUP BY m.id`;
 
   if (sort) {
-    query += ` ORDER BY m.title ${sort.toUpperCase()}`; 
+    query += ` ORDER BY m.title ${sort.toUpperCase()}`;
   } else {
-    query += ` ORDER BY m.id`; 
+    query += ` ORDER BY m.id`;
   }
 
   // Add pagination limits
@@ -245,7 +249,7 @@ app.get("/search", (req, res) => {
     LIMIT 10
   `;
   const searchTerm = `%${query}%`;
-  
+
   db.query(sql, [searchTerm], (err, results) => {
     if (err) throw err;
     res.json(results);
@@ -304,7 +308,7 @@ app.get('/movies/detail/:id', (req, res) => {
     WHERE
       movies.id = ?
   `;
-  
+
   db.query(query, [id], (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
@@ -409,7 +413,7 @@ app.get('/movies/detail/review/:id', (req, res) => {
     WHERE
       reviews.movie_id = ?
   `;
-  
+
   db.query(query, [id], (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
@@ -445,24 +449,24 @@ app.get('/filters', async (req, res) => {
   try {
     // Fetch years first to calculate decades
     const [yearRows] = await db.promise().query(queries.years);
-    
+
     if (yearRows.length) {
       const minYear = yearRows[0].minYear;
       const maxYear = yearRows[0].maxYear;
-      
-     
+
+
       const different = minYear % 10;
-      const normalizedMinYear = minYear - different; 
+      const normalizedMinYear = minYear - different;
       const decades = [];
 
       for (let year = normalizedMinYear; year <= maxYear; year += 10) {
         decades.push({
           start: year,
-          end: year + 10, 
+          end: year + 10,
         });
       }
 
-      results.years = decades; 
+      results.years = decades;
     } else {
       results.years = [];
     }
@@ -502,7 +506,7 @@ app.get('/filters', async (req, res) => {
       name: row.name,
     }));
 
-    res.json(results); 
+    res.json(results);
   } catch (error) {
     console.error('Error fetching filters:', error.message);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -536,7 +540,7 @@ app.get('/featured', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    
+
     res.json(results); // Send the top 10 movies to the front-end
   });
 }
@@ -631,7 +635,7 @@ app.get('/movie-list', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    res.json(results);  
+    res.json(results);
   });
 });
 
@@ -648,7 +652,7 @@ app.get('/users', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    res.json(results);  
+    res.json(results);
   });
 });
 
@@ -753,7 +757,7 @@ app.get('/reviews', (req, res) => {
       users ON reviews.user_id = users.id
     ORDER BY reviews.id ASC
   `;
-  
+
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error executing query:', err.message);
@@ -870,7 +874,7 @@ app.post('/login', (req, res) => {
 
         if (result) {
           const token = jwt.sign(
-            { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
+            { username: user.username, email: user.email, role: user.role, user_id: user.id },
             "our-jsonwebtoken-secret-key",
             { expiresIn: '1d' }
           );
@@ -918,13 +922,13 @@ app.get('/auth/google/callback',
 
     // Buat token JWT dengan informasi user
     const token = jwt.sign(
-      { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
-      "our-jsonwebtoken-secret-key", 
+      { username: user.username, email: user.email, role: user.role, user_id: user.id },
+      "our-jsonwebtoken-secret-key",
       { expiresIn: '1d' }
     );
 
     // Simpan token ke cookie
-    res.cookie('token', token, { 
+    res.cookie('token', token, {
       httpOnly: false,  // Set ke false jika token perlu diakses client-side
       sameSite: 'Strict',
       secure: false, // Gunakan true di production dengan HTTPS
@@ -939,6 +943,9 @@ app.get('/auth/google/callback',
 );
 
 
+
+
+//REGISTER
 
 app.get('/confirm-email/:token', (req, res) => {
   const { token } = req.params;
@@ -964,11 +971,12 @@ app.get('/confirm-email/:token', (req, res) => {
   });
 });
 
+
 app.post('/register', (req, res) => {
   const { username, email, password } = req.body;
 
   const checkSql = "SELECT * FROM users WHERE username = ? OR email = ?";
-  const sql = "INSERT INTO users (`username`, `email`, `password`, `isEmailConfirmed`) VALUES (?)";
+  const sql = "INSERT INTO users (username, email, password, isEmailConfirmed) VALUES (?)";
   const saltRounds = 10;
 
   // Check if the username or email already exists
@@ -998,8 +1006,9 @@ app.post('/register', (req, res) => {
         const emailToken = jwt.sign({ email }, "EMAIL_SECRET", { expiresIn: '1d' });
 
         // Send confirmation email
-        const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
+        const confirmationUrl = http="//localhost:8001/confirm-email/${emailToken}";
         const templatePath = path.join(__dirname, 'template', 'emailTemplate.html');
+
         fs.readFile(templatePath, 'utf8', (err, htmlTemplate) => {
           if (err) {
             console.error('Error reading email template:', err);
@@ -1020,72 +1029,158 @@ app.post('/register', (req, res) => {
           };
 
 
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            return res.json({ message: 'Error sending confirmation email', success: false });
-          }
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              return res.json({ message: 'Error sending confirmation email', success: false });
+            }
 
-          res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+            res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+          });
         });
       });
     });
-  });
-})});
+  })
+});
 
 
-// Forgot Password route
-router.post('/forgot-password', (req, res) => {
-  const { email } = req.body;
+// Forgot Password
+// OAuth2 client setup
+const OAuth2 = google.auth.OAuth2;
 
-  // Find user by email
-  const query = 'SELECT * FROM users WHERE email = ?';
-  db.query(query, [email], (err, results) => {
-    if (err || results.length === 0) {
-      return res.status(400).json({ message: 'No user with that email address' });
-    }
+// Buat OAuth2 client dengan Client ID, Client Secret, dan Redirect URL
+const oauth2Client = new OAuth2(
+  process.env.CLIENT_ID, // Client ID dari Google Cloud
+  process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
+  "https://developers.google.com/oauthplayground" // Redirect URL, bisa disesuaikan
+);
 
-    const user = results[0];
+// Set refresh token yang didapat dari Google Cloud Console
+oauth2Client.setCredentials({
+  refresh_token: process.env.REFRESH_TOKEN,
+});
 
-    // Create reset token and save to DB
-    const token = crypto.randomBytes(20).toString('hex');
-    const expires = Date.now() + 3600000; // 1 hour from now
-    const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
-    db.query(updateTokenQuery, [token, expires, email], (err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Error setting reset token' });
-      }
+// Fungsi untuk mengirim email
+function sendEmail({ recipient_email, OTP }) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Dapatkan access token
+      const accessToken = await oauth2Client.getAccessToken();
 
-      // Send email with reset link
-      const transporter = nodemailer.createTransport({
-        service: 'Gmail',
+      // Konfigurasikan nodemailer transport dengan OAuth2
+      var transporter = nodemailer.createTransport({
+        service: "gmail",
         auth: {
-          user: 'your-email@gmail.com',
-          pass: 'your-email-password',
+          type: "OAuth2",
+          user: process.env.MY_EMAIL, // Email Anda
+          clientId: process.env.CLIENT_ID, // Client ID dari Google Cloud
+          clientSecret: process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
+          refreshToken: process.env.REFRESH_TOKEN, // Refresh Token dari Google Cloud
+          accessToken: accessToken.token, // Access Token yang baru saja di-generate
         },
       });
 
-      const mailOptions = {
-        to: email,
-        from: 'password-reset@yourapp.com',
-        subject: 'Password Reset',
-        text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
-               Please click on the following link, or paste this into your browser to complete the process:
-               http://localhost:3001/reset-password/${token}
-               If you did not request this, please ignore this email and your password will remain unchanged.`,
+      // Konfigurasi email
+      const mail_configs = {
+        from: process.env.MY_EMAIL, // Email pengirim
+        to: recipient_email, // Email penerima
+        subject: "LALAJOEUY PASSWORD RECOVERY",
+        html: `<!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <title>Recovery Password</title>
+              </head>
+              <body>
+                <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+                  <div style="margin:50px auto;width:70%;padding:20px 0">
+                    <p>Hi,</p>
+                    <p>Thank you for choosing Lalajo Euy! Use the following OTP to complete your Password Recovery Procedure. OTP is valid for 5 minutes</p>
+                    <h2>${OTP}</h2>
+                  </div>
+                </div>
+              </body>
+              </html>`,
       };
 
-      transporter.sendMail(mailOptions, (err) => {
-        if (err) {
-          return res.status(500).json({ message: 'Error sending email' });
+      // Kirim email
+      transporter.sendMail(mail_configs, function (error, info) {
+        if (error) {
+          console.error("Error sending email:", error);
+          return reject({ message: `An error has occurred: ${error.message}` });
         }
-
-        res.status(200).json({ message: 'Password reset link sent!' });
+        console.log("Email sent:", info.response);
+        return resolve({ message: "Email sent successfully" });
       });
-    });
+    } catch (error) {
+      console.error("Error in OAuth2 or sending email:", error);
+      return reject({ message: `An error has occurred: ${error.message}` });
+    }
   });
+}
+
+// Endpoint untuk mengirim email pemulihan
+app.post("/send_recovery_email", (req, res) => {
+  sendEmail(req.body)
+    .then((response) => res.send(response.message))
+    .catch((error) => res.status(500).send(error.message));
 });
 
-module.exports = router;
+
+
+
+// Forgot Password route
+// router.post('/forgot-password', (req, res) => {
+//   const { email } = req.body;
+
+//   // Find user by email
+//   const query = 'SELECT * FROM users WHERE email = ?';
+//   db.query(query, [email], (err, results) => {
+//     if (err || results.length === 0) {
+//       return res.status(400).json({ message: 'No user with that email address' });
+//     }
+
+//     const user = results[0];
+
+//     // Create reset token and save to DB
+//     const token = crypto.randomBytes(20).toString('hex');
+//     const expires = Date.now() + 3600000; // 1 hour from now
+//     const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
+//     db.query(updateTokenQuery, [token, expires, email], (err) => {
+//       if (err) {
+//         return res.status(500).json({ message: 'Error setting reset token' });
+//       }
+
+//       // Send email with reset link
+//       const transporter = nodemailer.createTransport({
+//         service: 'Gmail',
+//         auth: {
+//           user: 'your-email@gmail.com',
+//           pass: 'your-email-password',
+//         },
+//       });
+
+//       const mailOptions = {
+//         to: email,
+//         from: 'password-reset@yourapp.com',
+//         subject: 'Password Reset',
+//         text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
+//                Please click on the following link, or paste this into your browser to complete the process:
+//                http://localhost:3001/reset-password/${token}
+//                If you did not request this, please ignore this email and your password will remain unchanged.`,
+//       };
+
+//       transporter.sendMail(mailOptions, (err) => {
+//         if (err) {
+//           return res.status(500).json({ message: 'Error sending email' });
+//         }
+
+//         res.status(200).json({ message: 'Password reset link sent!' });
+//       });
+//     });
+//   });
+// });
+
+// module.exports = router;
 
 
 //Input Review
