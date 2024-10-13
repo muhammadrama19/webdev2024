@@ -9,6 +9,8 @@ const passport= require('./middleware/passport-setup')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+const path = require('path'); 
+const fs = require('fs');
 
 const app = express();
 const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
@@ -58,6 +60,14 @@ app.use(session({
 }));
 
 
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
 
 
 // Logout route
@@ -869,7 +879,6 @@ app.post('/login', (req, res) => {
             { expiresIn: '7d' }
           );
 
-
           res.json({
             Status: "Login Success",
             accessToken,
@@ -887,39 +896,6 @@ app.post('/login', (req, res) => {
     }
   });
 });
-
-//Login with Google
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Google OAuth login
-app.get('/auth/google', passport.authenticate('google', {
-  scope: ['profile', 'email'],
-}));
-
-// Google OAuth callback
-// Google OAuth callback
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    // Get user from request after authentication
-    const user = req.user;
-
-    // Generate a JWT token or session for the user
-    const token = generateToken(user); // Implement your token generation logic
-
-    // Set token in a cookie
-    res.cookie('token', token, { httpOnly: true, secure: true }); // Set secure flag if using HTTPS
-
-    // Redirect to the frontend
-    res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
-  }
-);
-;
-
-function generateToken(user) {
-  return jwt.sign({ id: user.id, username: user.username, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
-}
 
 app.post('/token', (req, res) => {
   const { refreshToken } = req.body;
@@ -940,6 +916,26 @@ app.post('/token', (req, res) => {
   });
 });
 
+// Google OAuth login
+app.get('/auth/google', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+}));
+
+// Google OAuth callback
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    // Mengambil user dari request setelah autentikasi
+    const user = req.user;
+
+    // Simpan user ke dalam cookie atau kirim ke frontend melalui URL
+    const username = user.username;
+    const email = user.email;
+
+    // Redirect ke frontend setelah login dengan parameter username dan email
+    res.redirect(`http://localhost:3001/?username=${username}&email=${email}`);
+  }
+);
 
 
 app.get('/confirm-email/:token', (req, res) => {
@@ -1001,13 +997,26 @@ app.post('/register', (req, res) => {
 
         // Send confirmation email
         const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
+        const templatePath = path.join(__dirname, 'template', 'emailTemplate.html');
+        fs.readFile(templatePath, 'utf8', (err, htmlTemplate) => {
+          if (err) {
+            console.error('Error reading email template:', err);
+            return res.json({ message: 'Error reading email template', success: false });
+          }
 
-        const mailOptions = {
-          from: process.env.EMAIL,
-          to: email,
-          subject: 'Please confirm your email',
-          text: `Click the link to confirm your email: ${confirmationUrl}`
-        };
+          // Replace placeholders with actual data
+          const emailHtml = htmlTemplate
+            .replace(/{{username}}/g, username)
+            .replace(/{{confirmationUrl}}/g, confirmationUrl);
+
+          // Mail options
+          const mailOptions = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: 'Please confirm your email',
+            html: emailHtml // Set the HTML content of the email
+          };
+
 
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
@@ -1019,7 +1028,7 @@ app.post('/register', (req, res) => {
       });
     });
   });
-});
+})});
 
 
 

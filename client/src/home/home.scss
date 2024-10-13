@@ -3,58 +3,59 @@
   color: white;
   display: flex;
   flex-direction: column;
-}
-.search-container {
-  margin-top: 1rem;
-
-  .search-input {
-    width: 100%;
-    padding: 0.5rem;
-    border-radius: 5px;
-    color: white !important;
-    opacity: 1;
-
-    background-color: var(--main-color);
-  }
-}
-
-
-.dropdown-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  // margin: 10px 10px;
-  padding-left: 50px;
-  padding-right: 50px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-
-  .label-filter {
-    font-size: 24px;
-    font-weight: bold;
-    color: white;
-    margin-right: 20px;
-    margin-top: 45px;
-    // margin-bottom: 10px;
-    // border-top: 1px solid var(--primary-color);
-
-  }
-
-  select {
-    padding: 5px 10px;
-    background-color: transparent;
-    border: 1px solid white;
-    color: white;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    max-width: 100px;
-    margin: 10px 10px;
-
-    &:hover {
-      border-color: var(--tertiary-color);
+  .search-container {
+    margin-top: 1rem;
+  
+    .search-input {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 5px;
+      color: white !important;
+      opacity: 1;
+  
+      background-color: var(--main-color);
     }
   }
-
+  
+  
+  .dropdown-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    // margin: 10px 10px;
+    padding-left: 50px;
+    padding-right: 50px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  
+    .label-filter {
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      margin-right: 20px;
+      margin-top: 45px;
+      // margin-bottom: 10px;
+      // border-top: 1px solid var(--primary-color);
+  
+    }
+  
+    select {
+      padding: 5px 10px;
+      background-color: transparent;
+      border: 1px solid white;
+      color: white;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      max-width: 100px;
+      margin: 10px 10px;
+  
+      &:hover {
+        border-color: var(--tertiary-color);
+      }
+    }
+  
+  }
+  
 }
 
