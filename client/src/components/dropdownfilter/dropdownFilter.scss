@@ -1,9 +1,9 @@
 .dropdown-filter {
   margin: 10px;
-  min-width: 100px;
+  width: 100%;
 
   .dropdown-toggle {
-    // Override the button style
+
     background-color: var(--primary-color); // Change to your preferred color
     border: none;
     color: white;
@@ -11,7 +11,7 @@
 
     border-radius: 4px;
     margin: 10px;
-    min-width: 120px;
+    width: 100%;
     
     &:hover {
       background-color: var(--primary-on-hover); // Hover effect

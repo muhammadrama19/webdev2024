@@ -4,9 +4,9 @@ import StarIcon from "@mui/icons-material/Star";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CloseIcon from "@mui/icons-material/Close";
-import { Container, Row, Col, Button, Form, Modal } from "react-bootstrap";
+import { Row, Col, Button, Form, Modal } from "react-bootstrap";
 
-const ReviewInput = ({ movieImage, title, onClose }) => {
+const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // Tambahkan movieId dan userId sebagai props
   const [rating, setRating] = useState(0);
   const [liked, setLiked] = useState(false);
   const [review, setReview] = useState("");
@@ -17,6 +17,38 @@ const ReviewInput = ({ movieImage, title, onClose }) => {
 
   const toggleLike = () => {
     setLiked(!liked);
+  };
+
+  const handleSave = async () => {
+    // Buat request POST ke server untuk menyimpan review
+    const reviewData = {
+      movie_id: movieId,   // Menggunakan movieId dari props
+      user_id: userId,     // Menggunakan userId dari props
+      content: review,     // Isi review dari state
+      rating: rating,      // Rating dari state
+      status: 0            // Set status review ke 0 (menunggu persetujuan)
+    };
+
+    try {
+      const response = await fetch("http://localhost:8001/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reviewData),
+      });
+
+      if (response.ok) {
+        alert("Review saved successfully!");
+        onClose(); // Tutup modal setelah review disimpan
+      } else {
+        console.error("Error saving review:", response);
+        alert("Failed to save review. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to save review due to a network error.");
+    }
   };
 
   return (
@@ -54,7 +86,7 @@ const ReviewInput = ({ movieImage, title, onClose }) => {
                 {liked ? <FavoriteIcon className="liked" /> : <FavoriteBorderIcon />}
               </div>
             </div>
-            <Button variant="success" className="save-button">
+            <Button variant="success" className="save-button" onClick={handleSave}>
               Save
             </Button>
           </Col>
