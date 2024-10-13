@@ -698,7 +698,8 @@ app.get('/awards', (req, res) => {
     SELECT 
       a.id, 
       a.awards_name, 
-      c.country_name 
+      c.country_name,
+      a.awards_years
     FROM 
       awards a 
     JOIN 
