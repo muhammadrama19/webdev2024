@@ -11,6 +11,8 @@ const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const router = express.Router();
+const path = require('path'); 
+const fs = require('fs');
 
 
 const app = express();
@@ -62,6 +64,14 @@ app.use(session({
 }));
 
 
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
 
 
 // Logout route
@@ -839,7 +849,7 @@ app.put('/movie-restore/:id', (req, res) => {
 //LOGIN 
 app.post('/login', (req, res) => {
   const query = "SELECT * FROM users WHERE email = ?";
-  
+
   db.query(query, [req.body.email], (err, data) => {
     if (err) {
       return res.json({ Message: "Server Side Error" });
@@ -847,6 +857,11 @@ app.post('/login', (req, res) => {
 
     if (data.length > 0) {
       const user = data[0];
+
+      // Check if the user has confirmed their email
+      if (!user.isEmailConfirmed) {
+        return res.json({ Message: "Please confirm your email first." });
+      }
 
       bcrypt.compare(req.body.password, user.password, (err, result) => {
         if (err) {
@@ -881,6 +896,7 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
 
 
 
@@ -923,30 +939,102 @@ app.get('/auth/google/callback',
 );
 
 
+
 //REGISTER
 app.post('/register', (req, res) => {
   console.log("Incoming request body:", req.body); // Debugging
 
-  const sql = "INSERT INTO users (`username`, `email`, `password`) VALUES (?)";
-  const saltRounds = 10;
+app.get('/confirm-email/:token', (req, res) => {
+  const { token } = req.params;
 
-  bcrypt.hash(req.body.password, saltRounds, (err, hashedPassword) => {
+  // Verify email confirmation token
+  jwt.verify(token, 'EMAIL_SECRET', (err, decoded) => {
     if (err) {
-      return res.json({ message: "Error hashing password", success: false });
+      return res.json({ message: 'Invalid or expired token' });
     }
 
-    const values = [req.body.username, req.body.email, hashedPassword];
+    const email = decoded.email;
 
-    db.query(sql, [values], (err, data) => {
+    // Update the user to mark their email as confirmed
+    const updateSql = "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
+    
+    db.query(updateSql, [email], (err, result) => {
       if (err) {
-        console.error("Error saving user:", err); // Debugging
-        return res.json({ message: "Username/Password Sudah Terdaftar, silahkan buat yang lain", success: false });
+        return res.json({ message: 'Error confirming email' });
       }
-      console.log("User registered successfully:", data); // Debugging
-      return res.json({ message: "Registration successful", success: true });
+
+      res.json({ message: "Email confirmed successfully! You can now login." });
     });
   });
 });
+
+app.post('/register', (req, res) => {
+  const { username, email, password } = req.body;
+
+  const checkSql = "SELECT * FROM users WHERE username = ? OR email = ?";
+  const sql = "INSERT INTO users (`username`, `email`, `password`, `isEmailConfirmed`) VALUES (?)";
+  const saltRounds = 10;
+
+  // Check if the username or email already exists
+  db.query(checkSql, [username, email], (checkErr, checkData) => {
+    if (checkErr) {
+      console.error("Database check error:", checkErr); // Log the error
+      return res.json({ message: "Database error occurred", success: false });
+    }
+    if (checkData.length > 0) {
+      return res.json({ message: "Username or Email already exists", success: false });
+    }
+
+    // Proceed with password hashing and user creation if no duplicate found
+    bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
+      if (err) {
+        return res.json({ message: "Error hashing password", success: false });
+      }
+
+      const values = [username, email, hashedPassword, false]; // Default isConfirmed as false
+
+      db.query(sql, [values], (insertErr, insertData) => {
+        if (insertErr) {
+          return res.json({ message: "Error during registration", success: false });
+        }
+
+        // Generate Email Confirmation Token (JWT)
+        const emailToken = jwt.sign({ email }, "EMAIL_SECRET", { expiresIn: '1d' });
+
+        // Send confirmation email
+        const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
+        const templatePath = path.join(__dirname, 'template', 'emailTemplate.html');
+        fs.readFile(templatePath, 'utf8', (err, htmlTemplate) => {
+          if (err) {
+            console.error('Error reading email template:', err);
+            return res.json({ message: 'Error reading email template', success: false });
+          }
+
+          // Replace placeholders with actual data
+          const emailHtml = htmlTemplate
+            .replace(/{{username}}/g, username)
+            .replace(/{{confirmationUrl}}/g, confirmationUrl);
+
+          // Mail options
+          const mailOptions = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: 'Please confirm your email',
+            html: emailHtml // Set the HTML content of the email
+          };
+
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            return res.json({ message: 'Error sending confirmation email', success: false });
+          }
+
+          res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+        });
+      });
+    });
+  });
+})});
 
 
 // Forgot Password route

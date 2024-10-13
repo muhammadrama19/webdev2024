@@ -166,51 +166,58 @@ useEffect(() => {
             <span>Filter by:</span>
           </Col>
         </Row>
-        <Row className="g-3 align-items-center" style={{ borderTop: "1px solid var(--primary-color)",  gap: "1rem"  }}>
-          <Col xs={6} sm={6} md={4} lg={2}>
+        <Row className="align-items-center" style={{ borderTop: "1px solid var(--primary-color)",  gap: "1rem"  }}>
+          <Col >
             <DropdownFilterCustom
+              xs={6} sm={6} md={4} lg={2}
               label="Year"
               options={filters.years}
               onSelect={(option) => handleFilterChange("year", option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={2}>
+          <Col >
             <DropdownFilterCustom
+            xs={6} sm={6} md={4} lg={2}
               label="Awards"
               options={filters.awards}
               onSelect={(option) => handleFilterChange("awards", option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={2}>
+          <Col >
             <DropdownFilterCustom
+            xs={6} sm={6} md={4} lg={3}
               label="Genre"
               options={filters.genres}
               onSelect={(option) => handleFilterChange("genre", option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={2}>
+          <Col >
             <DropdownFilterCustom
+            xs={6} sm={6} md={4} lg={2}
               label="Sort By:"
               options={sortOptions}
               onSelect={handleSortChange}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={2}>
+          <Col >
             <DropdownFilterCustom
+            xs={6} sm={6} md={4} lg={2}
               label="Availability"
               options={filters.availability}
               onSelect={(option) => handleFilterChange("availability", option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={2}>
+          <Col >
             <DropdownFilterCustom
+            xs={6} sm={6} md={4} lg={2}
               label="Status"
               options={filters.status}
               onSelect={(option) => handleFilterChange("status", option)}
             />
           </Col>
-          <Col xs={12} sm={6} md={4} lg={2}>
+          <Col xs={6} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
+             
               label="Country"
               options={filters.countries}
               onSelect={(option) => handleFilterChange("country", option)}

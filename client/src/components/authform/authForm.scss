@@ -2,14 +2,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 100%;
   background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
   backdrop-filter: blur(10px);
-  background-color: var(--main-color);
+  background-color: var(--main-color); // Use the main color for the background
   
 }
 
 .auth-form {
+  margin-top: 100px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
   padding: 40px 30px; // More padding for better spacing
   border-radius: 15px;
   background: rgba(255, 255, 255, 0.85); // Increased opacity for better readability
