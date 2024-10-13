@@ -155,10 +155,11 @@ const ActorManager = () => {
         }
     };
 
-    // Function untuk filter drama berdasarkan search term (sebelum pagination)
+    // Function untuk filter actor berdasarkan search term (sebelum pagination)
     const filteredActors = actors.filter((actor) =>
         (actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase()))
+        (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (actor.birthdate && actor.birthdate.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     const indexOfLastActor = currentPage * showCount;
