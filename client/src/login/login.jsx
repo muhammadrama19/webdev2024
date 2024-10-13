@@ -122,9 +122,6 @@ const LoginForm = () => {
             Login
           </Button>
 
-          <Button type="submit" className="loginButton">
-            Login
-          </Button>
           <GoogleLogin label={"Login with Google"} />
         </form>
       </AuthForm>
