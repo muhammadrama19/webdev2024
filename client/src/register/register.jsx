@@ -18,6 +18,7 @@ const RegisterForm = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [isLoading, setIsLoading] = useState(false); 
+  const [confirmationMessage, setConfirmationMessage] = useState(""); // For email confirmation message
 
   const navigate = useNavigate();
 
@@ -55,7 +56,8 @@ const RegisterForm = () => {
         .then(res => {
           console.log('Response from server:', res.data);
           if (res.data.success) {
-            navigate('/login');
+            // Show the email confirmation message instead of navigating
+            setConfirmationMessage("Registration successful. Please check your email to confirm your account.");
           } else {
             alert(res.data.message);
           }
@@ -110,12 +112,19 @@ const RegisterForm = () => {
   };
 
   return (
+    <div className='register'
+    >
     <AuthForm
       title="Sign up"
       linkText="Already have an account?"
       linkHref="/login"
+      style={{marginTop: '50px'}}
+      
+      
+      
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}
+        >
         <FormInput
           label="Username"
           type="text"
@@ -159,11 +168,15 @@ const RegisterForm = () => {
         <Button type="submit" className="registerButton" disabled={isSubmitting}>
           {isLoading ? 'Registering...' : 'Register'}
         </Button>
-      <GoogleLogin />
-
+        
+        <GoogleLogin label={"Register with Google"} />
       </form>
 
+      {confirmationMessage && (
+        <p className="confirmation-message">{confirmationMessage}</p>
+      )}
     </AuthForm>
+    </div>
   );
 };
 
