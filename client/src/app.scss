@@ -1,0 +1,32 @@
+:root{
+    --main-color: rgb(18, 24, 41);
+    --primary-color: #7B6EF6;
+    --secondary-color: #1EA5FC;
+    --tertary-color: #B66DFF;
+    --succes-color:#05CE91;
+    --warning-color: #FF6161;
+    --primary-on-hover: #5A4AF4;
+    --primary-on-active: #7b6ef6;
+    --secondary-on-active: #4BB7FD;
+    --secondary-on-hover: #4BB7FD;
+    --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.1);
+    --elevation-2: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --elevation-3: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --elevation-4: 0 6px 12px rgba(0, 0, 0, 0.1);
+    --elevation-5: 0 8px 16px rgba(0, 0, 0, 0.1);
+    font-family: 'Poppins', sans-serif;
+    background-size: 100%;
+    
+}
+
+@mixin tablet {
+    @media(min-width: 768px){
+        @content;
+    }
+}
+
+@mixin mobile {
+    @media(max-width: 480px){
+        @content;
+    }
+}

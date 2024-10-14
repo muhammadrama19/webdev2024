@@ -1,0 +1,39 @@
+.dropdown-filter-container {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  gap: 10px; /* Adjust this value for space between dropdowns */
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px; /* Adjust this value for mobile gap between dropdowns */
+  }
+}
+
+.dropdown-filter {
+  position: relative;
+  font-size: 14px; /* Adjust font-size as needed */
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+
+  select {
+    cursor: pointer;
+    background-color: var(--main-color);
+    border: 1px solid white;
+    border-radius: 5px;
+    color: white;
+    padding: 5px;
+    min-width: 120px; /* Ensures dropdown has a consistent width */
+
+    @media (max-width: 768px) {
+      width: 100%; /* Full width on mobile for better usability */
+    }
+  }
+}

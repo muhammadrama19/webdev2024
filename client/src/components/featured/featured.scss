@@ -1,0 +1,113 @@
+.featured-container {
+  position: relative;
+  height: 90vh; // This works for large screens
+  width: 100%;
+  overflow: hidden;
+  transition: opacity 0.5s ease-in-out;
+
+  &.fade-in {
+    opacity: 1;
+  }
+
+  &.fade-out {
+    opacity: 0;
+  }
+
+  .background {
+    img.background-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      filter: brightness(0.5);
+    }
+  }
+
+  .content-overlay {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 50px;
+
+    .poster-col {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .movie-poster {
+        width: 50%;
+        max-width: 300px;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+    }
+
+    .info-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: white;
+
+      .movieTitle {
+        font-size: 50px;
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+
+      .desc {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 15px;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    height: auto; // Allow container to resize based on content for small screens
+
+    .content-overlay {
+      flex-direction: column;
+      padding: 0 20px; // Reduce padding on small screens for more space
+
+      .poster-col, .info-col {
+        text-align: center;
+        width: 100%; // Ensure full width on small screens
+      }
+
+      .poster-col {
+        margin-bottom: 20px; // Add margin for spacing
+      }
+
+      .info-col {
+        margin-top: 10px; // Space between elements
+      }
+
+      .desc {
+        font-size: 16px; // Reduce font size for smaller screens
+      }
+
+      .buttons {
+        justify-content: center; // Center buttons on smaller screens
+      }
+    }
+  }
+
+  @media (max-width: 576px) {
+    .movieTitle {
+      font-size: 40px; // Further reduce title size on extra-small screens
+    }
+
+    .desc {
+      font-size: 14px; // Further reduce description size on extra-small screens
+    }
+  }
+}
