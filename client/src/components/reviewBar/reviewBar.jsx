@@ -50,8 +50,8 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
 
   return (
     <Container fluid className="review-bar">
-      <Row className="text-center">
-        <Col xs={4}>
+      <Row className="text-center d-flex justify-content-center">
+       <Col xs={4}>
           <div
             className={`icon-container ${watchClicked ? "watch-active" : ""}`}
             onClick={toggleWatch}
@@ -66,7 +66,7 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
             <span>{hoverText.watch && watchClicked ? 'Remove' : watchClicked ? 'Watched' : 'Watch'}</span>
           </div>
         </Col>
-        <Col xs={4}>
+        {/* <Col xs={4}>
           <div
             className={`icon-container ${likeClicked ? "like-active" : ""}`}
             onClick={toggleLike}
@@ -81,7 +81,7 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
             <span>{hoverText.like && likeClicked ? 'Remove' : likeClicked ? 'Liked' : 'Like'}</span>
           </div>
         </Col>
-        <Col xs={4}>
+        <Col xs={4} className="d-flex justify-content-center">
           <div
             className={`icon-container ${watchlistClicked ? "watchlist-active" : ""}`}
             onClick={toggleWatchlist}
@@ -95,7 +95,7 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
             )}
             <span>{hoverText.watchlist && watchlistClicked ? 'Remove' : 'Watchlist'}</span>
           </div>
-        </Col>
+        </Col> */}
       </Row>
       <Row className="text-center">
         <Col>

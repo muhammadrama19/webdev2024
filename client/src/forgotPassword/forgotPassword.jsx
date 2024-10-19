@@ -1,45 +1,53 @@
 import React, { useState } from 'react';
-import { Button } from "react-bootstrap";
+import AuthForm from "../components/authform/authForm";
+import { Button } from 'react-bootstrap';
 import axios from 'axios';
+import "./forgotPassword.scss";
 
-const ForgotPassword = () => {
+const ForgotPasswordForm = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+  
     axios.post('http://localhost:8001/forgot-password', { email })
-      .then((res) => {
-        setMessage(res.data.message); // Success message
+      .then(res => {
+        if (res.data.success) {
+          setMessage('Check your email for the password reset link.');
+        } else {
+          setMessage('Failed to send reset email. Please try again.');
+        }
       })
-      .catch((err) => {
-        setMessage('Error: Unable to send password reset link');
+      .catch(err => {
+        console.error('Error sending reset email:', err); // Log the error
+        if (err.response) {
+          console.error('Response data:', err.response.data); // Log the response data for more context
+          setMessage(err.response.data.message || 'An error occurred. Please try again later 1.');
+        } else {
+          setMessage('An error occurred. Please try again later. 2');
+        }
       });
-  };
+  };  
 
   return (
-    <div className="forgot-password-container">
-      <h2>Forgot Password</h2>
+    <AuthForm title="Forgot Password" linkText="Remembered your password?" linkHref="/login">
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Email Address</label>
-          <input
-            type="email"
-            className="form-control"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <Button type="submit" className="submitButton">
-          Send Reset Link
+        <input
+          type="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{ color: 'black' }}
+        />
+        <Button type="submit" className="loginButton">
+          Send Reset Email
         </Button>
       </form>
       {message && <p>{message}</p>}
-    </div>
+    </AuthForm>
   );
 };
 
-export default ForgotPassword;
+export default ForgotPasswordForm;

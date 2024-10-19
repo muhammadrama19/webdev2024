@@ -3,7 +3,7 @@
   height: auto;
   position: relative;
   overflow: hidden;
-  padding-top: 40%; 
+  padding-top: 20%; 
 
   img {
     position: absolute;
@@ -29,12 +29,12 @@
     ),
     linear-gradient(
       to right, 
-      rgba(18, 24, 41, 0.8), // Darker color on the left
+      rgba(18, 24, 41, 1), // Darker color on the left with more transparency
       rgba(0, 0, 0, 0)
     ),
     linear-gradient(
       to left, 
-      rgba(18, 24, 41, 0.8), // Darker color on the right
+      rgba(18, 24, 41, 1), // Darker color on the right with more transparency
       rgba(0, 0, 0, 0)
     );
     z-index: 1;

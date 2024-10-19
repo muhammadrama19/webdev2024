@@ -13,6 +13,8 @@ const crypto = require('crypto');
 const router = express.Router();
 const path = require('path'); 
 const fs = require('fs');
+const { isAuthenticated, hasAdminRole } = require('./middleware/auth');
+
 
 
 const app = express();
@@ -62,7 +64,8 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
 }));
-
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 const transporter = nodemailer.createTransport({
@@ -544,14 +547,12 @@ app.get('/featured', (req, res) => {
 
 
 //CMS
-
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', isAuthenticated, hasAdminRole, (req, res) => {
   const queryMovies = 'SELECT COUNT(*) AS movieCount FROM movies';
   const queryGenres = 'SELECT COUNT(*) AS genreCount FROM genres';
   const queryCountries = 'SELECT COUNT(*) AS countryCount FROM countries';
   const queryAwards = 'SELECT COUNT(*) AS awardCount FROM awards';
 
-  // Menjalankan query secara berurutan menggunakan promise
   const getMoviesCount = () => new Promise((resolve, reject) => {
     db.query(queryMovies, (err, results) => {
       if (err) reject(err);
@@ -580,7 +581,7 @@ app.get('/dashboard', (req, res) => {
     });
   });
 
-  // Menggunakan Promise.all untuk menjalankan semua query secara paralel
+  // Run all queries in parallel and return the response
   Promise.all([getMoviesCount(), getGenresCount(), getCountriesCount(), getAwardsCount()])
     .then(([movieCount, genreCount, countryCount, awardCount]) => {
       const response = {
@@ -858,41 +859,53 @@ app.post('/login', (req, res) => {
     if (data.length > 0) {
       const user = data[0];
 
-      // Check if the user has confirmed their email
+      // Check if the user registered via Google OAuth
+      if (user.googleID && !user.password) {
+        return res.json({
+          Message: `It looks like you signed up with Google. Please use Google to log in.`,
+          useOAuth: true // Send this flag to handle on the frontend if necessary
+        });
+      }
+
       if (!user.isEmailConfirmed) {
         return res.json({ Message: "Please confirm your email first." });
       }
 
-      bcrypt.compare(req.body.password, user.password, (err, result) => {
-        if (err) {
-          return res.json({ Message: "Error comparing password" });
-        }
+      // If no googleID is found and password exists, proceed with manual login
+      if (!user.googleID && user.password) {
+        bcrypt.compare(req.body.password, user.password, (err, result) => {
+          if (err) {
+            return res.json({ Message: "Error comparing password" });
+          }
 
-        if (result) {
-          const token = jwt.sign(
-            { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
-            "our-jsonwebtoken-secret-key",
-            { expiresIn: '1d' }
-          );
+          if (result) {
+            const token = jwt.sign(
+              { username: user.username, email: user.email, role: user.role, user_id: user.id },
+              "our-jsonwebtoken-secret-key",
+              { expiresIn: '1d' }
+            );
 
-          // Kirim token dan user_id ke cookie
-          res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
-          res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
+            // Send token and user_id in cookies
+            res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
+            res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
 
-          return res.json({
-            Status: "Login Success",
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            token: token // Kirim token ke client
-          });
-        } else {
-          return res.json({ Message: "Incorrect Password" });
-        }
-      });
+            return res.json({
+              Status: "Login Success",
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              token: token // Send token to client
+            });
+          } else {
+            return res.json({ Message: "Incorrect Password" });
+          }
+        });
+      } else {
+        return res.json({ Message: "User not found or missing credentials." });
+      }
     } else {
-      return res.json({ Message: "No Records existed" });
+      return res.json({ Message: "No user found with that email." });
     }
   });
 });
@@ -901,8 +914,7 @@ app.post('/login', (req, res) => {
 
 
 //Login with Google
-app.use(passport.initialize());
-app.use(passport.session());
+
 
 // Google OAuth login route
 app.get('/auth/google', passport.authenticate('google', {
@@ -1016,7 +1028,7 @@ app.post('/register', (req, res) => {
             from: process.env.EMAIL,
             to: email,
             subject: 'Please confirm your email',
-            html: emailHtml // Set the HTML content of the email
+            html: emailHtml 
           };
 
 
@@ -1033,59 +1045,67 @@ app.post('/register', (req, res) => {
 })});
 
 
-// Forgot Password route
-router.post('/forgot-password', (req, res) => {
+router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
-  // Find user by email
-  const query = 'SELECT * FROM users WHERE email = ?';
-  db.query(query, [email], (err, results) => {
-    if (err || results.length === 0) {
-      return res.status(400).json({ message: 'No user with that email address' });
+  try {
+    // Check if the user exists
+    const [user] = await db.promise().query('SELECT * FROM users WHERE email = ?', [email]);
+
+    if (user.length === 0) {
+      return res.status(404).json({ message: 'User with this email does not exist.', success: false });
     }
 
-    const user = results[0];
+    // Generate a password reset token (JWT)
+    const resetToken = jwt.sign({ email: user[0].email }, 'RESET_PASSWORD_SECRET', { expiresIn: '1h' });
+    const resetUrl = `http://localhost:8001/reset-password/${resetToken}`;
 
-    // Create reset token and save to DB
-    const token = crypto.randomBytes(20).toString('hex');
-    const expires = Date.now() + 3600000; // 1 hour from now
-    const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
-    db.query(updateTokenQuery, [token, expires, email], (err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Error setting reset token' });
+    // Mail options
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: email,
+      subject: 'Password Reset Request',
+      html: `<p>You requested a password reset.</p>
+             <p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`,
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return res.status(500).json({ message: 'Error sending email.', success: false });
       }
 
-      // Send email with reset link
-      const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-          user: 'your-email@gmail.com',
-          pass: 'your-email-password',
-        },
-      });
-
-      const mailOptions = {
-        to: email,
-        from: 'password-reset@yourapp.com',
-        subject: 'Password Reset',
-        text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
-               Please click on the following link, or paste this into your browser to complete the process:
-               http://localhost:3001/reset-password/${token}
-               If you did not request this, please ignore this email and your password will remain unchanged.`,
-      };
-
-      transporter.sendMail(mailOptions, (err) => {
-        if (err) {
-          return res.status(500).json({ message: 'Error sending email' });
-        }
-
-        res.status(200).json({ message: 'Password reset link sent!' });
-      });
+      res.status(200).json({ message: 'Password reset link sent to your email.', success: true });
     });
-  });
+  } catch (error) {
+    console.error('Error during forgot password:', error);
+    res.status(500).json({ message: 'Internal server error.', success: false });
+  }
 });
 
-module.exports = router;
+// Route for resetting the password
+router.post('/reset-password/:token', async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  try {
+    // Verify the reset token
+    const decoded = jwt.verify(token, 'RESET_PASSWORD_SECRET');
+    const email = decoded.email;
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password in the database
+    await db.promise().query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+
+    res.status(200).json({ message: 'Password has been reset successfully.', success: true });
+  } catch (error) {
+    console.error('Error during password reset:', error);
+    res.status(400).json({ message: 'Invalid or expired token.', success: false });
+  }
+});
+
 
 
 //Input Review

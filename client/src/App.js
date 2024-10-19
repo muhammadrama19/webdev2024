@@ -9,6 +9,7 @@ import Detailmovie from './detailmovie/detailmovie';
 import SearchResult from './search/searchResult';
 import ForgotPassword from './forgotPassword/forgotPassword';
 import { SearchProvider } from './context/searchContext'; // Import SearchProvider
+import Dashboard from './dashboard/Home';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/movies/:id" element={<Detailmovie />} />
           <Route path="/searchresult" element={<SearchResult />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/dashboard" element={<Dashboard />} />
 
           
         </Routes>
