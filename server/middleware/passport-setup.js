@@ -8,7 +8,6 @@ passport.use(new GoogleStrategy({
   callbackURL: 'http://localhost:8001/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    // Check for existing user by Google ID
     const [existingUserById] = await db.promise().query(
       'SELECT * FROM users WHERE googleId = ?', [profile.id]
     );
@@ -25,18 +24,17 @@ passport.use(new GoogleStrategy({
     );
 
     if (existingUserByEmail.length > 0) {
-      // If the user exists by email, log them in (considering they signed up via email before)
+      // Log them in if user exists by email
       console.log('User already exists by email:', existingUserByEmail[0]);
       return done(null, existingUserByEmail[0]);
     }
 
     // Create a new user if no existing user was found
     const [newUser] = await db.promise().query(
-      'INSERT INTO users (googleId, email, username, role) VALUES (?, ?, ?, ?)',
-      [profile.id, profile.emails[0].value, profile.displayName, 'User']
+      'INSERT INTO users (googleId, email, username, role, isEmailConfirmed) VALUES (?, ?, ?, ?, ?)',
+      [profile.id, profile.emails[0].value, profile.displayName, 'User', 1] // Default role is 'User'
     );
 
-    // Check if the new user was created successfully
     if (newUser.affectedRows > 0) {
       const user = { id: newUser.insertId, googleId: profile.id, email: profile.emails[0].value, username: profile.displayName };
       console.log('New user created:', user);
@@ -51,16 +49,15 @@ passport.use(new GoogleStrategy({
   }
 }));
 
-// Serialize and deserialize user (for session management)
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  done(null, user.id); // Store user ID in session
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
     const [rows] = await db.promise().query('SELECT * FROM users WHERE id = ?', [id]);
     if (rows.length > 0) {
-      done(null, rows[0]);
+      done(null, rows[0]); // Attach user data to req.user
     } else {
       done(new Error('User not found'), null);
     }

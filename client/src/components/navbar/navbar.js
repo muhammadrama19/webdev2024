@@ -20,6 +20,7 @@ const Navbar = ({ loggedInUsername }) => {
   const [role, setRole] = useState(Cookies.get("role"));
 
 
+
   const navigate = useNavigate();
 
   // Fungsi untuk menangkap query parameter dari URL
@@ -32,17 +33,17 @@ const Navbar = ({ loggedInUsername }) => {
   useEffect(() => {
     const usernameFromGoogle = getQueryParams("username");
     const emailFromGoogle = getQueryParams("email");
+    const roleFromGoogle = getQueryParams("role");
   
     if (usernameFromGoogle && emailFromGoogle) {
-      // Simpan data ke cookie
+
       Cookies.set("username", usernameFromGoogle, { expires: 1 });
       Cookies.set("email", emailFromGoogle, { expires: 1 });
-      Cookies.set("role", "User", { expires: 1 });
+      Cookies.set("role", roleFromGoogle, { expires: 1 });
   
       setUsername(usernameFromGoogle);
       setEmail(emailFromGoogle);
-      setRole("User");
-  
+      setRole(roleFromGoogle);  
       // Clear query params after saving to cookies
       window.history.replaceState(null, null, window.location.pathname); 
     }
@@ -147,7 +148,7 @@ const Navbar = ({ loggedInUsername }) => {
                 />
                 <h4>{username || "Guest"}</h4> 
                 <span className="profile-email">{email || "Unknown ID"}</span>
-                <span className="profile-role">{role || "Guest Role"}</span>
+                
               </div>
               <div className="profile-actions">
                 <button className="btn-profile">Profile</button>
