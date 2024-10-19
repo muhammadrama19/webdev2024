@@ -1,0 +1,46 @@
+.profile-page {
+    background: #1e1e2f; // Dark background similar to the login page
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    .profile-card {
+      background: #f0f0f0; // Light background for the card
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      
+      h2 {
+        color: #333;
+        margin-bottom: 1.5rem;
+      }
+  
+      p {
+        color: #666;
+        margin-bottom: 0.5rem;
+      }
+  
+      .activity-section {
+        background: #f7f7f7;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 2rem;
+        h5 {
+          font-weight: bold;
+        }
+      }
+  
+      button {
+        background-color: #7b5cff;
+        border-color: #7b5cff;
+        &:hover {
+          background-color: #5a3bd1;
+          border-color: #5a3bd1;
+        }
+      }
+    }
+  }
+  
