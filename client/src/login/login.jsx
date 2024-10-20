@@ -111,8 +111,7 @@ const LoginForm = () => {
 
           <Container>
             <a
-              href="/otp"
-              onClick={() => navigateToOtp()}
+              href="/forgot-password"
               className="text-gray-800"
             >
               Forgot password?
