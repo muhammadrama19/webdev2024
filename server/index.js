@@ -862,31 +862,28 @@ app.post('/login', (req, res) => {
     if (data.length > 0) {
       const user = data[0];
 
-      // Check if the user registered via Google OAuth
-      if (user.googleID && !user.password) {
-        return res.json({
-          Message: `It looks like you signed up with Google. Please use Google to log in.`,
-          useOAuth: true // Send this flag to handle on the frontend if necessary
-        });
-      }
-
       if (!user.isEmailConfirmed) {
         return res.json({ Message: "Please confirm your email first." });
       }
 
-      // If no googleID is found and password exists, proceed with manual login
-      if (!user.googleID && user.password) {
+      // If a googleId exists but no password, inform the user to log in via Google OAuth
+      if (user.googleId && !user.password) {
+        return res.json({ Message: "Please log in using Google OAuth." });
+      }
+
+      // If no googleId and password exists, proceed with manual login
+      if (!user.googleId && user.password) {
         bcrypt.compare(req.body.password, user.password, (err, result) => {
           if (err) {
             return res.json({ Message: "Error comparing password" });
           }
 
-        if (result) {
-          const token = jwt.sign(
-            { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
-            "our-jsonwebtoken-secret-key",
-            { expiresIn: '1d' }
-          );
+          if (result) {
+            const token = jwt.sign(
+              { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
+              "our-jsonwebtoken-secret-key",
+              { expiresIn: '1d' }
+            );
 
             // Send token and user_id in cookies
             res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
@@ -898,7 +895,7 @@ app.post('/login', (req, res) => {
               username: user.username,
               email: user.email,
               role: user.role,
-              token: token // Send token to client
+              token: token 
             });
           } else {
             return res.json({ Message: "Incorrect Password" });
@@ -916,6 +913,7 @@ app.post('/login', (req, res) => {
 
 
 
+
 //Login with Google
 
 
@@ -926,9 +924,12 @@ app.get('/auth/google', passport.authenticate('google', {
 
 // Google OAuth callback route
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
+  passport.authenticate('google', { 
+    failureRedirect: 'http://localhost:3001/login?error=google-auth-failed', 
+    failureMessage: true 
+  }),
   (req, res) => {
-    // Mengambil user dari request setelah autentikasi Google
+    // Handle successful login
     const user = req.user;
 
     // Buat token JWT dengan informasi user
@@ -942,13 +943,13 @@ app.get('/auth/google/callback',
     res.cookie('token', token, {
       httpOnly: false,  // Set ke false jika token perlu diakses client-side
       sameSite: 'Strict',
-      secure: false, // Gunakan true di production dengan HTTPS
-      maxAge: 24 * 60 * 60 * 1000 // Cookie berlaku selama 1 hari
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // Cookie expires in 1 day
     });
 
     res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
 
-    // Redirect ke frontend setelah login berhasil
+    // Redirect to the frontend after successful login
     res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
   }
 );
@@ -1017,7 +1018,7 @@ app.post('/register', (req, res) => {
         const emailToken = jwt.sign({ email }, "EMAIL_SECRET", { expiresIn: '1d' });
 
         // Send confirmation email
-        const confirmationUrl = http="//localhost:8001/confirm-email/${emailToken}";
+        const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
         const templatePath = path.join(__dirname, 'template', 'emailTemplate.html');
 
         fs.readFile(templatePath, 'utf8', (err, htmlTemplate) => {
@@ -1046,6 +1047,8 @@ app.post('/register', (req, res) => {
             }
 
             res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+            //redirect into login
+            res.redirect('http://localhost:3001/login');
           });
         });
       });
