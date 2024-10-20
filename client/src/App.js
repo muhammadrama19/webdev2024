@@ -7,14 +7,14 @@ import Navbar from './components/navbar/navbar';
 import Register from './register/register';
 import Login from './login/login';
 import OTPInput from "./login/OTPInput";
-import ResetPassword from "./login/Reset";
 import TestFetch from './test/testFetch';
 import Detailmovie from './detailmovie/detailmovie';
 import SearchResult from './search/searchResult';
+import ForgotPassword from "./login/forgotPassowrd";
+import ResetPassword from "./login/reset";
 
 import Profile from './profile/profile';
 
-import ForgotPassword from './forgotPassword/forgotPassword';
 import { SearchProvider } from './context/searchContext'; // Import SearchProvider
 export const RecoveryContext = createContext();
 
@@ -37,7 +37,9 @@ function App() {
             <Route path="/searchresult" element={<SearchResult />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/otp" element={<OTPInput />} />
-            <Route path="/reset" element={<ResetPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+
           </Routes>
         </Router>
       </RecoveryContext.Provider>

@@ -1,61 +1,49 @@
 import React, { useState } from "react";
-import { useContext } from "react";
-import { RecoveryContext } from "../App";
-import AuthForm from "../components/authform/authForm"; // Reusing AuthForm
-import FormInput from "../components/forminput/formInput"; // For styling OTP input fields
-import { Button, Container } from "react-bootstrap"; // Reusing button and container components
+import AuthForm from "../components/authform/authForm";
+import FormInput from "../components/forminput/formInput";
+import { Button } from "react-bootstrap";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "./login.scss";
 
-export default function Reset() {
-  const [values, setValues] = useState({
-    password: "",
-    confirmPassword: "",
-  });
+const ResetPassword = () => {
+  const [newPassword, setNewPassword] = useState("");
+  const { token } = useParams();
+  const navigate = useNavigate();
 
-  const { setPage, setEmail } = useContext(RecoveryContext);
-
-  // Handler untuk perubahan input
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setValues({
-      ...values,
-      [name]: value,
-    });
+  const handleResetPassword = (e) => {
+    e.preventDefault();
+    
+    axios.post(`http://localhost:8001/reset-password/${token}`, { newPassword })
+      .then((res) => {
+        alert(res.data.message); // Show success message
+        navigate("/login"); // Redirect to login page
+      })
+      .catch((err) => {
+        console.log(err);
+        alert("Error resetting password");
+      });
   };
 
-  function changePassword() {
-    if (values.password !== values.confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-    setPage("recovered");
-  }
-
   return (
-    <AuthForm title="Change Password">
-      <form>
+    <div className="login">
+
+<AuthForm title="Reset Password">
+      <form onSubmit={handleResetPassword}>
         <FormInput
           label="New Password"
           type="password"
-          name="password"
-          placeholder="Enter new password"
-          value={values.password}
-          onChange={handleInputChange}
+          name="newPassword"
+          placeholder="Enter your new password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
         />
-        <FormInput
-          label="Confirm Password"
-          type="password"
-          name="confirmPassword"
-          placeholder="Re-enter new password"
-          value={values.confirmPassword}
-          onChange={handleInputChange}
-        />
-        <Button
-          onClick={changePassword}
-          className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-        >
-          Reset Password
-        </Button>
+        <Button className="loginButton"
+        type="submit">Reset Password</Button>
       </form>
     </AuthForm>
+    </div>
   );
-}
+};
+
+export default ResetPassword;

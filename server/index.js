@@ -954,6 +954,76 @@ app.get('/auth/google/callback',
   }
 );
 
+app.post('/forgot-password', (req, res) => {
+  const { email } = req.body;
+  
+  // Check if user exists with the given email
+  const checkUserSql = "SELECT * FROM users WHERE email = ?";
+  db.query(checkUserSql, [email], (err, userData) => {
+    if (err || userData.length === 0) {
+      return res.status(404).json({ message: "User with this email doesn't exist", success: false });
+    }
+    
+    const user = userData[0];
+    const resetToken = jwt.sign({ id: user.id }, "RESET_PASSWORD_SECRET", { expiresIn: '1h' });
+    
+    // Create reset link
+    const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
+
+    const templatePathReset = path.join(__dirname, 'template', 'forgotPassword.html');
+    
+    // Send reset email
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: email,
+      subject: 'Password Reset',
+      html: `<p>Hi ${user.username},</p>
+             <p>You requested to reset your password. Click the link below to reset:</p>
+             <a href="${resetLink}">${resetLink}</a>`
+    };
+    
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return res.status(500).json({ message: 'Error sending reset email', success: false });
+      }
+
+      res.json({ message: 'Password reset email sent', success: true });
+    });
+  });
+});
+
+app.post('/reset-password/:token', (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  // Verify the token
+  jwt.verify(token, "RESET_PASSWORD_SECRET", (err, decoded) => {
+    if (err) {
+      return res.status(400).json({ message: "Invalid or expired token", success: false });
+    }
+
+    const userId = decoded.id;
+
+    // Hash the new password
+    const saltRounds = 10;
+    bcrypt.hash(newPassword, saltRounds, (hashErr, hashedPassword) => {
+      if (hashErr) {
+        return res.status(500).json({ message: 'Error hashing password', success: false });
+      }
+
+      // Update password in the database
+      const updatePasswordSql = "UPDATE users SET password = ? WHERE id = ?";
+      db.query(updatePasswordSql, [hashedPassword, userId], (updateErr) => {
+        if (updateErr) {
+          return res.status(500).json({ message: 'Error updating password', success: false });
+        }
+
+        res.json({ message: 'Password updated successfully', success: true });
+      });
+    });
+  });
+});
+
 
 
 
@@ -1059,85 +1129,85 @@ app.post('/register', (req, res) => {
 
 // Forgot Password
 // OAuth2 client setup
-const OAuth2 = google.auth.OAuth2;
+// const OAuth2 = google.auth.OAuth2;
 
-// Buat OAuth2 client dengan Client ID, Client Secret, dan Redirect URL
-const oauth2Client = new OAuth2(
-  process.env.CLIENT_ID, // Client ID dari Google Cloud
-  process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
-  "https://developers.google.com/oauthplayground" // Redirect URL, bisa disesuaikan
-);
+// // Buat OAuth2 client dengan Client ID, Client Secret, dan Redirect URL
+// const oauth2Client = new OAuth2(
+//   process.env.CLIENT_ID, // Client ID dari Google Cloud
+//   process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
+//   "https://developers.google.com/oauthplayground" // Redirect URL, bisa disesuaikan
+// );
 
-// Set refresh token yang didapat dari Google Cloud Console
-oauth2Client.setCredentials({
-  refresh_token: process.env.REFRESH_TOKEN,
-});
+// // Set refresh token yang didapat dari Google Cloud Console
+// oauth2Client.setCredentials({
+//   refresh_token: process.env.REFRESH_TOKEN,
+// });
 
-// Fungsi untuk mengirim email
-function sendEmail({ recipient_email, OTP }) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Dapatkan access token
-      const accessToken = await oauth2Client.getAccessToken();
+// // Fungsi untuk mengirim email
+// function sendEmail({ recipient_email, OTP }) {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       // Dapatkan access token
+//       const accessToken = await oauth2Client.getAccessToken();
 
-      // Konfigurasikan nodemailer transport dengan OAuth2
-      var transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          type: "OAuth2",
-          user: process.env.MY_EMAIL, // Email Anda
-          clientId: process.env.CLIENT_ID, // Client ID dari Google Cloud
-          clientSecret: process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
-          refreshToken: process.env.REFRESH_TOKEN, // Refresh Token dari Google Cloud
-          accessToken: accessToken.token, // Access Token yang baru saja di-generate
-        },
-      });
+//       // Konfigurasikan nodemailer transport dengan OAuth2
+//       var transporter = nodemailer.createTransport({
+//         service: "gmail",
+//         auth: {
+//           type: "OAuth2",
+//           user: process.env.MY_EMAIL, // Email Anda
+//           clientId: process.env.CLIENT_ID, // Client ID dari Google Cloud
+//           clientSecret: process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
+//           refreshToken: process.env.REFRESH_TOKEN, // Refresh Token dari Google Cloud
+//           accessToken: accessToken.token, // Access Token yang baru saja di-generate
+//         },
+//       });
 
-      // Konfigurasi email
-      const mail_configs = {
-        from: process.env.MY_EMAIL, // Email pengirim
-        to: recipient_email, // Email penerima
-        subject: "LALAJOEUY PASSWORD RECOVERY",
-        html: `<!DOCTYPE html>
-              <html lang="en">
-              <head>
-                <meta charset="UTF-8">
-                <title>Recovery Password</title>
-              </head>
-              <body>
-                <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
-                  <div style="margin:50px auto;width:70%;padding:20px 0">
-                    <p>Hi,</p>
-                    <p>Thank you for choosing Lalajo Euy! Use the following OTP to complete your Password Recovery Procedure. OTP is valid for 5 minutes</p>
-                    <h2>${OTP}</h2>
-                  </div>
-                </div>
-              </body>
-              </html>`,
-      };
+//       // Konfigurasi email
+//       const mail_configs = {
+//         from: process.env.MY_EMAIL, // Email pengirim
+//         to: recipient_email, // Email penerima
+//         subject: "LALAJOEUY PASSWORD RECOVERY",
+//         html: `<!DOCTYPE html>
+//               <html lang="en">
+//               <head>
+//                 <meta charset="UTF-8">
+//                 <title>Recovery Password</title>
+//               </head>
+//               <body>
+//                 <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+//                   <div style="margin:50px auto;width:70%;padding:20px 0">
+//                     <p>Hi,</p>
+//                     <p>Thank you for choosing Lalajo Euy! Use the following OTP to complete your Password Recovery Procedure. OTP is valid for 5 minutes</p>
+//                     <h2>${OTP}</h2>
+//                   </div>
+//                 </div>
+//               </body>
+//               </html>`,
+//       };
 
-      // Kirim email
-      transporter.sendMail(mail_configs, function (error, info) {
-        if (error) {
-          console.error("Error sending email:", error);
-          return reject({ message: `An error has occurred: ${error.message}` });
-        }
-        console.log("Email sent:", info.response);
-        return resolve({ message: "Email sent successfully" });
-      });
-    } catch (error) {
-      console.error("Error in OAuth2 or sending email:", error);
-      return reject({ message: `An error has occurred: ${error.message}` });
-    }
-  });
-}
+//       // Kirim email
+//       transporter.sendMail(mail_configs, function (error, info) {
+//         if (error) {
+//           console.error("Error sending email:", error);
+//           return reject({ message: `An error has occurred: ${error.message}` });
+//         }
+//         console.log("Email sent:", info.response);
+//         return resolve({ message: "Email sent successfully" });
+//       });
+//     } catch (error) {
+//       console.error("Error in OAuth2 or sending email:", error);
+//       return reject({ message: `An error has occurred: ${error.message}` });
+//     }
+//   });
+// }
 
-// Endpoint untuk mengirim email pemulihan
-app.post("/send_recovery_email", (req, res) => {
-  sendEmail(req.body)
-    .then((response) => res.send(response.message))
-    .catch((error) => res.status(500).send(error.message));
-});
+// // Endpoint untuk mengirim email pemulihan
+// app.post("/send_recovery_email", (req, res) => {
+//   sendEmail(req.body)
+//     .then((response) => res.send(response.message))
+//     .catch((error) => res.status(500).send(error.message));
+// });
 
 
 
