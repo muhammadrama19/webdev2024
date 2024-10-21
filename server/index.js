@@ -13,8 +13,8 @@ const crypto = require('crypto');
 const router = express.Router();
 const path = require('path'); 
 const fs = require('fs');
-
-
+const { google } = require("googleapis");
+const multer = require('multer');
 const app = express();
 const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
 
@@ -33,9 +33,10 @@ app.use(cors({
   },
   credentials: true // Untuk mengizinkan penggunaan cookie
 }));
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
 
 
@@ -73,6 +74,19 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/images');
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '_' + Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage
+})
 
 // Logout route
 app.get('/logout', (req, res) => {
@@ -674,7 +688,7 @@ app.get('/users', (req, res) => {
 });
 
 
-
+// Route to fetch all actors
 app.get('/actors', (req, res) => {
   const query = `
     SELECT 
@@ -703,7 +717,121 @@ app.get('/actors', (req, res) => {
   });
 });
 
+// Route to add a new actor
+app.post('/actors', upload.single('actor_picture'), (req, res) => {
+  const { name, birthdate, country_name } = req.body;
+  const actor_picture = req.file ? req.file.filename : null;
 
+  if (!name || !birthdate || !country_name) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if the country exists in the database
+  const checkCountryQuery = `
+    SELECT id FROM countries WHERE country_name = ?;
+  `;
+
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country:', err.message);
+      return res.status(500).json({ error: 'Failed to check country.' });
+    }
+
+    if (countryResult.length === 0) {
+      // If country doesn't exist, return an error
+      return res.status(400).json({ error: 'Country not found. Please add the country first.' });
+    }
+
+    // If country exists, proceed with adding the actor
+    const country_birth_id = countryResult[0].id;
+
+    const addActorQuery = `
+      INSERT INTO actors (name, birthdate, country_birth_id, actor_picture) 
+      VALUES (?, ?, ?, ?);
+    `;
+    const values = [name, birthdate, country_birth_id, actor_picture];
+
+    db.query(addActorQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error inserting actor:', err.message);
+        return res.status(500).json({ error: 'Failed to add actor.' });
+      }
+      res.status(201).json({ message: 'Actor added successfully.', id: result.insertId });
+    });
+  });
+});
+
+
+// Route to update an existing actor with country existence check
+app.put('/actors/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, birthdate, country_name, actor_picture } = req.body;
+
+  if (!name || !birthdate || !country_name) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if country exists before updating actor
+  const checkCountryQuery = 'SELECT id FROM countries WHERE country_name = ?';
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country existence:', err.message);
+      return res.status(500).json({ error: 'Failed to check country existence.' });
+    }
+
+    if (countryResult.length === 0) {
+      return res.status(400).json({ error: 'Country does not exist.' });
+    }
+
+    // If country exists, proceed to update actor
+    const country_birth_id = countryResult[0].id;
+
+    const updateQuery = `
+      UPDATE actors 
+      SET name = ?, birthdate = ?, country_birth_id = ?, actor_picture = ?
+      WHERE id = ?;
+    `;
+    const values = [name, birthdate, country_birth_id, actor_picture, id];
+
+    db.query(updateQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error updating actor:', err.message);
+        return res.status(500).json({ error: 'Failed to update actor.' });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Actor not found.' });
+      }
+
+      res.json({ message: 'Actor updated successfully.' });
+    });
+  });
+});
+
+
+// Route to delete an actor
+app.delete('/actors/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = `
+    DELETE FROM actors 
+    WHERE id = ?;
+  `;
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting actor:', err.message);
+      return res.status(500).json({ error: 'Failed to delete actor.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Actor not found.' });
+    }
+
+    res.json({ message: 'Actor deleted successfully.' });
+  });
+});
+
+// Get all genres
 app.get('/genres', (req, res) => {
   const query = 'SELECT id, name FROM genres ORDER BY id ASC ';
   db.query(query, (err, results) => {
@@ -716,6 +844,53 @@ app.get('/genres', (req, res) => {
   });
 });
 
+// Add a new genre
+app.post('/genres', (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Genre name is required' });
+  }
+
+  const query = 'INSERT INTO genres (name) VALUES (?)';
+  db.query(query, [name], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to add genre' });
+    }
+    res.json({ id: result.insertId, name });
+  });
+});
+
+// Update an existing genre
+app.put('/genres/:id', (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Genre name is required' });
+  }
+
+  const query = 'UPDATE genres SET name = ? WHERE id = ?';
+  db.query(query, [name, id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to update genre' });
+    }
+    res.json({ message: 'Genre updated successfully' });
+  });
+});
+
+// Delete a genre
+app.delete('/genres/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM genres WHERE id = ?';
+  db.query(query, [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to delete genre' });
+    }
+    res.json({ message: 'Genre deleted successfully' });
+  });
+});
+
+// Get all countries
 app.get('/countries', (req, res) => {
   const query = 'SELECT id, country_name FROM countries ORDER BY id ASC ';
   db.query(query, (err, results) => {
@@ -728,6 +903,72 @@ app.get('/countries', (req, res) => {
   });
 });
 
+// Get a single country berdasarkan country_name
+app.get('/countries/:country_name', (req, res) => {
+  const { country_name } = req.params;
+  const query = 'SELECT id, country_name FROM countries WHERE country_name = ?';
+  db.query(query, [country_name], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Country not found' });
+    }
+
+    res.json(results[0]);
+  });
+});
+
+// Add a new country
+app.post('/countries', (req, res) => {
+  const { country_name } = req.body;
+  if (!country_name) {
+    return res.status(400).json({ error: 'Country name is required' });
+  }
+
+  const query = 'INSERT INTO countries (country_name) VALUES (?)';
+  db.query(query, [country_name], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to add country' });
+    }
+    res.json({ id: result.insertId, country_name });
+  });
+});
+
+// Update an existing country
+app.put('/countries/:id', (req, res) => {
+  const { id } = req.params;
+  const { country_name } = req.body;
+
+  if (!country_name) {
+    return res.status(400).json({ error: 'Country name is required' });
+  }
+
+  const query = 'UPDATE countries SET country_name = ? WHERE id = ?';
+  db.query(query, [country_name, id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to update country' });
+    }
+    res.json({ message: 'Country updated successfully' });
+  });
+});
+
+// Delete a country
+app.delete('/countries/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM countries WHERE id = ?';
+  db.query(query, [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to delete country' });
+    }
+    res.json({ message: 'Country deleted successfully' });
+  });
+});
+
+// Get all awards
 app.get('/awards', (req, res) => {
   const query = `
     SELECT 
@@ -754,9 +995,119 @@ app.get('/awards', (req, res) => {
   });
 });
 
+// Route to add a new Award
+app.post('/awards', (req, res) => {
+  const { awards_name, country_name, awards_years } = req.body;
 
-app.get('/reviews', (req, res) => {
+  if (!awards_name || !country_name || !awards_years) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+  // Check if the country exists in the database
+  const checkCountryQuery = `
+   SELECT id FROM countries WHERE country_name = ?;
+ `;
+
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country:', err.message);
+      return res.status(500).json({ error: 'Failed to check country.' });
+    }
+
+    if (countryResult.length === 0) {
+      // If country doesn't exist, return an error
+      return res.status(400).json({ error: 'Country not found. Please add the country first.' });
+    }
+
+    // If country exists, proceed with adding the award
+    const country_id = countryResult[0].id;
+
+    const addAwardQuery = `
+      INSERT INTO awards (awards_name, country_id, awards_years) 
+      VALUES (?, ?, ?);
+    `;
+    const values = [awards_name, country_id, awards_years];
+
+    db.query(addAwardQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error inserting award:', err.message);
+        return res.status(500).json({ error: 'Failed to add award.' });
+      }
+      res.status(201).json({ message: 'Award added successfully.', id: result.insertId });
+    });
+  });
+});
+
+// Route to update an existing award with country existence check
+app.put('/awards/:id', (req, res) => {
+  const { id } = req.params;
+  const { awards_name, country_name, awards_years } = req.body;
+
+  if (!awards_name || !country_name || !awards_years) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if country exists before updating award
+  const checkCountryQuery = 'SELECT id FROM countries WHERE country_name = ?';
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country existence:', err.message);
+      return res.status(500).json({ error: 'Failed to check country existence.' });
+    }
+
+    if (countryResult.length === 0) {
+      return res.status(400).json({ error: 'Country does not exist.' });
+    }
+
+    // If country exists, proceed with update the award
+    const country_id = countryResult[0].id;
+
+    const updateQuery = `
+      UPDATE awards 
+      SET awards_name = ?, country_id = ?, awards_years = ?
+      WHERE id = ?;
+    `;
+    const values = [awards_name, country_id, awards_years, id];
+
+    db.query(updateQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error updating award:', err.message);
+        return res.status(500).json({ error: 'Failed to update award.' });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Award not found.' });
+      }
+
+      res.json({ message: 'Award updated successfully.' });
+    });
+  });
+});
+
+// Route to delete an award
+app.delete('/awards/:id', (req, res) => {
+  const { id } = req.params;
+
   const query = `
+    DELETE FROM awards
+    WHERE id = ?;
+  `;
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting award:', err.message);
+      return res.status(500).json({ error: 'Failed to delete award.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Award not found.' });
+    }
+
+    res.json({ message: 'Award deleted successfully.' });
+  });
+});
+
+
+  app.get('/reviews', (req, res) => {
+    const query = `
     SELECT 
       reviews.id AS review_id,
       reviews.content,

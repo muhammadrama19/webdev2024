@@ -17,7 +17,7 @@ const ActorManager = () => {
     const [currentPage, setCurrentPage] = useState(1); // State for current page
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
-
+    const [file, setFile] = useState();
 
     useEffect(() => {
         const fetchActors = async () => {
@@ -44,22 +44,48 @@ const ActorManager = () => {
         }
     };
 
+    const checkCountryExists = async (countryName) => {
+        try {
+            const response = await fetch(`http://localhost:8001/countries?name=${countryName}`);
+            const data = await response.json();
+            return data.length > 0;
+        } catch (error) {
+            console.error("Error checking country existence:", error);
+            return false;
+        }
+    };
+
     const handleAddActor = async (e) => {
         e.preventDefault();
-        if (newActor.name.trim() && newActor.country.trim()) {
+
+        // Check if country exists in the backend
+        const countryExists = await checkCountryExists(newActor.country_name);
+        if (!countryExists) {
+            alert("Country does not exist. Please add the country first.");
+            return;
+        }
+
+        if (newActor.name.trim() && newActor.country_name.trim()) {
+            // Create FormData to send file and other actor data
+            const formData = new FormData();
+            formData.append('name', newActor.name);
+            formData.append('country_name', newActor.country_name);
+            formData.append('birthdate', newActor.birthdate);
+            formData.append('actor_picture', file);
+
             try {
                 const response = await fetch('http://localhost:8001/actors', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ ...newActor, id: Date.now() }),
+                    body: formData,  // Sending FormData directly
                 });
+
                 const data = await response.json();
                 setActors((prevActors) => [...prevActors, data]);
             } catch (error) {
                 console.error("Error adding actor:", error);
             }
+
+            // Clear the form and reset state
             setNewActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
             setShowModal(false);
         } else {
@@ -88,25 +114,50 @@ const ActorManager = () => {
 
     const handleSaveEdit = async (e) => {
         e.preventDefault();
-        try {
-            const response = await fetch(`http://localhost:8001/actors/${editing}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(editActor),
-            });
-            const updatedActor = await response.json();
-            setActors((prevActors) =>
-                prevActors.map((actor) => (actor.id === editing ? updatedActor : actor))
-            );
-            setEditing(null);
-            setEditActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
-            setShowModal(false);
-        } catch (error) {
-            console.error("Error saving edit:", error);
+
+        if (editActor.name && editActor.country_name && editActor.birthdate && editActor.actor_picture) {
+            const updatedActor = {
+                name: editActor.name,
+                country_name: editActor.country_name,
+                birthdate: editActor.birthdate,
+                actor_picture: editActor.actor_picture
+            }
+            
+            // Check if the edited country exists in the backend
+            const countryExists = await checkCountryExists(editActor.country_name);
+            if (!countryExists) {
+                alert("Country does not exist. Please add the country first.");
+                return;
+            }
+
+            console.log(updatedActor);
+            console.log(editing);
+            console.log(editActor);
+
+            try {
+                const response = await fetch(`http://localhost:8001/actors/${editing}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedActor),
+                });
+
+                const data = await response.json();
+                setActors((prevActors) =>
+                    prevActors.map((actor) => (actor.id === editing ? data : actor))
+                );
+                setEditing(null);
+                setEditActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
+                setShowModal(false);
+            } catch (error) {
+                console.error("Error saving edit:", error);
+            }
+        } else {
+            alert("All fields must be filled!");
         }
     };
+
 
     const handleShowModal = () => {
         setIsEditing(false);
@@ -126,28 +177,11 @@ const ActorManager = () => {
     };
 
     const handlePhotoChange = (e) => {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            const photoUrl = URL.createObjectURL(file);
-
-            if (isEditing) {
-                setEditActor((prev) => ({
-                    ...prev,
-                    photo: photoUrl,
-                }));
-            } else {
-                setNewActor((prev) => ({
-                    ...prev,
-                    photo: photoUrl,
-                }));
-            }
-        } else {
-            alert('Please upload a valid image file.');
-        }
+        setFile(e.target.files[0]);
     };
 
     const handleDateChange = (date) => {
-        const formattedDate = date.toISOString().split("T")[0]; // Format to YYYY-MM-DD
+        const formattedDate = date.toISOString().split("T")[0];
         if (isEditing) {
             setEditActor((prev) => ({ ...prev, birthdate: formattedDate }));
         } else {
@@ -247,18 +281,6 @@ const ActorManager = () => {
                 <Modal.Body>
                     <Form>
                         <Form.Group className="mb-3">
-                            <Form.Label>Country</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="country"
-                                value={isEditing ? editActor.country_name : newActor.country_name}
-                                onChange={handleInputChange}
-                                placeholder="Enter country"
-                                required
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
                             <Form.Label>Actor Name</Form.Label>
                             <Form.Control
                                 type="text"
@@ -266,6 +288,18 @@ const ActorManager = () => {
                                 value={isEditing ? editActor.name : newActor.name}
                                 onChange={handleInputChange}
                                 placeholder="Enter actor name"
+                                required
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Country</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="country_name"
+                                value={isEditing ? editActor.country_name : newActor.country_name}
+                                onChange={handleInputChange}
+                                placeholder="Enter country"
                                 required
                             />
                         </Form.Group>
@@ -286,19 +320,23 @@ const ActorManager = () => {
                             <Form.Label>Upload Picture</Form.Label>
                             <Form.Control
                                 type="file"
-                                name="photo"
+                                name="actor_picture"
                                 accept="image/*"
                                 onChange={handlePhotoChange}
                             />
                             {/* Preview Image */}
                             {isEditing && editActor.actor_picture && (
                                 <div className="mt-2">
-                                    <img src={editActor.actor_picture} alt="Preview" width={100} />
+                                    <img src={editActor.actor_picture.startsWith("http") || editActor.actor_picture.startsWith("https")
+                                        ? editActor.actor_picture
+                                        : 'http://localhost:8001/images/' + editActor.actor_picture} alt="Preview" width={100} />
                                 </div>
                             )}
                             {!isEditing && newActor.actor_picture && (
                                 <div className="mt-2">
-                                    <img src={newActor.actor_picture} alt="Preview" width={100} />
+                                    <img src={newActor.actor_picture.startsWith("http") || newActor.actor_picture.startsWith("https")
+                                        ? newActor.actor_picture
+                                        : 'http://localhost:8001/images/' + newActor.actor_picture} alt="Preview" width={100} />
                                 </div>
                             )}
                         </Form.Group>
@@ -352,10 +390,11 @@ const ActorManager = () => {
                                                 year: 'numeric'
                                             })}
                                         </td>
-
                                         <td>
                                             {actor.actor_picture && actor.actor_picture !== "N/A" ? (
-                                                <img src={actor.actor_picture} alt={actor.name} width={50} />
+                                                <img src={actor.actor_picture.startsWith("http") || actor.actor_picture.startsWith("https")
+                                                    ? actor.actor_picture
+                                                    : 'http://localhost:8001/images/' + actor.actor_picture} alt={actor.name} width={50} />
                                             ) : (
                                                 <img src={Icon} alt={actor.name} width={50} />
                                             )}
