@@ -139,7 +139,7 @@ app.get('/movies/movie', (req, res) => {
     JOIN awards a ON ma.awards_id = a.id
     JOIN status s ON m.status_id = s.id
     JOIN availability av ON m.availability_id = av.id
-    WHERE 1=1
+    WHERE status = 1
   `;
 
   // Apply filters
@@ -193,7 +193,7 @@ app.get('/movies/movie', (req, res) => {
       JOIN awards a ON ma.awards_id = a.id
       JOIN status s ON m.status_id = s.id 
       JOIN availability av ON m.availability_id = av.id
-      WHERE 1=1
+      WHERE status = 1
     `;
 
     // Apply filters to count query as well
@@ -302,7 +302,7 @@ app.get('/movies/detail/:id', (req, res) => {
     LEFT JOIN
     status ON movies.status_id = status.id
     WHERE
-      movies.id = ?
+      movies.id = ? AND status = 1
   `;
   
   db.query(query, [id], (err, results) => {
@@ -597,6 +597,28 @@ app.get('/dashboard', (req, res) => {
     });
 });
 
+app.get('/movie-genre-count-by-decade', (req, res) => {
+  const query = `
+    SELECT 
+      FLOOR(YEAR(m.release_year) / 10) * 10 AS decade,  -- Mengelompokkan berdasarkan dekade
+      COUNT(DISTINCT m.id) AS movieCount, 
+      COUNT(DISTINCT mg.genre_id) AS genreCount
+    FROM movies m
+    LEFT JOIN movie_genres mg ON m.id = mg.movie_id
+    GROUP BY decade
+    ORDER BY decade ASC;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 
 
 app.get('/movie-list', (req, res) => {
@@ -634,7 +656,6 @@ app.get('/movie-list', (req, res) => {
     res.json(results);  
   });
 });
-
 
 app.get('/users', (req, res) => {
   const query = `
