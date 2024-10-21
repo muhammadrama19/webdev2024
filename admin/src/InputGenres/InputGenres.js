@@ -36,44 +36,71 @@ const GenreManager = () => {
         setNewGenre("");
     };
 
-    const handleAddGenre = () => {
+    const handleAddGenre = async () => {
         const trimmedGenre = newGenre.trim();
 
         if (trimmedGenre) {
-            if (genres.some(genres => genres.name.toLowerCase() === trimmedGenre.toLowerCase())) {
+            if (genres.some(genre => genre.name.toLowerCase() === trimmedGenre.toLowerCase())) {
                 alert("Genre already exists!");
             } else {
-                setGenres([
-                    ...genres,
-                    {
-                        id: genres.length + 1,
-                        name: trimmedGenre,
-                    },
-                ]);
-                setNewGenre("");
-                handleCloseModal();
+                try {
+                    const response = await fetch('http://localhost:8001/genres', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name: trimmedGenre }),
+                    });
+
+                    const data = await response.json();
+                    setGenres([...genres, data]); 
+                    setNewGenre("");
+                    handleCloseModal();
+                } catch (error) {
+                    console.error("Error adding genre:", error);
+                }
             }
         } else {
             alert("Genre name cannot be empty or just spaces!");
         }
     };
 
-    const handleDeleteGenre = (id) => {
-        setGenres(genres.filter((genres) => genres.id !== id));
-    };
 
-    const handleRenameGenre = (id) => {
-        if (editName.trim()) {
-            setGenres(
-                genres.map((genre) =>
-                    genres.id === id ? { ...genre, name: editName } : genre
-                )
-            );
-            setEditing(null);
-            setEditName("");
+    const handleDeleteGenre = async (id) => {
+        try {
+            await fetch(`http://localhost:8001/genres/${id}`, {
+                method: 'DELETE',
+            });
+            setGenres(genres.filter((genre) => genre.id !== id));
+        } catch (error) {
+            console.error("Error deleting genre:", error);
         }
     };
-    
+
+    const handleRenameGenre = async (id) => {
+        if (editName.trim()) {
+            try {
+                await fetch(`http://localhost:8001/genres/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: editName }),
+                });
+                setGenres(
+                    genres.map((genre) =>
+                        genre.id === id ? { ...genre, name: editName } : genre
+                    )
+                );
+                setEditing(null);
+                setEditName("");
+            } catch (error) {
+                console.error("Error updating genre:", error);
+            }
+        }
+    };
+
+
     // Function untuk filter drama berdasarkan search term (sebelum pagination)
     const filteredGenres = genres.filter((genre) =>
         genre.name && genre.name.toLowerCase().includes(searchTerm.toLowerCase())
