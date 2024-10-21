@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 const passport = require('./middleware/passport-setup')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-
+const multer = require('multer');
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 
@@ -40,6 +40,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
 
 
@@ -77,6 +78,19 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/images');
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '_' + Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage
+})
 
 // Logout route
 app.get('/logout', (req, res) => {
@@ -657,7 +671,7 @@ app.get('/users', (req, res) => {
 });
 
 
-
+// Route to fetch all actors
 app.get('/actors', (req, res) => {
   const query = `
     SELECT 
@@ -686,7 +700,121 @@ app.get('/actors', (req, res) => {
   });
 });
 
+// Route to add a new actor
+app.post('/actors', upload.single('actor_picture'), (req, res) => {
+  const { name, birthdate, country_name } = req.body;
+  const actor_picture = req.file ? req.file.filename : null;
 
+  if (!name || !birthdate || !country_name) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if the country exists in the database
+  const checkCountryQuery = `
+    SELECT id FROM countries WHERE country_name = ?;
+  `;
+
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country:', err.message);
+      return res.status(500).json({ error: 'Failed to check country.' });
+    }
+
+    if (countryResult.length === 0) {
+      // If country doesn't exist, return an error
+      return res.status(400).json({ error: 'Country not found. Please add the country first.' });
+    }
+
+    // If country exists, proceed with adding the actor
+    const country_birth_id = countryResult[0].id;
+
+    const addActorQuery = `
+      INSERT INTO actors (name, birthdate, country_birth_id, actor_picture) 
+      VALUES (?, ?, ?, ?);
+    `;
+    const values = [name, birthdate, country_birth_id, actor_picture];
+
+    db.query(addActorQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error inserting actor:', err.message);
+        return res.status(500).json({ error: 'Failed to add actor.' });
+      }
+      res.status(201).json({ message: 'Actor added successfully.', id: result.insertId });
+    });
+  });
+});
+
+
+// Route to update an existing actor with country existence check
+app.put('/actors/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, birthdate, country_name, actor_picture } = req.body;
+
+  if (!name || !birthdate || !country_name) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if country exists before updating actor
+  const checkCountryQuery = 'SELECT id FROM countries WHERE country_name = ?';
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country existence:', err.message);
+      return res.status(500).json({ error: 'Failed to check country existence.' });
+    }
+
+    if (countryResult.length === 0) {
+      return res.status(400).json({ error: 'Country does not exist.' });
+    }
+
+    // If country exists, proceed to update actor
+    const country_birth_id = countryResult[0].id;
+
+    const updateQuery = `
+      UPDATE actors 
+      SET name = ?, birthdate = ?, country_birth_id = ?, actor_picture = ?
+      WHERE id = ?;
+    `;
+    const values = [name, birthdate, country_birth_id, actor_picture, id];
+
+    db.query(updateQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error updating actor:', err.message);
+        return res.status(500).json({ error: 'Failed to update actor.' });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Actor not found.' });
+      }
+
+      res.json({ message: 'Actor updated successfully.' });
+    });
+  });
+});
+
+
+// Route to delete an actor
+app.delete('/actors/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = `
+    DELETE FROM actors 
+    WHERE id = ?;
+  `;
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting actor:', err.message);
+      return res.status(500).json({ error: 'Failed to delete actor.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Actor not found.' });
+    }
+
+    res.json({ message: 'Actor deleted successfully.' });
+  });
+});
+
+// Get all genres
 app.get('/genres', (req, res) => {
   const query = 'SELECT id, name FROM genres ORDER BY id ASC ';
   db.query(query, (err, results) => {
@@ -699,6 +827,53 @@ app.get('/genres', (req, res) => {
   });
 });
 
+// Add a new genre
+app.post('/genres', (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Genre name is required' });
+  }
+
+  const query = 'INSERT INTO genres (name) VALUES (?)';
+  db.query(query, [name], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to add genre' });
+    }
+    res.json({ id: result.insertId, name });
+  });
+});
+
+// Update an existing genre
+app.put('/genres/:id', (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Genre name is required' });
+  }
+
+  const query = 'UPDATE genres SET name = ? WHERE id = ?';
+  db.query(query, [name, id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to update genre' });
+    }
+    res.json({ message: 'Genre updated successfully' });
+  });
+});
+
+// Delete a genre
+app.delete('/genres/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM genres WHERE id = ?';
+  db.query(query, [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to delete genre' });
+    }
+    res.json({ message: 'Genre deleted successfully' });
+  });
+});
+
+// Get all countries
 app.get('/countries', (req, res) => {
   const query = 'SELECT id, country_name FROM countries ORDER BY id ASC ';
   db.query(query, (err, results) => {
@@ -711,6 +886,72 @@ app.get('/countries', (req, res) => {
   });
 });
 
+// Get a single country berdasarkan country_name
+app.get('/countries/:country_name', (req, res) => {
+  const { country_name } = req.params;
+  const query = 'SELECT id, country_name FROM countries WHERE country_name = ?';
+  db.query(query, [country_name], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Country not found' });
+    }
+
+    res.json(results[0]);
+  });
+});
+
+// Add a new country
+app.post('/countries', (req, res) => {
+  const { country_name } = req.body;
+  if (!country_name) {
+    return res.status(400).json({ error: 'Country name is required' });
+  }
+
+  const query = 'INSERT INTO countries (country_name) VALUES (?)';
+  db.query(query, [country_name], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to add country' });
+    }
+    res.json({ id: result.insertId, country_name });
+  });
+});
+
+// Update an existing country
+app.put('/countries/:id', (req, res) => {
+  const { id } = req.params;
+  const { country_name } = req.body;
+
+  if (!country_name) {
+    return res.status(400).json({ error: 'Country name is required' });
+  }
+
+  const query = 'UPDATE countries SET country_name = ? WHERE id = ?';
+  db.query(query, [country_name, id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to update country' });
+    }
+    res.json({ message: 'Country updated successfully' });
+  });
+});
+
+// Delete a country
+app.delete('/countries/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM countries WHERE id = ?';
+  db.query(query, [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to delete country' });
+    }
+    res.json({ message: 'Country deleted successfully' });
+  });
+});
+
+// Get all awards
 app.get('/awards', (req, res) => {
   const query = `
     SELECT 
@@ -737,9 +978,119 @@ app.get('/awards', (req, res) => {
   });
 });
 
+// Route to add a new Award
+app.post('/awards', (req, res) => {
+  const { awards_name, country_name, awards_years } = req.body;
 
-app.get('/reviews', (req, res) => {
+  if (!awards_name || !country_name || !awards_years) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+  // Check if the country exists in the database
+  const checkCountryQuery = `
+   SELECT id FROM countries WHERE country_name = ?;
+ `;
+
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country:', err.message);
+      return res.status(500).json({ error: 'Failed to check country.' });
+    }
+
+    if (countryResult.length === 0) {
+      // If country doesn't exist, return an error
+      return res.status(400).json({ error: 'Country not found. Please add the country first.' });
+    }
+
+    // If country exists, proceed with adding the award
+    const country_id = countryResult[0].id;
+
+    const addAwardQuery = `
+      INSERT INTO awards (awards_name, country_id, awards_years) 
+      VALUES (?, ?, ?);
+    `;
+    const values = [awards_name, country_id, awards_years];
+
+    db.query(addAwardQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error inserting award:', err.message);
+        return res.status(500).json({ error: 'Failed to add award.' });
+      }
+      res.status(201).json({ message: 'Award added successfully.', id: result.insertId });
+    });
+  });
+});
+
+// Route to update an existing award with country existence check
+app.put('/awards/:id', (req, res) => {
+  const { id } = req.params;
+  const { awards_name, country_name, awards_years } = req.body;
+
+  if (!awards_name || !country_name || !awards_years) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if country exists before updating award
+  const checkCountryQuery = 'SELECT id FROM countries WHERE country_name = ?';
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country existence:', err.message);
+      return res.status(500).json({ error: 'Failed to check country existence.' });
+    }
+
+    if (countryResult.length === 0) {
+      return res.status(400).json({ error: 'Country does not exist.' });
+    }
+
+    // If country exists, proceed with update the award
+    const country_id = countryResult[0].id;
+
+    const updateQuery = `
+      UPDATE awards 
+      SET awards_name = ?, country_id = ?, awards_years = ?
+      WHERE id = ?;
+    `;
+    const values = [awards_name, country_id, awards_years, id];
+
+    db.query(updateQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error updating award:', err.message);
+        return res.status(500).json({ error: 'Failed to update award.' });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Award not found.' });
+      }
+
+      res.json({ message: 'Award updated successfully.' });
+    });
+  });
+});
+
+// Route to delete an award
+app.delete('/awards/:id', (req, res) => {
+  const { id } = req.params;
+
   const query = `
+    DELETE FROM awards
+    WHERE id = ?;
+  `;
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting award:', err.message);
+      return res.status(500).json({ error: 'Failed to delete award.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Award not found.' });
+    }
+
+    res.json({ message: 'Award deleted successfully.' });
+  });
+});
+
+
+  app.get('/reviews', (req, res) => {
+    const query = `
     SELECT 
       reviews.id AS review_id,
       reviews.content,
@@ -758,333 +1109,332 @@ app.get('/reviews', (req, res) => {
     ORDER BY reviews.id ASC
   `;
 
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
-      return;
-    }
-    res.json(results);
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error executing query:', err.message);
+        res.status(500).json({ error: 'Internal Server Error' });
+        return;
+      }
+      res.json(results);
+    });
   });
-});
 
 
-//CRUD
+  //CRUD
 
-//ADD MOVIES
-app.post('/add-drama', (req, res) => {
-  const {
-    poster,
-    title,
-    alt_title,
-    release_year,
-    country,
-    synopsis,
-    availability,
-    genres,
-    actors,
-    trailer,
-    award,
-    background,
-  } = req.body;
+  //ADD MOVIES
+  app.post('/add-drama', (req, res) => {
+    const {
+      poster,
+      title,
+      alt_title,
+      release_year,
+      country,
+      synopsis,
+      availability,
+      genres,
+      actors,
+      trailer,
+      award,
+      background,
+    } = req.body;
 
-  const query = `INSERT INTO dramas (poster, title, alt_title, release_year, country, synopsis, availability, genres, actors, trailer, award, background) 
+    const query = `INSERT INTO dramas (poster, title, alt_title, release_year, country, synopsis, availability, genres, actors, trailer, award, background) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-  db.query(query, [poster, title, alt_title, release_year, country, synopsis, availability, genres.join(', '), actors.join(', '), trailer, award.join(', '), background], (err, result) => {
-    if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-    res.status(200).json({ message: 'Drama added successfully' });
-  });
-});
-
-
-//SET TRASH
-app.put('/movie-delete/:id', (req, res) => {
-  const movieId = req.params.id;
-
-  const query = `UPDATE movies SET status = 0 WHERE id = ?`;
-
-  db.query(query, [movieId], (err, result) => {
-    if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-
-    res.status(200).json({ message: 'Movie moved to trash successfully' });
-  });
-});
-
-//PERMANENT DELETE
-// Endpoint untuk mengubah status menjadi 3 (permanen delete dari trash)
-app.put('/movie-permanent-delete/:id', (req, res) => {
-  const movieId = req.params.id;
-
-  const query = `UPDATE movies SET status = 3 WHERE id = ?`;
-
-  db.query(query, [movieId], (err, result) => {
-    if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-
-    res.status(200).json({ message: 'Movie permanently deleted successfully' });
-  });
-});
-
-
-//RESTORE
-app.put('/movie-restore/:id', (req, res) => {
-  const movieId = req.params.id;
-  const query = `UPDATE movies SET status = 1 WHERE id = ?`;
-
-  db.query(query, [movieId], (err, result) => {
-    if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-
-    res.status(200).json({ message: 'Movie restored successfully' });
-  });
-});
-
-//LOGIN 
-app.post('/login', (req, res) => {
-  const query = "SELECT * FROM users WHERE email = ?";
-
-  db.query(query, [req.body.email], (err, data) => {
-    if (err) {
-      return res.json({ Message: "Server Side Error" });
-    }
-
-    if (data.length > 0) {
-      const user = data[0];
-
-      // Check if the user has confirmed their email
-      if (!user.isEmailConfirmed) {
-        return res.json({ Message: "Please confirm your email first." });
-      }
-
-      bcrypt.compare(req.body.password, user.password, (err, result) => {
-        if (err) {
-          return res.json({ Message: "Error comparing password" });
-        }
-
-        if (result) {
-          const token = jwt.sign(
-            { username: user.username, email: user.email, role: user.role, user_id: user.id },
-            "our-jsonwebtoken-secret-key",
-            { expiresIn: '1d' }
-          );
-
-          // Kirim token dan user_id ke cookie
-          res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
-          res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
-
-          return res.json({
-            Status: "Login Success",
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            token: token // Kirim token ke client
-          });
-        } else {
-          return res.json({ Message: "Incorrect Password" });
-        }
-      });
-    } else {
-      return res.json({ Message: "No Records existed" });
-    }
-  });
-});
-
-
-
-
-//Login with Google
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Google OAuth login route
-app.get('/auth/google', passport.authenticate('google', {
-  scope: ['profile', 'email'],
-}));
-
-// Google OAuth callback route
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    // Mengambil user dari request setelah autentikasi Google
-    const user = req.user;
-
-    // Buat token JWT dengan informasi user
-    const token = jwt.sign(
-      { username: user.username, email: user.email, role: user.role, user_id: user.id },
-      "our-jsonwebtoken-secret-key",
-      { expiresIn: '1d' }
-    );
-
-    // Simpan token ke cookie
-    res.cookie('token', token, {
-      httpOnly: false,  // Set ke false jika token perlu diakses client-side
-      sameSite: 'Strict',
-      secure: false, // Gunakan true di production dengan HTTPS
-      maxAge: 24 * 60 * 60 * 1000 // Cookie berlaku selama 1 hari
-    });
-
-    res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
-
-    // Redirect ke frontend setelah login berhasil
-    res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
-  }
-);
-
-
-
-
-//REGISTER
-
-app.get('/confirm-email/:token', (req, res) => {
-  const { token } = req.params;
-
-  // Verify email confirmation token
-  jwt.verify(token, 'EMAIL_SECRET', (err, decoded) => {
-    if (err) {
-      return res.json({ message: 'Invalid or expired token' });
-    }
-
-    const email = decoded.email;
-
-    // Update the user to mark their email as confirmed
-    const updateSql = "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
-    
-    db.query(updateSql, [email], (err, result) => {
+    db.query(query, [poster, title, alt_title, release_year, country, synopsis, availability, genres.join(', '), actors.join(', '), trailer, award.join(', '), background], (err, result) => {
       if (err) {
-        return res.json({ message: 'Error confirming email' });
+        console.error('Error executing query:', err.message);
+        return res.status(500).json({ error: 'Internal Server Error' });
       }
-
-      res.json({ message: "Email confirmed successfully! You can now login." });
+      res.status(200).json({ message: 'Drama added successfully' });
     });
   });
-});
 
 
-app.post('/register', (req, res) => {
-  const { username, email, password } = req.body;
+  //SET TRASH
+  app.put('/movie-delete/:id', (req, res) => {
+    const movieId = req.params.id;
 
-  const checkSql = "SELECT * FROM users WHERE username = ? OR email = ?";
-  const sql = "INSERT INTO users (username, email, password, isEmailConfirmed) VALUES (?)";
-  const saltRounds = 10;
+    const query = `UPDATE movies SET status = 0 WHERE id = ?`;
 
-  // Check if the username or email already exists
-  db.query(checkSql, [username, email], (checkErr, checkData) => {
-    if (checkErr) {
-      console.error("Database check error:", checkErr); // Log the error
-      return res.json({ message: "Database error occurred", success: false });
-    }
-    if (checkData.length > 0) {
-      return res.json({ message: "Username or Email already exists", success: false });
-    }
-
-    // Proceed with password hashing and user creation if no duplicate found
-    bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
+    db.query(query, [movieId], (err, result) => {
       if (err) {
-        return res.json({ message: "Error hashing password", success: false });
+        console.error('Error executing query:', err.message);
+        return res.status(500).json({ error: 'Internal Server Error' });
       }
 
-      const values = [username, email, hashedPassword, false]; // Default isConfirmed as false
+      res.status(200).json({ message: 'Movie moved to trash successfully' });
+    });
+  });
 
-      db.query(sql, [values], (insertErr, insertData) => {
-        if (insertErr) {
-          return res.json({ message: "Error during registration", success: false });
+  //PERMANENT DELETE
+  // Endpoint untuk mengubah status menjadi 3 (permanen delete dari trash)
+  app.put('/movie-permanent-delete/:id', (req, res) => {
+    const movieId = req.params.id;
+
+    const query = `UPDATE movies SET status = 3 WHERE id = ?`;
+
+    db.query(query, [movieId], (err, result) => {
+      if (err) {
+        console.error('Error executing query:', err.message);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      res.status(200).json({ message: 'Movie permanently deleted successfully' });
+    });
+  });
+
+
+  //RESTORE
+  app.put('/movie-restore/:id', (req, res) => {
+    const movieId = req.params.id;
+    const query = `UPDATE movies SET status = 1 WHERE id = ?`;
+
+    db.query(query, [movieId], (err, result) => {
+      if (err) {
+        console.error('Error executing query:', err.message);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      res.status(200).json({ message: 'Movie restored successfully' });
+    });
+  });
+
+  //LOGIN 
+  app.post('/login', (req, res) => {
+    const query = "SELECT * FROM users WHERE email = ?";
+
+    db.query(query, [req.body.email], (err, data) => {
+      if (err) {
+        return res.json({ Message: "Server Side Error" });
+      }
+
+      if (data.length > 0) {
+        const user = data[0];
+
+        // Check if the user has confirmed their email
+        if (!user.isEmailConfirmed) {
+          return res.json({ Message: "Please confirm your email first." });
         }
 
-        // Generate Email Confirmation Token (JWT)
-        const emailToken = jwt.sign({ email }, "EMAIL_SECRET", { expiresIn: '1d' });
-
-        // Send confirmation email
-        const confirmationUrl = http="//localhost:8001/confirm-email/${emailToken}";
-        const templatePath = path.join(__dirname, 'template', 'emailTemplate.html');
-
-        fs.readFile(templatePath, 'utf8', (err, htmlTemplate) => {
+        bcrypt.compare(req.body.password, user.password, (err, result) => {
           if (err) {
-            console.error('Error reading email template:', err);
-            return res.json({ message: 'Error reading email template', success: false });
+            return res.json({ Message: "Error comparing password" });
           }
 
-          // Replace placeholders with actual data
-          const emailHtml = htmlTemplate
-            .replace(/{{username}}/g, username)
-            .replace(/{{confirmationUrl}}/g, confirmationUrl);
+          if (result) {
+            const token = jwt.sign(
+              { username: user.username, email: user.email, role: user.role, user_id: user.id },
+              "our-jsonwebtoken-secret-key",
+              { expiresIn: '1d' }
+            );
 
-          // Mail options
-          const mailOptions = {
-            from: process.env.EMAIL,
-            to: email,
-            subject: 'Please confirm your email',
-            html: emailHtml // Set the HTML content of the email
-          };
+            // Kirim token dan user_id ke cookie
+            res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
+            res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
+
+            return res.json({
+              Status: "Login Success",
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              token: token // Kirim token ke client
+            });
+          } else {
+            return res.json({ Message: "Incorrect Password" });
+          }
+        });
+      } else {
+        return res.json({ Message: "No Records existed" });
+      }
+    });
+  });
 
 
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              return res.json({ message: 'Error sending confirmation email', success: false });
+
+
+  //Login with Google
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // Google OAuth login route
+  app.get('/auth/google', passport.authenticate('google', {
+    scope: ['profile', 'email'],
+  }));
+
+  // Google OAuth callback route
+  app.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req, res) => {
+      // Mengambil user dari request setelah autentikasi Google
+      const user = req.user;
+
+      // Buat token JWT dengan informasi user
+      const token = jwt.sign(
+        { username: user.username, email: user.email, role: user.role, user_id: user.id },
+        "our-jsonwebtoken-secret-key",
+        { expiresIn: '1d' }
+      );
+
+      // Simpan token ke cookie
+      res.cookie('token', token, {
+        httpOnly: false,  // Set ke false jika token perlu diakses client-side
+        sameSite: 'Strict',
+        secure: false, // Gunakan true di production dengan HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // Cookie berlaku selama 1 hari
+      });
+
+      res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
+
+      // Redirect ke frontend setelah login berhasil
+      res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
+    }
+  );
+
+
+
+
+  //REGISTER
+  app.get('/confirm-email/:token', (req, res) => {
+    const { token } = req.params;
+
+    // Verify email confirmation token
+    jwt.verify(token, 'EMAIL_SECRET', (err, decoded) => {
+      if (err) {
+        return res.json({ message: 'Invalid or expired token' });
+      }
+
+      const email = decoded.email;
+
+      // Update the user to mark their email as confirmed
+      const updateSql = "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
+
+      db.query(updateSql, [email], (err, result) => {
+        if (err) {
+          return res.json({ message: 'Error confirming email' });
+        }
+
+        res.json({ message: "Email confirmed successfully! You can now login." });
+      });
+    });
+  });
+
+
+  app.post('/register', (req, res) => {
+    const { username, email, password } = req.body;
+
+    const checkSql = "SELECT * FROM users WHERE username = ? OR email = ?";
+    const sql = "INSERT INTO users (username, email, password, isEmailConfirmed) VALUES (?)";
+    const saltRounds = 10;
+
+    // Check if the username or email already exists
+    db.query(checkSql, [username, email], (checkErr, checkData) => {
+      if (checkErr) {
+        console.error("Database check error:", checkErr); // Log the error
+        return res.json({ message: "Database error occurred", success: false });
+      }
+      if (checkData.length > 0) {
+        return res.json({ message: "Username or Email already exists", success: false });
+      }
+
+      // Proceed with password hashing and user creation if no duplicate found
+      bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
+        if (err) {
+          return res.json({ message: "Error hashing password", success: false });
+        }
+
+        const values = [username, email, hashedPassword, false]; // Default isConfirmed as false
+
+        db.query(sql, [values], (insertErr, insertData) => {
+          if (insertErr) {
+            return res.json({ message: "Error during registration", success: false });
+          }
+
+          // Generate Email Confirmation Token (JWT)
+          const emailToken = jwt.sign({ email }, "EMAIL_SECRET", { expiresIn: '1d' });
+
+          // Send confirmation email
+          const confirmationUrl = http = "//localhost:8001/confirm-email/${emailToken}";
+          const templatePath = path.join(__dirname, 'template', 'emailTemplate.html');
+
+          fs.readFile(templatePath, 'utf8', (err, htmlTemplate) => {
+            if (err) {
+              console.error('Error reading email template:', err);
+              return res.json({ message: 'Error reading email template', success: false });
             }
 
-            res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+            // Replace placeholders with actual data
+            const emailHtml = htmlTemplate
+              .replace(/{{username}}/g, username)
+              .replace(/{{confirmationUrl}}/g, confirmationUrl);
+
+            // Mail options
+            const mailOptions = {
+              from: process.env.EMAIL,
+              to: email,
+              subject: 'Please confirm your email',
+              html: emailHtml // Set the HTML content of the email
+            };
+
+
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                return res.json({ message: 'Error sending confirmation email', success: false });
+              }
+
+              res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+            });
           });
         });
       });
-    });
-  })
-});
+    })
+  });
 
 
-// Forgot Password
-// OAuth2 client setup
-const OAuth2 = google.auth.OAuth2;
+  // Forgot Password
+  // OAuth2 client setup
+  const OAuth2 = google.auth.OAuth2;
 
-// Buat OAuth2 client dengan Client ID, Client Secret, dan Redirect URL
-const oauth2Client = new OAuth2(
-  process.env.CLIENT_ID, // Client ID dari Google Cloud
-  process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
-  "https://developers.google.com/oauthplayground" // Redirect URL, bisa disesuaikan
-);
+  // Buat OAuth2 client dengan Client ID, Client Secret, dan Redirect URL
+  const oauth2Client = new OAuth2(
+    process.env.CLIENT_ID, // Client ID dari Google Cloud
+    process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
+    "https://developers.google.com/oauthplayground" // Redirect URL, bisa disesuaikan
+  );
 
-// Set refresh token yang didapat dari Google Cloud Console
-oauth2Client.setCredentials({
-  refresh_token: process.env.REFRESH_TOKEN,
-});
+  // Set refresh token yang didapat dari Google Cloud Console
+  oauth2Client.setCredentials({
+    refresh_token: process.env.REFRESH_TOKEN,
+  });
 
-// Fungsi untuk mengirim email
-function sendEmail({ recipient_email, OTP }) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Dapatkan access token
-      const accessToken = await oauth2Client.getAccessToken();
+  // Fungsi untuk mengirim email
+  function sendEmail({ recipient_email, OTP }) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Dapatkan access token
+        const accessToken = await oauth2Client.getAccessToken();
 
-      // Konfigurasikan nodemailer transport dengan OAuth2
-      var transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          type: "OAuth2",
-          user: process.env.MY_EMAIL, // Email Anda
-          clientId: process.env.CLIENT_ID, // Client ID dari Google Cloud
-          clientSecret: process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
-          refreshToken: process.env.REFRESH_TOKEN, // Refresh Token dari Google Cloud
-          accessToken: accessToken.token, // Access Token yang baru saja di-generate
-        },
-      });
+        // Konfigurasikan nodemailer transport dengan OAuth2
+        var transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            type: "OAuth2",
+            user: process.env.MY_EMAIL, // Email Anda
+            clientId: process.env.CLIENT_ID, // Client ID dari Google Cloud
+            clientSecret: process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
+            refreshToken: process.env.REFRESH_TOKEN, // Refresh Token dari Google Cloud
+            accessToken: accessToken.token, // Access Token yang baru saja di-generate
+          },
+        });
 
-      // Konfigurasi email
-      const mail_configs = {
-        from: process.env.MY_EMAIL, // Email pengirim
-        to: recipient_email, // Email penerima
-        subject: "LALAJOEUY PASSWORD RECOVERY",
-        html: `<!DOCTYPE html>
+        // Konfigurasi email
+        const mail_configs = {
+          from: process.env.MY_EMAIL, // Email pengirim
+          to: recipient_email, // Email penerima
+          subject: "LALAJOEUY PASSWORD RECOVERY",
+          html: `<!DOCTYPE html>
               <html lang="en">
               <head>
                 <meta charset="UTF-8">
@@ -1100,110 +1450,110 @@ function sendEmail({ recipient_email, OTP }) {
                 </div>
               </body>
               </html>`,
-      };
+        };
 
-      // Kirim email
-      transporter.sendMail(mail_configs, function (error, info) {
-        if (error) {
-          console.error("Error sending email:", error);
-          return reject({ message: `An error has occurred: ${error.message}` });
-        }
-        console.log("Email sent:", info.response);
-        return resolve({ message: "Email sent successfully" });
-      });
-    } catch (error) {
-      console.error("Error in OAuth2 or sending email:", error);
-      return reject({ message: `An error has occurred: ${error.message}` });
-    }
+        // Kirim email
+        transporter.sendMail(mail_configs, function (error, info) {
+          if (error) {
+            console.error("Error sending email:", error);
+            return reject({ message: `An error has occurred: ${error.message}` });
+          }
+          console.log("Email sent:", info.response);
+          return resolve({ message: "Email sent successfully" });
+        });
+      } catch (error) {
+        console.error("Error in OAuth2 or sending email:", error);
+        return reject({ message: `An error has occurred: ${error.message}` });
+      }
+    });
+  }
+
+  // Endpoint untuk mengirim email pemulihan
+  app.post("/send_recovery_email", (req, res) => {
+    sendEmail(req.body)
+      .then((response) => res.send(response.message))
+      .catch((error) => res.status(500).send(error.message));
   });
-}
-
-// Endpoint untuk mengirim email pemulihan
-app.post("/send_recovery_email", (req, res) => {
-  sendEmail(req.body)
-    .then((response) => res.send(response.message))
-    .catch((error) => res.status(500).send(error.message));
-});
 
 
 
 
-// Forgot Password route
-// router.post('/forgot-password', (req, res) => {
-//   const { email } = req.body;
+  // Forgot Password route
+  // router.post('/forgot-password', (req, res) => {
+  //   const { email } = req.body;
 
-//   // Find user by email
-//   const query = 'SELECT * FROM users WHERE email = ?';
-//   db.query(query, [email], (err, results) => {
-//     if (err || results.length === 0) {
-//       return res.status(400).json({ message: 'No user with that email address' });
-//     }
+  //   // Find user by email
+  //   const query = 'SELECT * FROM users WHERE email = ?';
+  //   db.query(query, [email], (err, results) => {
+  //     if (err || results.length === 0) {
+  //       return res.status(400).json({ message: 'No user with that email address' });
+  //     }
 
-//     const user = results[0];
+  //     const user = results[0];
 
-//     // Create reset token and save to DB
-//     const token = crypto.randomBytes(20).toString('hex');
-//     const expires = Date.now() + 3600000; // 1 hour from now
-//     const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
-//     db.query(updateTokenQuery, [token, expires, email], (err) => {
-//       if (err) {
-//         return res.status(500).json({ message: 'Error setting reset token' });
-//       }
+  //     // Create reset token and save to DB
+  //     const token = crypto.randomBytes(20).toString('hex');
+  //     const expires = Date.now() + 3600000; // 1 hour from now
+  //     const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
+  //     db.query(updateTokenQuery, [token, expires, email], (err) => {
+  //       if (err) {
+  //         return res.status(500).json({ message: 'Error setting reset token' });
+  //       }
 
-//       // Send email with reset link
-//       const transporter = nodemailer.createTransport({
-//         service: 'Gmail',
-//         auth: {
-//           user: 'your-email@gmail.com',
-//           pass: 'your-email-password',
-//         },
-//       });
+  //       // Send email with reset link
+  //       const transporter = nodemailer.createTransport({
+  //         service: 'Gmail',
+  //         auth: {
+  //           user: 'your-email@gmail.com',
+  //           pass: 'your-email-password',
+  //         },
+  //       });
 
-//       const mailOptions = {
-//         to: email,
-//         from: 'password-reset@yourapp.com',
-//         subject: 'Password Reset',
-//         text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
-//                Please click on the following link, or paste this into your browser to complete the process:
-//                http://localhost:3001/reset-password/${token}
-//                If you did not request this, please ignore this email and your password will remain unchanged.`,
-//       };
+  //       const mailOptions = {
+  //         to: email,
+  //         from: 'password-reset@yourapp.com',
+  //         subject: 'Password Reset',
+  //         text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
+  //                Please click on the following link, or paste this into your browser to complete the process:
+  //                http://localhost:3001/reset-password/${token}
+  //                If you did not request this, please ignore this email and your password will remain unchanged.`,
+  //       };
 
-//       transporter.sendMail(mailOptions, (err) => {
-//         if (err) {
-//           return res.status(500).json({ message: 'Error sending email' });
-//         }
+  //       transporter.sendMail(mailOptions, (err) => {
+  //         if (err) {
+  //           return res.status(500).json({ message: 'Error sending email' });
+  //         }
 
-//         res.status(200).json({ message: 'Password reset link sent!' });
-//       });
-//     });
-//   });
-// });
+  //         res.status(200).json({ message: 'Password reset link sent!' });
+  //       });
+  //     });
+  //   });
+  // });
 
-// module.exports = router;
+  // module.exports = router;
 
 
-//Input Review
-app.post('/reviews', (req, res) => {
-  const { movie_id, user_id, content, rating } = req.body;
+  //Input Review
+  app.post('/reviews', (req, res) => {
+    const { movie_id, user_id, content, rating } = req.body;
 
-  const query = `
+    const query = `
     INSERT INTO reviews (movie_id, user_id, content, rating, status, created_at, updated_at)
     VALUES (?, ?, ?, ?, 0, NOW(), NOW())
   `;
 
-  db.query(query, [movie_id, user_id, content, rating], (err, result) => {
-    if (err) {
-      return res.status(500).json({ message: "Error inserting review", error: err });
-    }
-    res.status(201).json({ message: "Review saved successfully!" });
+    db.query(query, [movie_id, user_id, content, rating], (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: "Error inserting review", error: err });
+      }
+      res.status(201).json({ message: "Review saved successfully!" });
+    });
   });
-});
 
 
-// Starting the server
-const PORT = 8001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+  // Starting the server
+  const PORT = 8001;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 
