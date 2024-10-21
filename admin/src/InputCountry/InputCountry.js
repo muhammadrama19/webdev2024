@@ -183,29 +183,30 @@ const CountryManager = () => {
                 </Button>
             </Container>
             <Modal show={showModal} onHide={handleCloseModal} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Add New Country</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form inline onSubmit={(e) => { e.preventDefault(); handleAddCountry(); }}>
-                        <Form.Group className="mb-3">
-                        <Form.Label className="me-2">Country</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={newCountry}
-                                onChange={(e) => setNewCountry(e.target.value)}
-                                placeholder="Enter country name"
-                                className="me-2"
-                            />
-                        </Form.Group>
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button type="submit" variant="primary" className="mt-2" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}>
-                        Submit
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+    <Modal.Header closeButton>
+        <Modal.Title>Add New Country</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+        <Form onSubmit={(e) => { e.preventDefault(); handleAddCountry(); }}>
+            <Form.Group className="mb-3">
+                <Form.Label>Country</Form.Label>
+                <Form.Control
+                    type="text"
+                    value={newCountry}
+                    onChange={(e) => setNewCountry(e.target.value)}
+                    placeholder="Enter country name"
+                />
+            </Form.Group>
+            {/* Tambahkan div wrapper untuk mengatur posisi tombol */}
+            <div className="d-flex justify-content-end">
+                <Button type="submit" variant="primary" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}>
+                    Submit
+                </Button>
+            </div>
+        </Form>
+    </Modal.Body>
+</Modal>
+
 
             {loading ? (
                 <p>Loading data...</p>
