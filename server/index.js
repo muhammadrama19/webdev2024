@@ -969,28 +969,40 @@ app.post('/forgot-password', (req, res) => {
     
     // Create reset link
     const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
-
     const templatePathReset = path.join(__dirname, 'template', 'forgotPassword.html');
     
-    // Send reset email
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: email,
-      subject: 'Password Reset',
-      html: `<p>Hi ${user.username},</p>
-             <p>You requested to reset your password. Click the link below to reset:</p>
-             <a href="${resetLink}">${resetLink}</a>`
-    };
-    
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        return res.status(500).json({ message: 'Error sending reset email', success: false });
+    // Read the email template file
+    fs.readFile(templatePathReset, 'utf8', (err, htmlTemplate) => {
+      if (err) {
+        console.error('Error reading email template:', err);
+        return res.status(500).json({ message: 'Error reading email template', success: false });
       }
 
-      res.json({ message: 'Password reset email sent', success: true });
+      // Replace placeholders in the template with actual data
+      const emailHtml = htmlTemplate
+        .replace(/{{username}}/g, user.username)
+        .replace(/{{resetLink}}/g, resetLink);
+
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'Password Reset',
+        html: emailHtml // Use the customized HTML content
+      };
+
+      // Send email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res.status(500).json({ message: 'Error sending reset email', success: false });
+        }
+
+        res.json({ message: 'Password reset email sent', success: true });
+      });
     });
   });
 });
+
 
 app.post('/reset-password/:token', (req, res) => {
   const { token } = req.params;
