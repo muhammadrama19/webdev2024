@@ -4,7 +4,7 @@ import FormInput from "../components/forminput/formInput";
 import { Button } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./login.scss";
+import "./reset.scss";
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -13,8 +13,9 @@ const ResetPassword = () => {
 
   const handleResetPassword = (e) => {
     e.preventDefault();
-    
-    axios.post(`http://localhost:8001/reset-password/${token}`, { newPassword })
+
+    axios
+      .post(`http://localhost:8001/reset-password/${token}`, { newPassword })
       .then((res) => {
         alert(res.data.message); // Show success message
         navigate("/login"); // Redirect to login page
@@ -26,22 +27,22 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="login">
-
-<AuthForm title="Reset Password">
-      <form onSubmit={handleResetPassword}>
-        <FormInput
-          label="New Password"
-          type="password"
-          name="newPassword"
-          placeholder="Enter your new password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-        />
-        <Button className="loginButton"
-        type="submit">Reset Password</Button>
-      </form>
-    </AuthForm>
+    <div className="reset">
+      <AuthForm title="Reset Password">
+        <form onSubmit={handleResetPassword}>
+          <FormInput
+            label="New Password"
+            type="password"
+            name="newPassword"
+            placeholder="Enter your new password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <Button className="loginButton" type="submit">
+            Reset Password
+          </Button>
+        </form>
+      </AuthForm>
     </div>
   );
 };
