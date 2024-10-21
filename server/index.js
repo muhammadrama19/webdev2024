@@ -145,7 +145,7 @@ app.get('/movies/movie', (req, res) => {
     JOIN awards a ON ma.awards_id = a.id
     JOIN status s ON m.status_id = s.id
     JOIN availability av ON m.availability_id = av.id
-    WHERE 1=1
+    WHERE status = 1
   `;
 
   // Apply filters
@@ -199,7 +199,7 @@ app.get('/movies/movie', (req, res) => {
       JOIN awards a ON ma.awards_id = a.id
       JOIN status s ON m.status_id = s.id 
       JOIN availability av ON m.availability_id = av.id
-      WHERE 1=1
+      WHERE status = 1
     `;
 
     // Apply filters to count query as well
@@ -1037,6 +1037,22 @@ app.post('/reset-password/:token', (req, res) => {
 });
 
 
+//movie check if reviewed or not
+app.get('/movies/:movieId/reviewed/:userId', isAuthenticated,(req, res) => {
+  const userId = req.params.userId;
+  const movieId = req.params.movieId;
+
+  const query = 'SELECT * FROM reviews WHERE user_id = ? AND movie_id = ?';
+
+  db.query(query, [userId, movieId], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    res.json({ reviewed: results.length > 0 });
+  });
+});
 
 
 //REGISTER
