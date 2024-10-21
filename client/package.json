@@ -14,6 +14,10 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.7",
     "client": "file:",
+<<<<<<< HEAD
+=======
+    "cookie-parser": "^1.4.7",
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
     "js-cookie": "^3.0.5",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.4",
@@ -21,6 +25,10 @@
     "react-icons": "^5.3.0",
     "react-router-dom": "^6.26.1",
     "react-scripts": "5.0.1",
+<<<<<<< HEAD
+=======
+    "recharts": "^2.13.0",
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
     "sass": "^1.77.8",
     "web-vitals": "^2.1.4"
   },

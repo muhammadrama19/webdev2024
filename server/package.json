@@ -17,6 +17,10 @@
     "express": "^4.21.0",
     "express-session": "^1.18.0",
     "google-auth-library": "^9.14.1",
+<<<<<<< HEAD
+=======
+    "googleapis": "^144.0.0",
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",

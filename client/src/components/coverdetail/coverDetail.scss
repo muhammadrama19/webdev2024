@@ -3,7 +3,11 @@
   height: auto;
   position: relative;
   overflow: hidden;
+<<<<<<< HEAD
   padding-top: 40%; 
+=======
+  padding-top: 20%; 
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
 
   img {
     position: absolute;
@@ -29,12 +33,20 @@
     ),
     linear-gradient(
       to right, 
+<<<<<<< HEAD
       rgba(18, 24, 41, 0.8), // Darker color on the left
+=======
+      rgba(18, 24, 41, 1), // Darker color on the left with more transparency
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
       rgba(0, 0, 0, 0)
     ),
     linear-gradient(
       to left, 
+<<<<<<< HEAD
       rgba(18, 24, 41, 0.8), // Darker color on the right
+=======
+      rgba(18, 24, 41, 1), // Darker color on the right with more transparency
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
       rgba(0, 0, 0, 0)
     );
     z-index: 1;

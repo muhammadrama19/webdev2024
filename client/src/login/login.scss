@@ -2,10 +2,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+<<<<<<< HEAD
   height: 100vh;
   background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
   backdrop-filter: blur(10px);
   background-color: var(--primary-color);
+=======
+  height: 100%;
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
 
   .loginButton {
     margin-top: 20px;
@@ -23,5 +27,9 @@
       background-color: #5A4AF4;
     }
   }
+<<<<<<< HEAD
 }
 
+=======
+}
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2

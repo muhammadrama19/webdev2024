@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useState } from "react";
+=======
+import React, { useState, useEffect } from "react";
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
 import { Button, Container, Row, Col } from "react-bootstrap";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -8,8 +12,14 @@ import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
 import ReviewInput from "../reviewInput/reviewInput";
 import "./reviewBar.scss";
+<<<<<<< HEAD
 
 const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tambahkan movieId dan userId sebagai props
+=======
+import axios from 'axios'; // Import axios for making API requests
+
+const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
   // State management for icons and text
   const [watchClicked, setWatchClicked] = useState(false);
   const [likeClicked, setLikeClicked] = useState(false);
@@ -22,6 +32,24 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
     watchlist: false,
   });
 
+<<<<<<< HEAD
+=======
+  useEffect(() => {
+    if (isLoggedIn) {
+      // Fetch data from the API to check if the movie is reviewed by the user
+      axios.get(`http://localhost:8001/movies/${movieId}/reviewed/${userId}`)
+        .then(response => {
+          if (response.data.reviewed) {
+            setWatchClicked(true);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching review status:', error);
+        });
+    }
+  }, [movieId, userId, isLoggedIn]);
+
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
   const handleAddReviewClick = () => {
     setShowReviewInput(true);
   };
@@ -50,7 +78,11 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
 
   return (
     <Container fluid className="review-bar">
+<<<<<<< HEAD
       <Row className="text-center">
+=======
+      <Row className="text-center d-flex justify-content-center">
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
         <Col xs={4}>
           <div
             className={`icon-container ${watchClicked ? "watch-active" : ""}`}
@@ -66,7 +98,11 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
             <span>{hoverText.watch && watchClicked ? 'Remove' : watchClicked ? 'Watched' : 'Watch'}</span>
           </div>
         </Col>
+<<<<<<< HEAD
         <Col xs={4}>
+=======
+        {/* <Col xs={4}>
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
           <div
             className={`icon-container ${likeClicked ? "like-active" : ""}`}
             onClick={toggleLike}
@@ -81,7 +117,11 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
             <span>{hoverText.like && likeClicked ? 'Remove' : likeClicked ? 'Liked' : 'Like'}</span>
           </div>
         </Col>
+<<<<<<< HEAD
         <Col xs={4}>
+=======
+        <Col xs={4} className="d-flex justify-content-center">
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
           <div
             className={`icon-container ${watchlistClicked ? "watchlist-active" : ""}`}
             onClick={toggleWatchlist}
@@ -95,7 +135,11 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
             )}
             <span>{hoverText.watchlist && watchlistClicked ? 'Remove' : 'Watchlist'}</span>
           </div>
+<<<<<<< HEAD
         </Col>
+=======
+        </Col> */}
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
       </Row>
       <Row className="text-center">
         <Col>
@@ -121,4 +165,8 @@ const ReviewBar = ({ srcImg, title, movieId, userId, isLoggedIn }) => {  // Tamb
   );
 };
 
+<<<<<<< HEAD
 export default ReviewBar;
+=======
+export default ReviewBar;
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2

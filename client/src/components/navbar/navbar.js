@@ -20,6 +20,10 @@ const Navbar = ({ loggedInUsername }) => {
   const [role, setRole] = useState(Cookies.get("role"));
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
   const navigate = useNavigate();
 
   // Fungsi untuk menangkap query parameter dari URL
@@ -32,6 +36,7 @@ const Navbar = ({ loggedInUsername }) => {
   useEffect(() => {
     const usernameFromGoogle = getQueryParams("username");
     const emailFromGoogle = getQueryParams("email");
+<<<<<<< HEAD
   
     if (usernameFromGoogle && emailFromGoogle) {
       // Simpan data ke cookie
@@ -45,6 +50,19 @@ const Navbar = ({ loggedInUsername }) => {
       setEmail(emailFromGoogle);
 
   
+=======
+    const roleFromGoogle = getQueryParams("role");
+  
+    if (usernameFromGoogle && emailFromGoogle) {
+
+      Cookies.set("username", usernameFromGoogle, { expires: 1 });
+      Cookies.set("email", emailFromGoogle, { expires: 1 });
+      Cookies.set("role", roleFromGoogle, { expires: 1 });
+  
+      setUsername(usernameFromGoogle);
+      setEmail(emailFromGoogle);
+      setRole(roleFromGoogle);  
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
       // Clear query params after saving to cookies
       window.history.replaceState(null, null, window.location.pathname); 
     }
@@ -149,10 +167,17 @@ const Navbar = ({ loggedInUsername }) => {
                 />
                 <h4>{username || "Guest"}</h4> 
                 <span className="profile-email">{email || "Unknown ID"}</span>
+<<<<<<< HEAD
                 <span className="profile-role">{role || "Guest Role"}</span>
               </div>
               <div className="profile-actions">
                 <button className="btn-profile">Profile</button>
+=======
+                
+              </div>
+              <div className="profile-actions">
+                <button className="btn-profile" onClick={() => navigate("/profile")}>Profile</button>
+>>>>>>> 1782fe1ea812b9325200dd2923b485ccbb8ae7b2
                 <button className="btn-signout" onClick={handleLogout}>Sign out</button>
               </div>
             </div>
