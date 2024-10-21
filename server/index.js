@@ -1476,63 +1476,6 @@ app.delete('/awards/:id', (req, res) => {
   });
 
 
-
-
-  // Forgot Password route
-  // router.post('/forgot-password', (req, res) => {
-  //   const { email } = req.body;
-
-  //   // Find user by email
-  //   const query = 'SELECT * FROM users WHERE email = ?';
-  //   db.query(query, [email], (err, results) => {
-  //     if (err || results.length === 0) {
-  //       return res.status(400).json({ message: 'No user with that email address' });
-  //     }
-
-  //     const user = results[0];
-
-  //     // Create reset token and save to DB
-  //     const token = crypto.randomBytes(20).toString('hex');
-  //     const expires = Date.now() + 3600000; // 1 hour from now
-  //     const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
-  //     db.query(updateTokenQuery, [token, expires, email], (err) => {
-  //       if (err) {
-  //         return res.status(500).json({ message: 'Error setting reset token' });
-  //       }
-
-  //       // Send email with reset link
-  //       const transporter = nodemailer.createTransport({
-  //         service: 'Gmail',
-  //         auth: {
-  //           user: 'your-email@gmail.com',
-  //           pass: 'your-email-password',
-  //         },
-  //       });
-
-  //       const mailOptions = {
-  //         to: email,
-  //         from: 'password-reset@yourapp.com',
-  //         subject: 'Password Reset',
-  //         text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
-  //                Please click on the following link, or paste this into your browser to complete the process:
-  //                http://localhost:3001/reset-password/${token}
-  //                If you did not request this, please ignore this email and your password will remain unchanged.`,
-  //       };
-
-  //       transporter.sendMail(mailOptions, (err) => {
-  //         if (err) {
-  //           return res.status(500).json({ message: 'Error sending email' });
-  //         }
-
-  //         res.status(200).json({ message: 'Password reset link sent!' });
-  //       });
-  //     });
-  //   });
-  // });
-
-  // module.exports = router;
-
-
   //Input Review
   app.post('/reviews', (req, res) => {
     const { movie_id, user_id, content, rating } = req.body;
