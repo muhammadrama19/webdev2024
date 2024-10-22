@@ -67,11 +67,11 @@ const CountryManager = () => {
 
 
     const handleDeleteCountry = async (id) => {
-        try {   
+        try {
             await fetch(`http://localhost:8001/countries/${id}`, {
                 method: 'DELETE',
             });
-            setCountries(countries.filter((country) => country.id !== id)); 
+            setCountries(countries.filter((country) => country.id !== id));
         } catch (error) {
             console.error("Error deleting country:", error);
         }
@@ -183,29 +183,40 @@ const CountryManager = () => {
                 </Button>
             </Container>
             <Modal show={showModal} onHide={handleCloseModal} centered>
-    <Modal.Header closeButton>
-        <Modal.Title>Add New Country</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-        <Form onSubmit={(e) => { e.preventDefault(); handleAddCountry(); }}>
-            <Form.Group className="mb-3">
-                <Form.Label>Country</Form.Label>
-                <Form.Control
-                    type="text"
-                    value={newCountry}
-                    onChange={(e) => setNewCountry(e.target.value)}
-                    placeholder="Enter country name"
-                />
-            </Form.Group>
-            {/* Tambahkan div wrapper untuk mengatur posisi tombol */}
-            <div className="d-flex justify-content-end">
-                <Button type="submit" variant="primary" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}>
-                    Submit
-                </Button>
-            </div>
-        </Form>
-    </Modal.Body>
-</Modal>
+                <Modal.Header closeButton>
+                    <Modal.Title>Add New Country</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Country</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={newCountry}
+                                onChange={(e) => setNewCountry(e.target.value)}
+                                placeholder="Enter country name"
+                            />
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={handleCloseModal}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-2"
+                        onClick={handleAddCountry}
+                        style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
+                    >
+                        Add Country
+                    </Button>
+                </Modal.Footer>
+            </Modal>
 
 
             {loading ? (
