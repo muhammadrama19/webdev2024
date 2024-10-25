@@ -240,6 +240,22 @@ app.get('/movies/movie', (req, res) => {
   });
 });
 
+// Rute baru untuk mengambil availability/platforms dari database
+app.get('/platforms', (req, res) => {
+  const query = `
+    SELECT id, platform_name 
+    FROM availability
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching availability data:", err);
+      return res.status(500).json({ error: 'Failed to fetch availability data' });
+    }
+
+    res.json(results); // Mengirimkan hasil dalam bentuk JSON
+  });
+});
 
 app.get("/search", (req, res) => {
   const query = req.query.q;
@@ -642,7 +658,9 @@ app.get('/movie-list', (req, res) => {
     SELECT
       m.status, 
       m.id, 
-      m.title, 
+      m.title,
+      m.poster, 
+      m.release_year,
       GROUP_CONCAT(DISTINCT ac.name SEPARATOR ', ') AS Actors,
       GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,
       m.synopsis
@@ -1140,33 +1158,89 @@ app.delete('/awards/:id', (req, res) => {
 //CRUD
 
 //ADD MOVIES
-app.post('/add-drama', (req, res) => {
+app.post('/add-drama', upload.fields([{ name: 'poster' }, { name: 'background' }]), async (req, res) => {
   const {
-    poster,
     title,
     alt_title,
     release_year,
-    country,
+    country,   // This is a country name or identifier sent by the client
     synopsis,
-    availability,
-    genres,
-    actors,
+    availability,  // This is the availability platform name or identifier sent by the client
     trailer,
-    award,
-    background,
+    director,   // Assuming this is coming from the client
   } = req.body;
 
-  const query = `INSERT INTO dramas (poster, title, alt_title, release_year, country, synopsis, availability, genres, actors, trailer, award, background) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  // Parse fields that might be arrays from strings (if needed)
+  const genres = typeof req.body.genres === 'string' ? req.body.genres.split(',') : req.body.genres;
+  const actors = typeof req.body.actors === 'string' ? req.body.actors.split(',') : req.body.actors;
 
-  db.query(query, [poster, title, alt_title, release_year, country, synopsis, availability, genres.join(', '), actors.join(', '), trailer, award.join(', '), background], (err, result) => {
-    if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
+  // Get file paths from uploaded files
+  const poster = req.files['poster'] ? req.files['poster'][0].path : null;
+  const background = req.files['background'] ? req.files['background'][0].path : null;
+
+  try {
+    // Insert into movies table
+    const movieQuery = `
+      INSERT INTO movies (poster, title, alt_title, release_year, synopsis, trailer, director, background)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const movieValues = [poster, title, alt_title, release_year, synopsis, trailer, director, background];
+    
+    const [movieResult] = await db.query(movieQuery, movieValues);
+    const movieId = movieResult.insertId;  // Get the newly inserted movie's ID
+
+    // Insert into movie_countries
+    const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
+    const [countryResult] = await db.query(countryQuery, [country]);
+    const countryId = countryResult.length > 0 ? countryResult[0].id : null;
+
+    if (countryId) {
+      const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
+      await db.query(movieCountryQuery, [movieId, countryId]);
     }
-    res.status(200).json({ message: 'Drama added successfully' });
-  });
+
+    // Insert into movie_availability
+    const availabilityQuery = `SELECT id FROM platforms WHERE platform_name = ?`;
+    const [availabilityResult] = await db.query(availabilityQuery, [availability]);
+    const availabilityId = availabilityResult.length > 0 ? availabilityResult[0].id : null;
+
+    if (availabilityId) {
+      const movieAvailabilityQuery = `INSERT INTO movie_availability (movie_id, availability_id) VALUES (?, ?)`;
+      await db.query(movieAvailabilityQuery, [movieId, availabilityId]);
+    }
+
+    // Insert genres (assuming genres already exist in a 'genres' table)
+    for (const genre of genres) {
+      const genreQuery = `SELECT id FROM genres WHERE genre_name = ?`;
+      const [genreResult] = await db.query(genreQuery, [genre]);
+      const genreId = genreResult.length > 0 ? genreResult[0].id : null;
+
+      if (genreId) {
+        const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
+        await db.query(movieGenreQuery, [movieId, genreId]);
+      }
+    }
+
+    // Insert actors (assuming actors already exist in an 'actors' table)
+    for (const actor of actors) {
+      const actorQuery = `SELECT id FROM actors WHERE actor_name = ?`;
+      const [actorResult] = await db.query(actorQuery, [actor]);
+      const actorId = actorResult.length > 0 ? actorResult[0].id : null;
+
+      if (actorId) {
+        const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id) VALUES (?, ?)`;
+        await db.query(movieActorQuery, [movieId, actorId]);
+      }
+    }
+
+    res.status(200).json({ message: 'Drama added successfully', movieId });
+  } catch (err) {
+    console.error('Error executing query:', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
+
+
 
 
 //SET TRASH
@@ -1190,7 +1264,7 @@ app.put('/movie-delete/:id', (req, res) => {
 app.put('/movie-permanent-delete/:id', (req, res) => {
   const movieId = req.params.id;
 
-  const query = `UPDATE movies SET status = 3 WHERE id = ?`;
+  const query = `UPDATE movies SET status = 4 WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
