@@ -13,7 +13,8 @@ const crypto = require('crypto');
 const router = express.Router();
 const path = require('path'); 
 const fs = require('fs');
-const { google } = require("googleapis");
+
+const { isAuthenticated, hasAdminRole } = require('./middleware/auth');
 const multer = require('multer');
 const app = express();
 const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
@@ -63,7 +64,8 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
 }));
-
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 const transporter = nodemailer.createTransport({
@@ -574,14 +576,12 @@ app.get('/featured', (req, res) => {
 
 
 //CMS
-
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', isAuthenticated, hasAdminRole, (req, res) => {
   const queryMovies = 'SELECT COUNT(*) AS movieCount FROM movies';
   const queryGenres = 'SELECT COUNT(*) AS genreCount FROM genres';
   const queryCountries = 'SELECT COUNT(*) AS countryCount FROM countries';
   const queryAwards = 'SELECT COUNT(*) AS awardCount FROM awards';
 
-  // Menjalankan query secara berurutan menggunakan promise
   const getMoviesCount = () => new Promise((resolve, reject) => {
     db.query(queryMovies, (err, results) => {
       if (err) reject(err);
@@ -610,7 +610,7 @@ app.get('/dashboard', (req, res) => {
     });
   });
 
-  // Menggunakan Promise.all untuk menjalankan semua query secara paralel
+  // Run all queries in parallel and return the response
   Promise.all([getMoviesCount(), getGenresCount(), getCountriesCount(), getAwardsCount()])
     .then(([movieCount, genreCount, countryCount, awardCount]) => {
       const response = {
@@ -1304,42 +1304,51 @@ app.post('/login', (req, res) => {
     if (data.length > 0) {
       const user = data[0];
 
-      // Check if the user has confirmed their email
       if (!user.isEmailConfirmed) {
         return res.json({ Message: "Please confirm your email first." });
       }
 
-      bcrypt.compare(req.body.password, user.password, (err, result) => {
-        if (err) {
-          return res.json({ Message: "Error comparing password" });
-        }
+      // If a googleId exists but no password, inform the user to log in via Google OAuth
+      if (user.googleId && !user.password) {
+        return res.json({ Message: "Please log in using Google OAuth." });
+      }
+      // If no googleId and password exists, proceed with manual login
+      if (!user.googleId && user.password) {
+        bcrypt.compare(req.body.password, user.password, (err, result) => {
+          if (err) {
+            return res.json({ Message: "Error comparing password" });
+          }
 
-        if (result) {
-          const token = jwt.sign(
-            { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
-            "our-jsonwebtoken-secret-key",
-            { expiresIn: '1d' }
-          );
+          if (result) {
+            const token = jwt.sign(
+              { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
+              "our-jsonwebtoken-secret-key",
+              { expiresIn: '1d' }
+            );
 
-          // Kirim token dan user_id ke cookie
-          res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
-          res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
-          res.cookie('role', user.role, { httpOnly: false, sameSite: 'strict' }); // Tambahkan role ke cookie
+            // Send token and user_id in cookies
+            res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
+            res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
+            res.cookie('role', user.role, { httpOnly: false, sameSite: 'strict' }); // Tambahkan role ke cookie
 
-          return res.json({
-            Status: "Login Success",
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            token: token // Kirim token ke client
-          });
-        } else {
-          return res.json({ Message: "Incorrect Password" });
-        }
-      });
+            return res.json({
+              Status: "Login Success",
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              token: token 
+            });
+          } else {
+            return res.json({ Message: "Incorrect Password" });
+          }
+        });
+      } else {
+        return res.json({ Message: "User not found or missing credentials." });
+      }
+
     } else {
-      return res.json({ Message: "No Records existed" });
+      return res.json({ Message: "No user found with that email." });
     }
   });
 });
@@ -1347,9 +1356,9 @@ app.post('/login', (req, res) => {
 
 
 
+
 //Login with Google
-app.use(passport.initialize());
-app.use(passport.session());
+
 
 // Google OAuth login route
 app.get('/auth/google', passport.authenticate('google', {
@@ -1358,9 +1367,12 @@ app.get('/auth/google', passport.authenticate('google', {
 
 // Google OAuth callback route
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
+  passport.authenticate('google', { 
+    failureRedirect: 'http://localhost:3001/login?error=google-auth-failed', 
+    failureMessage: true 
+  }),
   (req, res) => {
-    // Mengambil user dari request setelah autentikasi Google
+    // Handle successful login
     const user = req.user;
 
     // Buat token JWT dengan informasi user
@@ -1374,19 +1386,117 @@ app.get('/auth/google/callback',
     res.cookie('token', token, { 
       httpOnly: false,  // Set ke false jika token perlu diakses client-side
       sameSite: 'Strict',
-      secure: false, // Gunakan true di production dengan HTTPS
-      maxAge: 24 * 60 * 60 * 1000 // Cookie berlaku selama 1 hari
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // Cookie expires in 1 day
     });
 
     res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
     res.cookie('role', user.role, { httpOnly: false, sameSite: 'strict' }); // Tambahkan role ke cookie
 
-    // Redirect ke frontend setelah login berhasil
+    // Redirect to the frontend after successful login
     res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
   }
 );
 
+app.post('/forgot-password', (req, res) => {
+  const { email } = req.body;
+  
+  // Check if user exists with the given email
+  const checkUserSql = "SELECT * FROM users WHERE email = ?";
+  db.query(checkUserSql, [email], (err, userData) => {
+    if (err || userData.length === 0) {
+      return res.status(404).json({ message: "User with this email doesn't exist", success: false });
+    }
+    
+    const user = userData[0];
+    const resetToken = jwt.sign({ id: user.id }, "RESET_PASSWORD_SECRET", { expiresIn: '1h' });
+    
+    // Create reset link
+    const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
+    const templatePathReset = path.join(__dirname, 'template', 'forgotPassword.html');
+    
+    // Read the email template file
+    fs.readFile(templatePathReset, 'utf8', (err, htmlTemplate) => {
+      if (err) {
+        console.error('Error reading email template:', err);
+        return res.status(500).json({ message: 'Error reading email template', success: false });
+      }
 
+      // Replace placeholders in the template with actual data
+      const emailHtml = htmlTemplate
+        .replace(/{{username}}/g, user.username)
+        .replace(/{{resetLink}}/g, resetLink);
+
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'Password Reset',
+        html: emailHtml // Use the customized HTML content
+      };
+
+      // Send email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res.status(500).json({ message: 'Error sending reset email', success: false });
+        }
+
+        res.json({ message: 'Password reset email sent', success: true });
+      });
+    });
+  });
+});
+
+
+app.post('/reset-password/:token', (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  // Verify the token
+  jwt.verify(token, "RESET_PASSWORD_SECRET", (err, decoded) => {
+    if (err) {
+      return res.status(400).json({ message: "Invalid or expired token", success: false });
+    }
+
+    const userId = decoded.id;
+
+    // Hash the new password
+    const saltRounds = 10;
+    bcrypt.hash(newPassword, saltRounds, (hashErr, hashedPassword) => {
+      if (hashErr) {
+        return res.status(500).json({ message: 'Error hashing password', success: false });
+      }
+
+      // Update password in the database
+      const updatePasswordSql = "UPDATE users SET password = ? WHERE id = ?";
+      db.query(updatePasswordSql, [hashedPassword, userId], (updateErr) => {
+        if (updateErr) {
+          return res.status(500).json({ message: 'Error updating password', success: false });
+        }
+
+        res.json({ message: 'Password updated successfully', success: true });
+      });
+    });
+  });
+});
+
+
+//movie check if reviewed or not
+app.get('/movies/:movieId/reviewed/:userId', isAuthenticated,(req, res) => {
+  const userId = req.params.userId;
+  const movieId = req.params.movieId;
+
+  const query = 'SELECT * FROM reviews WHERE user_id = ? AND movie_id = ?';
+
+  db.query(query, [userId, movieId], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    res.json({ reviewed: results.length > 0 });
+  });
+});
 
 app.get('/confirm-email/:token', (req, res) => {
   const { token } = req.params;
@@ -1464,7 +1574,7 @@ app.post('/register', (req, res) => {
             from: process.env.EMAIL,
             to: email,
             subject: 'Please confirm your email',
-            html: emailHtml // Set the HTML content of the email
+            html: emailHtml 
           };
 
 
@@ -1472,8 +1582,10 @@ app.post('/register', (req, res) => {
           if (error) {
             return res.json({ message: 'Error sending confirmation email', success: false });
           }
-
-          res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+            res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+            //redirect into login
+            res.redirect('http://localhost:3001/login');
+          });
         });
       });
     });
@@ -1481,57 +1593,88 @@ app.post('/register', (req, res) => {
 })});
 
 
-// Forgot Password route
-router.post('/forgot-password', (req, res) => {
-  const { email } = req.body;
+// Forgot Password
+// OAuth2 client setup
+// const OAuth2 = google.auth.OAuth2;
 
-  // Find user by email
-  const query = 'SELECT * FROM users WHERE email = ?';
-  db.query(query, [email], (err, results) => {
-    if (err || results.length === 0) {
-      return res.status(400).json({ message: 'No user with that email address' });
-    }
+// // Buat OAuth2 client dengan Client ID, Client Secret, dan Redirect URL
+// const oauth2Client = new OAuth2(
+//   process.env.CLIENT_ID, // Client ID dari Google Cloud
+//   process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
+//   "https://developers.google.com/oauthplayground" // Redirect URL, bisa disesuaikan
+// );
 
-    const user = results[0];
+// // Set refresh token yang didapat dari Google Cloud Console
+// oauth2Client.setCredentials({
+//   refresh_token: process.env.REFRESH_TOKEN,
+// });
 
-    // Create reset token and save to DB
-    const token = crypto.randomBytes(20).toString('hex');
-    const expires = Date.now() + 3600000; // 1 hour from now
-    const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
-    db.query(updateTokenQuery, [token, expires, email], (err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Error setting reset token' });
-      }
+// // Fungsi untuk mengirim email
+// function sendEmail({ recipient_email, OTP }) {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       // Dapatkan access token
+//       const accessToken = await oauth2Client.getAccessToken();
 
-      // Send email with reset link
-      const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-          user: 'your-email@gmail.com',
-          pass: 'your-email-password',
-        },
-      });
+//       // Konfigurasikan nodemailer transport dengan OAuth2
+//       var transporter = nodemailer.createTransport({
+//         service: "gmail",
+//         auth: {
+//           type: "OAuth2",
+//           user: process.env.MY_EMAIL, // Email Anda
+//           clientId: process.env.CLIENT_ID, // Client ID dari Google Cloud
+//           clientSecret: process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
+//           refreshToken: process.env.REFRESH_TOKEN, // Refresh Token dari Google Cloud
+//           accessToken: accessToken.token, // Access Token yang baru saja di-generate
+//         },
+//       });
 
-      const mailOptions = {
-        to: email,
-        from: 'password-reset@yourapp.com',
-        subject: 'Password Reset',
-        text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
-               Please click on the following link, or paste this into your browser to complete the process:
-               http://localhost:3001/reset-password/${token}
-               If you did not request this, please ignore this email and your password will remain unchanged.`,
-      };
+//       // Konfigurasi email
+//       const mail_configs = {
+//         from: process.env.MY_EMAIL, // Email pengirim
+//         to: recipient_email, // Email penerima
+//         subject: "LALAJOEUY PASSWORD RECOVERY",
+//         html: `<!DOCTYPE html>
+//               <html lang="en">
+//               <head>
+//                 <meta charset="UTF-8">
+//                 <title>Recovery Password</title>
+//               </head>
+//               <body>
+//                 <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+//                   <div style="margin:50px auto;width:70%;padding:20px 0">
+//                     <p>Hi,</p>
+//                     <p>Thank you for choosing Lalajo Euy! Use the following OTP to complete your Password Recovery Procedure. OTP is valid for 5 minutes</p>
+//                     <h2>${OTP}</h2>
+//                   </div>
+//                 </div>
+//               </body>
+//               </html>`,
+//       };
 
-      transporter.sendMail(mailOptions, (err) => {
-        if (err) {
-          return res.status(500).json({ message: 'Error sending email' });
-        }
+//       // Kirim email
+//       transporter.sendMail(mail_configs, function (error, info) {
+//         if (error) {
+//           console.error("Error sending email:", error);
+//           return reject({ message: `An error has occurred: ${error.message}` });
+//         }
+//         console.log("Email sent:", info.response);
+//         return resolve({ message: "Email sent successfully" });
+//       });
+//     } catch (error) {
+//       console.error("Error in OAuth2 or sending email:", error);
+//       return reject({ message: `An error has occurred: ${error.message}` });
+//     }
+//   });
+// }
 
-        res.status(200).json({ message: 'Password reset link sent!' });
-      });
-    });
-  });
-});
+// // Endpoint untuk mengirim email pemulihan
+// app.post("/send_recovery_email", (req, res) => {
+//   sendEmail(req.body)
+//     .then((response) => res.send(response.message))
+//     .catch((error) => res.status(500).send(error.message));
+// });
+
 
 module.exports = router;
 

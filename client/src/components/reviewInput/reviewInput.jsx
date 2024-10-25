@@ -40,7 +40,7 @@ const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // T
 
       if (response.ok) {
         alert("Review saved successfully!");
-        onClose(); // Tutup modal setelah review disimpan
+        onClose(); 
       } else {
         console.error("Error saving review:", response);
         alert("Failed to save review. Please try again.");
