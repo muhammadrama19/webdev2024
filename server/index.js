@@ -5,21 +5,17 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 // const googleAuth = require('./routes/googleAuth');
-const passport = require('./middleware/passport-setup')
+const passport= require('./middleware/passport-setup')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-
-const nodemailer = require("nodemailer");
-const { google } = require("googleapis");
-
+const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const router = express.Router();
-const path = require('path');
+const path = require('path'); 
 const fs = require('fs');
+
 const { isAuthenticated, hasAdminRole } = require('./middleware/auth');
-
-
-
+const multer = require('multer');
 const app = express();
 const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
 
@@ -41,6 +37,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
 
 
@@ -48,7 +45,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "",
+  password: "", 
   database: "lalajoeuydb"
 });
 
@@ -79,6 +76,19 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/images');
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '_' + Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage
+})
 
 // Logout route
 app.get('/logout', (req, res) => {
@@ -152,7 +162,7 @@ app.get('/movies/movie', (req, res) => {
   if (filterConditions.length) {
     query += ` AND ${filterConditions.join(' AND ')}`;
   }
-
+  
 
   // Handle genre filtering
   if (genre && genre.trim()) {
@@ -168,9 +178,9 @@ app.get('/movies/movie', (req, res) => {
   query += ` GROUP BY m.id`;
 
   if (sort) {
-    query += ` ORDER BY m.title ${sort.toUpperCase()}`;
+    query += ` ORDER BY m.title ${sort.toUpperCase()}`; 
   } else {
-    query += ` ORDER BY m.id`;
+    query += ` ORDER BY m.id`; 
   }
 
   // Add pagination limits
@@ -232,6 +242,22 @@ app.get('/movies/movie', (req, res) => {
   });
 });
 
+// Rute baru untuk mengambil availability/platforms dari database
+app.get('/platforms', (req, res) => {
+  const query = `
+    SELECT id, platform_name 
+    FROM availability
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching availability data:", err);
+      return res.status(500).json({ error: 'Failed to fetch availability data' });
+    }
+
+    res.json(results); // Mengirimkan hasil dalam bentuk JSON
+  });
+});
 
 app.get("/search", (req, res) => {
   const query = req.query.q;
@@ -251,7 +277,7 @@ app.get("/search", (req, res) => {
     LIMIT 10
   `;
   const searchTerm = `%${query}%`;
-
+  
   db.query(sql, [searchTerm], (err, results) => {
     if (err) throw err;
     res.json(results);
@@ -308,9 +334,9 @@ app.get('/movies/detail/:id', (req, res) => {
     LEFT JOIN
     status ON movies.status_id = status.id
     WHERE
-      movies.id = ?
+      movies.id = ? AND status = 1
   `;
-
+  
   db.query(query, [id], (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
@@ -415,7 +441,7 @@ app.get('/movies/detail/review/:id', (req, res) => {
     WHERE
       reviews.movie_id = ?
   `;
-
+  
   db.query(query, [id], (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
@@ -451,24 +477,24 @@ app.get('/filters', async (req, res) => {
   try {
     // Fetch years first to calculate decades
     const [yearRows] = await db.promise().query(queries.years);
-
+    
     if (yearRows.length) {
       const minYear = yearRows[0].minYear;
       const maxYear = yearRows[0].maxYear;
-
-
+      
+     
       const different = minYear % 10;
-      const normalizedMinYear = minYear - different;
+      const normalizedMinYear = minYear - different; 
       const decades = [];
 
       for (let year = normalizedMinYear; year <= maxYear; year += 10) {
         decades.push({
           start: year,
-          end: year + 10,
+          end: year + 10, 
         });
       }
 
-      results.years = decades;
+      results.years = decades; 
     } else {
       results.years = [];
     }
@@ -508,7 +534,7 @@ app.get('/filters', async (req, res) => {
       name: row.name,
     }));
 
-    res.json(results);
+    res.json(results); 
   } catch (error) {
     console.error('Error fetching filters:', error.message);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -542,7 +568,7 @@ app.get('/featured', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-
+    
     res.json(results); // Send the top 10 movies to the front-end
   });
 }
@@ -601,6 +627,28 @@ app.get('/dashboard', isAuthenticated, hasAdminRole, (req, res) => {
     });
 });
 
+app.get('/movie-genre-count-by-decade', (req, res) => {
+  const query = `
+    SELECT 
+      FLOOR(YEAR(m.release_year) / 10) * 10 AS decade,  -- Mengelompokkan berdasarkan dekade
+      COUNT(DISTINCT m.id) AS movieCount, 
+      COUNT(DISTINCT mg.genre_id) AS genreCount
+    FROM movies m
+    LEFT JOIN movie_genres mg ON m.id = mg.movie_id
+    GROUP BY decade
+    ORDER BY decade ASC;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 
 
 app.get('/movie-list', (req, res) => {
@@ -610,7 +658,9 @@ app.get('/movie-list', (req, res) => {
     SELECT
       m.status, 
       m.id, 
-      m.title, 
+      m.title,
+      m.poster, 
+      m.release_year,
       GROUP_CONCAT(DISTINCT ac.name SEPARATOR ', ') AS Actors,
       GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,
       m.synopsis
@@ -635,10 +685,9 @@ app.get('/movie-list', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    res.json(results);
+    res.json(results);  
   });
 });
-
 
 app.get('/users', (req, res) => {
   const query = `
@@ -652,12 +701,12 @@ app.get('/users', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    res.json(results);
+    res.json(results);  
   });
 });
 
 
-
+// Route to fetch all actors
 app.get('/actors', (req, res) => {
   const query = `
     SELECT 
@@ -686,7 +735,121 @@ app.get('/actors', (req, res) => {
   });
 });
 
+// Route to add a new actor
+app.post('/actors', upload.single('actor_picture'), (req, res) => {
+  const { name, birthdate, country_name } = req.body;
+  const actor_picture = req.file ? req.file.filename : null;
 
+  if (!name || !birthdate || !country_name) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if the country exists in the database
+  const checkCountryQuery = `
+    SELECT id FROM countries WHERE country_name = ?;
+  `;
+
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country:', err.message);
+      return res.status(500).json({ error: 'Failed to check country.' });
+    }
+
+    if (countryResult.length === 0) {
+      // If country doesn't exist, return an error
+      return res.status(400).json({ error: 'Country not found. Please add the country first.' });
+    }
+
+    // If country exists, proceed with adding the actor
+    const country_birth_id = countryResult[0].id;
+
+    const addActorQuery = `
+      INSERT INTO actors (name, birthdate, country_birth_id, actor_picture) 
+      VALUES (?, ?, ?, ?);
+    `;
+    const values = [name, birthdate, country_birth_id, actor_picture];
+
+    db.query(addActorQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error inserting actor:', err.message);
+        return res.status(500).json({ error: 'Failed to add actor.' });
+      }
+      res.status(201).json({ message: 'Actor added successfully.', id: result.insertId });
+    });
+  });
+});
+
+
+// Route to update an existing actor with country existence check
+app.put('/actors/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, birthdate, country_name, actor_picture } = req.body;
+
+  if (!name || !birthdate || !country_name) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if country exists before updating actor
+  const checkCountryQuery = 'SELECT id FROM countries WHERE country_name = ?';
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country existence:', err.message);
+      return res.status(500).json({ error: 'Failed to check country existence.' });
+    }
+
+    if (countryResult.length === 0) {
+      return res.status(400).json({ error: 'Country does not exist.' });
+    }
+
+    // If country exists, proceed to update actor
+    const country_birth_id = countryResult[0].id;
+
+    const updateQuery = `
+      UPDATE actors 
+      SET name = ?, birthdate = ?, country_birth_id = ?, actor_picture = ?
+      WHERE id = ?;
+    `;
+    const values = [name, birthdate, country_birth_id, actor_picture, id];
+
+    db.query(updateQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error updating actor:', err.message);
+        return res.status(500).json({ error: 'Failed to update actor.' });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Actor not found.' });
+      }
+
+      res.json({ message: 'Actor updated successfully.' });
+    });
+  });
+});
+
+
+// Route to delete an actor
+app.delete('/actors/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = `
+    DELETE FROM actors 
+    WHERE id = ?;
+  `;
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting actor:', err.message);
+      return res.status(500).json({ error: 'Failed to delete actor.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Actor not found.' });
+    }
+
+    res.json({ message: 'Actor deleted successfully.' });
+  });
+});
+
+// Get all genres
 app.get('/genres', (req, res) => {
   const query = 'SELECT id, name FROM genres ORDER BY id ASC ';
   db.query(query, (err, results) => {
@@ -699,6 +862,53 @@ app.get('/genres', (req, res) => {
   });
 });
 
+// Add a new genre
+app.post('/genres', (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Genre name is required' });
+  }
+
+  const query = 'INSERT INTO genres (name) VALUES (?)';
+  db.query(query, [name], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to add genre' });
+    }
+    res.json({ id: result.insertId, name });
+  });
+});
+
+// Update an existing genre
+app.put('/genres/:id', (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Genre name is required' });
+  }
+
+  const query = 'UPDATE genres SET name = ? WHERE id = ?';
+  db.query(query, [name, id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to update genre' });
+    }
+    res.json({ message: 'Genre updated successfully' });
+  });
+});
+
+// Delete a genre
+app.delete('/genres/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM genres WHERE id = ?';
+  db.query(query, [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to delete genre' });
+    }
+    res.json({ message: 'Genre deleted successfully' });
+  });
+});
+
+// Get all countries
 app.get('/countries', (req, res) => {
   const query = 'SELECT id, country_name FROM countries ORDER BY id ASC ';
   db.query(query, (err, results) => {
@@ -711,6 +921,72 @@ app.get('/countries', (req, res) => {
   });
 });
 
+// Get a single country berdasarkan country_name
+app.get('/countries/:country_name', (req, res) => {
+  const { country_name } = req.params;
+  const query = 'SELECT id, country_name FROM countries WHERE country_name = ?';
+  db.query(query, [country_name], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Country not found' });
+    }
+
+    res.json(results[0]);
+  });
+});
+
+// Add a new country
+app.post('/countries', (req, res) => {
+  const { country_name } = req.body;
+  if (!country_name) {
+    return res.status(400).json({ error: 'Country name is required' });
+  }
+
+  const query = 'INSERT INTO countries (country_name) VALUES (?)';
+  db.query(query, [country_name], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to add country' });
+    }
+    res.json({ id: result.insertId, country_name });
+  });
+});
+
+// Update an existing country
+app.put('/countries/:id', (req, res) => {
+  const { id } = req.params;
+  const { country_name } = req.body;
+
+  if (!country_name) {
+    return res.status(400).json({ error: 'Country name is required' });
+  }
+
+  const query = 'UPDATE countries SET country_name = ? WHERE id = ?';
+  db.query(query, [country_name, id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to update country' });
+    }
+    res.json({ message: 'Country updated successfully' });
+  });
+});
+
+// Delete a country
+app.delete('/countries/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM countries WHERE id = ?';
+  db.query(query, [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to delete country' });
+    }
+    res.json({ message: 'Country deleted successfully' });
+  });
+});
+
+// Get all awards
 app.get('/awards', (req, res) => {
   const query = `
     SELECT 
@@ -737,9 +1013,119 @@ app.get('/awards', (req, res) => {
   });
 });
 
+// Route to add a new Award
+app.post('/awards', (req, res) => {
+  const { awards_name, country_name, awards_years } = req.body;
 
-app.get('/reviews', (req, res) => {
+  if (!awards_name || !country_name || !awards_years) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+  // Check if the country exists in the database
+  const checkCountryQuery = `
+   SELECT id FROM countries WHERE country_name = ?;
+ `;
+
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country:', err.message);
+      return res.status(500).json({ error: 'Failed to check country.' });
+    }
+
+    if (countryResult.length === 0) {
+      // If country doesn't exist, return an error
+      return res.status(400).json({ error: 'Country not found. Please add the country first.' });
+    }
+
+    // If country exists, proceed with adding the award
+    const country_id = countryResult[0].id;
+
+    const addAwardQuery = `
+      INSERT INTO awards (awards_name, country_id, awards_years) 
+      VALUES (?, ?, ?);
+    `;
+    const values = [awards_name, country_id, awards_years];
+
+    db.query(addAwardQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error inserting award:', err.message);
+        return res.status(500).json({ error: 'Failed to add award.' });
+      }
+      res.status(201).json({ message: 'Award added successfully.', id: result.insertId });
+    });
+  });
+});
+
+// Route to update an existing award with country existence check
+app.put('/awards/:id', (req, res) => {
+  const { id } = req.params;
+  const { awards_name, country_name, awards_years } = req.body;
+
+  if (!awards_name || !country_name || !awards_years) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  // Check if country exists before updating award
+  const checkCountryQuery = 'SELECT id FROM countries WHERE country_name = ?';
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error('Error checking country existence:', err.message);
+      return res.status(500).json({ error: 'Failed to check country existence.' });
+    }
+
+    if (countryResult.length === 0) {
+      return res.status(400).json({ error: 'Country does not exist.' });
+    }
+
+    // If country exists, proceed with update the award
+    const country_id = countryResult[0].id;
+
+    const updateQuery = `
+      UPDATE awards 
+      SET awards_name = ?, country_id = ?, awards_years = ?
+      WHERE id = ?;
+    `;
+    const values = [awards_name, country_id, awards_years, id];
+
+    db.query(updateQuery, values, (err, result) => {
+      if (err) {
+        console.error('Error updating award:', err.message);
+        return res.status(500).json({ error: 'Failed to update award.' });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Award not found.' });
+      }
+
+      res.json({ message: 'Award updated successfully.' });
+    });
+  });
+});
+
+// Route to delete an award
+app.delete('/awards/:id', (req, res) => {
+  const { id } = req.params;
+
   const query = `
+    DELETE FROM awards
+    WHERE id = ?;
+  `;
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting award:', err.message);
+      return res.status(500).json({ error: 'Failed to delete award.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Award not found.' });
+    }
+
+    res.json({ message: 'Award deleted successfully.' });
+  });
+});
+
+
+  app.get('/reviews', (req, res) => {
+    const query = `
     SELECT 
       reviews.id AS review_id,
       reviews.content,
@@ -757,7 +1143,7 @@ app.get('/reviews', (req, res) => {
       users ON reviews.user_id = users.id
     ORDER BY reviews.id ASC
   `;
-
+  
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error executing query:', err.message);
@@ -772,33 +1158,89 @@ app.get('/reviews', (req, res) => {
 //CRUD
 
 //ADD MOVIES
-app.post('/add-drama', (req, res) => {
+app.post('/add-drama', upload.fields([{ name: 'poster' }, { name: 'background' }]), async (req, res) => {
   const {
-    poster,
     title,
     alt_title,
     release_year,
-    country,
+    country,   // This is a country name or identifier sent by the client
     synopsis,
-    availability,
-    genres,
-    actors,
+    availability,  // This is the availability platform name or identifier sent by the client
     trailer,
-    award,
-    background,
+    director,   // Assuming this is coming from the client
   } = req.body;
 
-  const query = `INSERT INTO dramas (poster, title, alt_title, release_year, country, synopsis, availability, genres, actors, trailer, award, background) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  // Parse fields that might be arrays from strings (if needed)
+  const genres = typeof req.body.genres === 'string' ? req.body.genres.split(',') : req.body.genres;
+  const actors = typeof req.body.actors === 'string' ? req.body.actors.split(',') : req.body.actors;
 
-  db.query(query, [poster, title, alt_title, release_year, country, synopsis, availability, genres.join(', '), actors.join(', '), trailer, award.join(', '), background], (err, result) => {
-    if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
+  // Get file paths from uploaded files
+  const poster = req.files['poster'] ? req.files['poster'][0].path : null;
+  const background = req.files['background'] ? req.files['background'][0].path : null;
+
+  try {
+    // Insert into movies table
+    const movieQuery = `
+      INSERT INTO movies (poster, title, alt_title, release_year, synopsis, trailer, director, background)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const movieValues = [poster, title, alt_title, release_year, synopsis, trailer, director, background];
+    
+    const [movieResult] = await db.query(movieQuery, movieValues);
+    const movieId = movieResult.insertId;  // Get the newly inserted movie's ID
+
+    // Insert into movie_countries
+    const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
+    const [countryResult] = await db.query(countryQuery, [country]);
+    const countryId = countryResult.length > 0 ? countryResult[0].id : null;
+
+    if (countryId) {
+      const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
+      await db.query(movieCountryQuery, [movieId, countryId]);
     }
-    res.status(200).json({ message: 'Drama added successfully' });
-  });
+
+    // Insert into movie_availability
+    const availabilityQuery = `SELECT id FROM platforms WHERE platform_name = ?`;
+    const [availabilityResult] = await db.query(availabilityQuery, [availability]);
+    const availabilityId = availabilityResult.length > 0 ? availabilityResult[0].id : null;
+
+    if (availabilityId) {
+      const movieAvailabilityQuery = `INSERT INTO movie_availability (movie_id, availability_id) VALUES (?, ?)`;
+      await db.query(movieAvailabilityQuery, [movieId, availabilityId]);
+    }
+
+    // Insert genres (assuming genres already exist in a 'genres' table)
+    for (const genre of genres) {
+      const genreQuery = `SELECT id FROM genres WHERE genre_name = ?`;
+      const [genreResult] = await db.query(genreQuery, [genre]);
+      const genreId = genreResult.length > 0 ? genreResult[0].id : null;
+
+      if (genreId) {
+        const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
+        await db.query(movieGenreQuery, [movieId, genreId]);
+      }
+    }
+
+    // Insert actors (assuming actors already exist in an 'actors' table)
+    for (const actor of actors) {
+      const actorQuery = `SELECT id FROM actors WHERE actor_name = ?`;
+      const [actorResult] = await db.query(actorQuery, [actor]);
+      const actorId = actorResult.length > 0 ? actorResult[0].id : null;
+
+      if (actorId) {
+        const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id) VALUES (?, ?)`;
+        await db.query(movieActorQuery, [movieId, actorId]);
+      }
+    }
+
+    res.status(200).json({ message: 'Drama added successfully', movieId });
+  } catch (err) {
+    console.error('Error executing query:', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
+
+
 
 
 //SET TRASH
@@ -822,7 +1264,7 @@ app.put('/movie-delete/:id', (req, res) => {
 app.put('/movie-permanent-delete/:id', (req, res) => {
   const movieId = req.params.id;
 
-  const query = `UPDATE movies SET status = 3 WHERE id = ?`;
+  const query = `UPDATE movies SET status = 4 WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
@@ -870,7 +1312,6 @@ app.post('/login', (req, res) => {
       if (user.googleId && !user.password) {
         return res.json({ Message: "Please log in using Google OAuth." });
       }
-
       // If no googleId and password exists, proceed with manual login
       if (!user.googleId && user.password) {
         bcrypt.compare(req.body.password, user.password, (err, result) => {
@@ -888,6 +1329,7 @@ app.post('/login', (req, res) => {
             // Send token and user_id in cookies
             res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
             res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
+            res.cookie('role', user.role, { httpOnly: false, sameSite: 'strict' }); // Tambahkan role ke cookie
 
             return res.json({
               Status: "Login Success",
@@ -904,6 +1346,7 @@ app.post('/login', (req, res) => {
       } else {
         return res.json({ Message: "User not found or missing credentials." });
       }
+
     } else {
       return res.json({ Message: "No user found with that email." });
     }
@@ -934,13 +1377,13 @@ app.get('/auth/google/callback',
 
     // Buat token JWT dengan informasi user
     const token = jwt.sign(
-      { username: user.username, email: user.email, role: user.role, user_id: user.id },
-      "our-jsonwebtoken-secret-key",
+      { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
+      "our-jsonwebtoken-secret-key", 
       { expiresIn: '1d' }
     );
 
     // Simpan token ke cookie
-    res.cookie('token', token, {
+    res.cookie('token', token, { 
       httpOnly: false,  // Set ke false jika token perlu diakses client-side
       sameSite: 'Strict',
       secure: false, // Set to true in production with HTTPS
@@ -948,6 +1391,7 @@ app.get('/auth/google/callback',
     });
 
     res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
+    res.cookie('role', user.role, { httpOnly: false, sameSite: 'strict' }); // Tambahkan role ke cookie
 
     // Redirect to the frontend after successful login
     res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
@@ -1054,9 +1498,6 @@ app.get('/movies/:movieId/reviewed/:userId', isAuthenticated,(req, res) => {
   });
 });
 
-
-//REGISTER
-
 app.get('/confirm-email/:token', (req, res) => {
   const { token } = req.params;
 
@@ -1081,12 +1522,11 @@ app.get('/confirm-email/:token', (req, res) => {
   });
 });
 
-
 app.post('/register', (req, res) => {
   const { username, email, password } = req.body;
 
   const checkSql = "SELECT * FROM users WHERE username = ? OR email = ?";
-  const sql = "INSERT INTO users (username, email, password, isEmailConfirmed) VALUES (?)";
+  const sql = "INSERT INTO users (`username`, `email`, `password`, `isEmailConfirmed`) VALUES (?)";
   const saltRounds = 10;
 
   // Check if the username or email already exists
@@ -1118,7 +1558,6 @@ app.post('/register', (req, res) => {
         // Send confirmation email
         const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
         const templatePath = path.join(__dirname, 'template', 'emailTemplate.html');
-
         fs.readFile(templatePath, 'utf8', (err, htmlTemplate) => {
           if (err) {
             console.error('Error reading email template:', err);
@@ -1139,11 +1578,10 @@ app.post('/register', (req, res) => {
           };
 
 
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              return res.json({ message: 'Error sending confirmation email', success: false });
-            }
-
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            return res.json({ message: 'Error sending confirmation email', success: false });
+          }
             res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
             //redirect into login
             res.redirect('http://localhost:3001/login');
@@ -1151,8 +1589,8 @@ app.post('/register', (req, res) => {
         });
       });
     });
-  })
-});
+  });
+})});
 
 
 // Forgot Password
@@ -1238,61 +1676,7 @@ app.post('/register', (req, res) => {
 // });
 
 
-
-
-// Forgot Password route
-// router.post('/forgot-password', (req, res) => {
-//   const { email } = req.body;
-
-//   // Find user by email
-//   const query = 'SELECT * FROM users WHERE email = ?';
-//   db.query(query, [email], (err, results) => {
-//     if (err || results.length === 0) {
-//       return res.status(400).json({ message: 'No user with that email address' });
-//     }
-
-//     const user = results[0];
-
-//     // Create reset token and save to DB
-//     const token = crypto.randomBytes(20).toString('hex');
-//     const expires = Date.now() + 3600000; // 1 hour from now
-//     const updateTokenQuery = 'UPDATE users SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?';
-//     db.query(updateTokenQuery, [token, expires, email], (err) => {
-//       if (err) {
-//         return res.status(500).json({ message: 'Error setting reset token' });
-//       }
-
-//       // Send email with reset link
-//       const transporter = nodemailer.createTransport({
-//         service: 'Gmail',
-//         auth: {
-//           user: 'your-email@gmail.com',
-//           pass: 'your-email-password',
-//         },
-//       });
-
-//       const mailOptions = {
-//         to: email,
-//         from: 'password-reset@yourapp.com',
-//         subject: 'Password Reset',
-//         text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
-//                Please click on the following link, or paste this into your browser to complete the process:
-//                http://localhost:3001/reset-password/${token}
-//                If you did not request this, please ignore this email and your password will remain unchanged.`,
-//       };
-
-//       transporter.sendMail(mailOptions, (err) => {
-//         if (err) {
-//           return res.status(500).json({ message: 'Error sending email' });
-//         }
-
-//         res.status(200).json({ message: 'Password reset link sent!' });
-//       });
-//     });
-//   });
-// });
-
-// module.exports = router;
+module.exports = router;
 
 
 //Input Review

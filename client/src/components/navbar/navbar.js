@@ -39,6 +39,7 @@ const Navbar = ({ loggedInUsername }) => {
 
       Cookies.set("username", usernameFromGoogle, { expires: 1 });
       Cookies.set("email", emailFromGoogle, { expires: 1 });
+
       Cookies.set("role", roleFromGoogle, { expires: 1 });
   
       setUsername(usernameFromGoogle);
@@ -151,7 +152,7 @@ const Navbar = ({ loggedInUsername }) => {
                 
               </div>
               <div className="profile-actions">
-                <button className="btn-profile" onClick={() => navigate("/profile")}>Profile</button>
+                <button className="btn-profile">Profile</button>
                 <button className="btn-signout" onClick={handleLogout}>Sign out</button>
               </div>
             </div>
