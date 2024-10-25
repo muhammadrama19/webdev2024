@@ -48,6 +48,12 @@ const AwardsManager = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+
+        if (name === 'awards_years' && (value.length > 4 || isNaN(value))) {
+            alert("Year must be exactly 4 digits");
+            return;
+        }
+
         if (isEditing) {
             setEditAward((prev) => ({ ...prev, [name]: value }));
         } else {
@@ -59,7 +65,6 @@ const AwardsManager = () => {
         try {
             const response = await fetch(`http://localhost:8001/countries?name=${countryName}`);
             const data = await response.json();
-            console.log(data);
             // Memeriksa apakah data ada dan mengembalikan ID negara
             if (data.length > 0) {
                 console.log("Country found:", data[0]);
@@ -81,6 +86,18 @@ const AwardsManager = () => {
         const countryExists = await checkCountryExists(newAward.country_name);
         if (!countryExists) {
             alert("Country does not exist. Please add the country first.");
+            return;
+        }
+
+        // Cek apakah tahun berisi tepat 4 angka
+        if (newAward.awards_years.length !== 4 || isNaN(newAward.awards_years) ) {
+            alert("Year must be exactly 4 digits");
+            return;
+        }
+
+        
+        if (parseInt(newAward.awards_years) < 1950) {
+            alert("Year must be greater than or equal to 1950");
             return;
         }
 
@@ -115,6 +132,11 @@ const AwardsManager = () => {
     const handleEditAward = async (e) => {
         e.preventDefault();
 
+        if (parseInt(editAward.awards_years) < 1950) {
+            alert("Year must be greater than or equal to 1950");
+            return;
+        }
+
         if (editAward.awards_name && editAward.country_name && editAward.awards_years) {
             const updatedAwardData = {
                 awards_name: editAward.awards_name,
@@ -124,7 +146,6 @@ const AwardsManager = () => {
 
             // Check if the edited country exists in the backend
             const countryExists = await checkCountryExists(editAward.country_name);
-            console.log(countryExists);
             if (!countryExists) {
                 alert("Country does not exist. Please add the country first.");
                 return;
