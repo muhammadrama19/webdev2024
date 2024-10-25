@@ -18,9 +18,9 @@ import MovieTrash from './MovieTrash/movieTrash'; // Import MovieTrash component
 
 function App() {
   const [openSidebarToggle, setOpenSidebarToggle] = useState(false); // Default tutup di mobile
-  const [dramas, setDramas] = useState([]); // State untuk menyimpan movie yang diinput
-  const [trashDramas, setTrashDramas] = useState([]); // State untuk menyimpan movie yang dihapus
-  const [validatedDramas, setValidatedDramas] = useState([]); // State untuk menyimpan drama yang sudah divalidasi
+  // const [dramas, setDramas] = useState([]); // State untuk menyimpan movie yang diinput
+  // const [trashDramas, setTrashDramas] = useState([]); // State untuk menyimpan movie yang dihapus
+  // const [validatedDramas, setValidatedDramas] = useState([]); // State untuk menyimpan drama yang sudah divalidasi
 
   const OpenSidebar = () => {
     setOpenSidebarToggle(!openSidebarToggle);
@@ -35,32 +35,16 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/movie-input" element={<DramaInput />} />
-            {/* Pass state dramas, trashDramas, dan setDramas ke ListDrama */}
-            <Route 
-              path="/movie-list" 
-              element={<ListDrama dramas={dramas} setDramas={setDramas} trashDramas={trashDramas} setTrashDramas={setTrashDramas} />} 
-            />
-            {/* Pass state validatedDramas untuk validasi */}
-            <Route 
-              path="/movie-validation" 
-              element={<ValidateDrama validatedDramas={validatedDramas} setValidatedDramas={setValidatedDramas} />} 
-            />
-            {/* Route untuk history validasi */}
-            <Route 
-              path="/validate-history" 
-              element={<ValidateHistory validatedDramas={validatedDramas} />} 
-            />
+            <Route path="/movie-list" element={<ListDrama />} />
+            <Route path="/movie-validation" element={<ValidateDrama />} />
+            <Route path="/validate-history" element={<ValidateHistory />} />
             <Route path="/review-list" element={<ReviewManager />} />
             <Route path="/attribute-actor" element={<ActorManager />} />
             <Route path="/attribute-genre" element={<GenreManager />} />
             <Route path="/attribute-country" element={<CountryManager />} />
             <Route path="/attribute-award" element={<AwardsManager />} />
             <Route path="/users" element={<UserSetting />} />
-            {/* Tambahkan route untuk MovieTrash dan pass state dramas dan trashDramas */}
-            <Route 
-              path="/movie-trash" 
-              element={<MovieTrash dramas={dramas} setDramas={setDramas} trashDramas={trashDramas} setTrashDramas={setTrashDramas} />} 
-            />
+            <Route path="/movie-trash" element={<MovieTrash />} />
           </Routes>
         </div>
       </div>
