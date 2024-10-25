@@ -188,7 +188,7 @@ const GenreManager = () => {
                     <Modal.Title>Add New Genre</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Form inline onSubmit={(e) => { e.preventDefault(); handleAddGenre(); }}>
+                    <Form>
                         <Form.Group className="mb-3">
                             <Form.Label className="me-2">Genre</Form.Label>
                             <Form.Control
@@ -202,8 +202,20 @@ const GenreManager = () => {
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button type="submit" variant="primary" className="mt-2" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}>
-                        Submit
+                    <Button
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={handleCloseModal}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-2"
+                        onClick={handleAddGenre}
+                        style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
+                    >
+                        Add Genre
                     </Button>
                 </Modal.Footer>
             </Modal>
