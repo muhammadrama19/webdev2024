@@ -5,15 +5,15 @@ import './InputAward.css';
 
 const AwardsManager = () => {
     const [awards, setAwards] = useState([]);
-    const [newAward, setNewAward] = useState({ country: '', year: '', award: '' });
+    const [newAward, setNewAward] = useState({ country_name: '', awards_years: '', awards_name: '' });
     const [editing, setEditing] = useState(null);
+    const [editAward, setEditAward] = useState({ country_name: '', awards_years: '', awards_name: '' });
     const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true); // To handle loading state
     const [currentPage, setCurrentPage] = useState(1); // State for current page
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
-
-    const handleShowModal = () => setShowModal(true);
 
     useEffect(() => {
         const fetchAwards = async () => {
@@ -30,45 +30,161 @@ const AwardsManager = () => {
         fetchAwards();
     }, []);
 
+    const handleShowModal = () => {
+        setIsEditing(false);
+        setShowModal(true);
+    };
+
     const handleCloseModal = () => {
         setShowModal(false);
-        setNewAward({ country: '', year: '', award: '' });
-        setEditing(null);
+        if (isEditing) {
+            // Reset the editing state and clear editActor data
+            setEditAward({ country_name: '', awards_years: '', awards_name: '' });
+        } else {
+            // Reset the newActor state
+            setNewAward({ country_name: '', awards_years: '', awards_name: '' });
+        }
     };
 
-    const handleChange = (e) => {
+    const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setNewAward({ ...newAward, [name]: value });
+
+        if (name === 'awards_years' && (value.length > 4 || isNaN(value))) {
+            alert("Year must be exactly 4 digits");
+            return;
+        }
+
+        if (isEditing) {
+            setEditAward((prev) => ({ ...prev, [name]: value }));
+        } else {
+            setNewAward((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
-    const handleAddAward = () => {
-        if (newAward.country && newAward.year && newAward.award) {
-            if (editing !== null) {
-                setAwards(awards.map((entry) =>
-                    entry.id === editing ? { ...entry, ...newAward } : entry
-                ));
-                setEditing(null);
+    const checkCountryExists = async (countryName) => {
+        try {
+            const response = await fetch(`http://localhost:8001/countries?name=${countryName}`);
+            const data = await response.json();
+            // Memeriksa apakah data ada dan mengembalikan ID negara
+            if (data.length > 0) {
+                console.log("Country found:", data[0]);
+                return data[0].id; // Mengembalikan ID negara
             } else {
-                setAwards([
-                    ...awards,
-                    { id: awards.length + 1, ...newAward }
-                ]);
+                console.log("Country not found");
+                return false; // Jika negara tidak ditemukan
             }
+        } catch (error) {
+            console.error("Error checking country existence:", error);
+            return false;
+        }
+    };
+
+    const handleAddAward = async (e) => {
+        e.preventDefault();
+
+        // Check if country exists in the backend
+        const countryExists = await checkCountryExists(newAward.country_name);
+        if (!countryExists) {
+            alert("Country does not exist. Please add the country first.");
+            return;
+        }
+
+        // Cek apakah tahun berisi tepat 4 angka
+        if (newAward.awards_years.length !== 4 || isNaN(newAward.awards_years) ) {
+            alert("Year must be exactly 4 digits");
+            return;
+        }
+
+        
+        if (parseInt(newAward.awards_years) < 1950) {
+            alert("Year must be greater than or equal to 1950");
+            return;
+        }
+
+        if (newAward.awards_name && newAward.country_name && newAward.awards_years) {
+            const newAwardData = {
+                awards_name: newAward.awards_name,
+                country_name: newAward.country_name,
+                awards_years: newAward.awards_years,
+            };
+
+            try {
+                const response = await fetch('http://localhost:8001/awards', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newAwardData),
+                });
+
+                const data = await response.json();
+                setAwards((prevAwards) => [...prevAwards, data]);
+            } catch (error) {
+                console.error("Error adding award:", error);
+            }
+            setNewAward({ country_name: '', awards_years: '', awards_name: '' });
             handleCloseModal();
         } else {
             alert("All fields must be filled!");
         }
     };
 
-    const handleEdit = (id) => {
-        const entry = awards.find((entry) => entry.id === id);
-        setNewAward(entry);
-        setEditing(id);
-        handleShowModal();
+    const handleEditAward = async (e) => {
+        e.preventDefault();
+
+        if (parseInt(editAward.awards_years) < 1950) {
+            alert("Year must be greater than or equal to 1950");
+            return;
+        }
+
+        if (editAward.awards_name && editAward.country_name && editAward.awards_years) {
+            const updatedAwardData = {
+                awards_name: editAward.awards_name,
+                country_name: editAward.country_name,
+                awards_years: editAward.awards_years,
+            };
+
+            // Check if the edited country exists in the backend
+            const countryExists = await checkCountryExists(editAward.country_name);
+            if (!countryExists) {
+                alert("Country does not exist. Please add the country first.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8001/awards/${editing}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedAwardData),
+                });
+
+                const data = await response.json();
+                setAwards((prevAwards) =>
+                    prevAwards.map((award) => (award.id === editing ? data : award))
+                );
+                setIsEditing(false);
+                setEditing(null);
+                handleCloseModal();
+            } catch (error) {
+                console.error("Error updating award:", error);
+            }
+        } else {
+            alert("All fields must be filled!");
+        }
     };
 
-    const handleDelete = (id) => {
-        setAwards(awards.filter((entry) => entry.id !== id));
+
+    const handleDeleteAward = async (id) => {
+        try {
+            await fetch(`http://localhost:8001/awards/${id}`, {
+                method: 'DELETE',
+            });
+            setAwards((prevAwards) => prevAwards.filter((award) => award.id !== id));
+        } catch (error) {
+            console.error("Error deleting award:", error);
+        }
     };
 
     // Function untuk filter award berdasarkan search term (sebelum pagination)
@@ -157,47 +273,50 @@ const AwardsManager = () => {
 
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
-                    <Modal.Title>{editing !== null ? 'Edit Award' : 'Add New Award'}</Modal.Title>
+                    <Modal.Title>{isEditing ? 'Edit Award' : 'Add New Award'}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Form onSubmit={(e) => { e.preventDefault(); handleAddAward(); }}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Country</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="country"
-                                value={newAward.country}
-                                onChange={handleChange}
-                                placeholder="Enter country"
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Year</Form.Label>
-                            <Form.Control
-                                type="number"
-                                name="year"
-                                value={newAward.year}
-                                onChange={handleChange}
-                                placeholder="Enter year"
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Award</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="award"
-                                value={newAward.award}
-                                onChange={handleChange}
-                                placeholder="Enter award"
-                            />
-                        </Form.Group>
+                    <Form>
+                        <Form>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Award</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="awards_name"
+                                    value={isEditing ? editAward.awards_name : newAward.awards_name}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter award"
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Country</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="country_name"
+                                    value={isEditing ? editAward.country_name : newAward.country_name}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter country"
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Year</Form.Label>
+                                <Form.Control
+                                    type="number"
+                                    name="awards_years"
+                                    value={isEditing ? editAward.awards_years : newAward.awards_years}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter year"
+                                />
+                            </Form.Group>
+                        </Form>
+
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button
                         variant="secondary"
                         className="mt-2"
-                        onClick={() => setShowModal(false)}>
+                        onClick={handleCloseModal}>
                         Cancel
                     </Button>
                     <Button
@@ -205,8 +324,8 @@ const AwardsManager = () => {
                         variant="primary"
                         className="mt-2"
                         style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
-                        onClick={handleAddAward}>
-                        {editing !== null ? 'Save Changes' : 'Submit'}
+                        onClick={isEditing ? handleEditAward : handleAddAward}>
+                        {isEditing ? 'Save Changes' : 'Submit'}
                     </Button>
                 </Modal.Footer>
             </Modal>
@@ -238,13 +357,18 @@ const AwardsManager = () => {
                                             <Container className="action-button">
                                                 <Button
                                                     className="btn btn-sm btn-primary me-2"
-                                                    onClick={() => handleEdit(award.id)}
+                                                    onClick={() => {
+                                                        setIsEditing(true);
+                                                        setShowModal(true);
+                                                        setEditAward(award);
+                                                        setEditing(award.id);
+                                                    }}
                                                 >
                                                     Edit
                                                 </Button>
                                                 <Button
                                                     className="btn btn-sm btn-danger"
-                                                    onClick={() => handleDelete(award.id)}
+                                                    onClick={() => handleDeleteAward(award.id)}
                                                 >
                                                     Delete
                                                 </Button>

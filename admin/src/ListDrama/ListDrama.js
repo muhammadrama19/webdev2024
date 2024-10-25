@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Table, Form, Container, Modal, Button, Col, Dropdown, Pagination} from "react-bootstrap";
+import { Table, Form, Container, Modal, Button, Col, Dropdown, Pagination } from "react-bootstrap";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import "../ListDrama/ListDrama.css";
 
@@ -12,6 +12,10 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   const [editingDrama, setEditingDrama] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
+
+  // State untuk menampilkan modal detail film
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState(null); // Menyimpan data film yang dipilih
 
   // useEffect to fetch data from backend
   useEffect(() => {
@@ -36,41 +40,34 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
     setShowModal(true);
   };
 
-  // Mengubah status movie menjadi 0 (delete soft)
+  const handleShowDetail = (movie) => {
+    setSelectedMovie(movie);
+    setShowDetailModal(true);
+  };
+
   const handleDelete = async (id) => {
     try {
-      // Lakukan request PUT ke backend untuk mengubah status menjadi 0
       await fetch(`http://localhost:8001/movie-delete/${id}`, {
-        method: 'PUT', // Mengubah status menggunakan metode PUT
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: 0 }) // Mengirimkan status 0 untuk soft delete
+        body: JSON.stringify({ status: 0 }),
       });
-
-      // Hapus movie dari state setelah soft delete berhasil
       setDramas(dramas.filter((drama) => drama.id !== id));
     } catch (error) {
       console.error("Error deleting movie:", error);
     }
   };
 
-
   const handleSave = () => {
-    setDramas(
-      dramas.map((drama) =>
-        drama.id === editingDrama.id ? editingDrama : drama
-      )
-    );
+    setDramas(dramas.map((drama) => (drama.id === editingDrama.id ? editingDrama : drama)));
     setEditingDrama(null);
     setShowModal(false);
   };
 
   const handleChange = (e) => {
-    setEditingDrama({
-      ...editingDrama,
-      [e.target.name]: e.target.value
-    });
+    setEditingDrama({ ...editingDrama, [e.target.name]: e.target.value });
   };
 
   const navigate = useNavigate();
@@ -83,24 +80,22 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
     navigate("/movie-trash");
   };
 
-  // Function untuk filter drama berdasarkan search term (sebelum pagination)
-  const filteredDramas = dramas.filter((drama) =>
-    drama.title && drama.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (drama.Actors && drama.Actors.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (drama.Genres && drama.Genres.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredDramas = dramas.filter(
+    (drama) =>
+      (drama.title && drama.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (drama.Actors && drama.Actors.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (drama.Genres && drama.Genres.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Pagination logic (setelah pencarian)
   const indexOfLastDrama = currentPage * showCount;
   const indexOfFirstDrama = indexOfLastDrama - showCount;
-  const currentDramas = filteredDramas.slice(indexOfFirstDrama, indexOfLastDrama); // Paginate hasil pencarian
+  const currentDramas = filteredDramas.slice(indexOfFirstDrama, indexOfLastDrama);
   const totalPages = Math.ceil(filteredDramas.length / showCount);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  // Logic to show only 3 pages (current, previous, next)
   const renderPagination = () => {
     let items = [];
     const startPage = Math.max(1, currentPage - 1);
@@ -153,15 +148,15 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
             type="text"
             className="search-input"
             placeholder="Search"
-            value={searchTerm} // Menghubungkan input pencarian dengan state searchTerm
-            onChange={(e) => setSearchTerm(e.target.value)} // Update state saat pengguna mengetik
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div>
           {!viewTrash && (
             <Button className="btn btn-danger me-2" onClick={handleViewTrash}>
-              <FaTrash className="me-2"/>
+              <FaTrash className="me-2" />
               Trash
             </Button>
           )}
@@ -182,35 +177,45 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Drama</th>
-                  <th>Actors</th>
-                  <th>Genres</th>
-                  <th>Synopsis</th>
+                  <th>Poster</th>
+                  <th>Title</th>
+                  <th className="genres-column">Genres</th>
+                  <th>Actor</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {currentDramas.map((drama, index) => (
                   <tr key={drama.id}>
-                    <td>{indexOfFirstDrama + index + 1}</td> {/* Adjusting index to show proper numbering */}
-                    <td>{drama.title}</td>
-                    <td>{drama.Actors}</td>
-                    <td>{drama.Genres}</td>
-                    <td>{drama.synopsis}</td>
+                    <td>{indexOfFirstDrama + index + 1}</td>
                     <td>
+                      {drama.poster ? (
+                        <img
+                          src={drama.poster}
+                          alt={drama.title}
+                          className="poster-image"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/100x150?text=No+Image";
+                          }}
+                        />
+                      ) : (
+                        <span>No Image</span>
+                      )}
+                    </td>
+                    <td className="title-column" onClick={() => handleShowDetail(drama)}>
+                      {drama.title}
+                    </td>
+                    <td className="genres-column">{drama.Genres}</td>
+                    <td>{drama.Actors}</td>
+                    <td className="action-column">
                       <Container className="action-button">
-                        <Button
-                          className="btn btn-sm btn-primary me-2"
-                          onClick={() => handleEdit(drama)}
-                        >
+                        <Button className="btn btn-sm btn-primary me-3" onClick={() => handleEdit(drama)}>
                           Edit
                         </Button>
                         {!viewTrash && (
-                          <Button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleDelete(drama.id)}
-                          >
-                            Delete
+                          <Button className="btn btn-sm btn-danger" onClick={() => handleDelete(drama.id)}>
+                            Trash
                           </Button>
                         )}
                       </Container>
@@ -227,7 +232,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
       {editingDrama && (
         <Modal show={showModal} onHide={() => setShowModal(false)} centered>
           <Modal.Header closeButton>
-            <Modal.Title>Edit Drama</Modal.Title>
+            <Modal.Title>Edit Movie</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Form>
@@ -244,7 +249,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
                 <Form.Label>Actors</Form.Label>
                 <Form.Control
                   type="text"
-                  name="actors"
+                  name="Actors"
                   value={editingDrama.Actors}
                   onChange={handleChange}
                 />
@@ -253,7 +258,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
                 <Form.Label>Genres</Form.Label>
                 <Form.Control
                   type="text"
-                  name="genres"
+                  name="Genres"
                   value={editingDrama.Genres}
                   onChange={handleChange}
                 />
@@ -271,24 +276,57 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button
-              variant="secondary"
-              className="mt-2"
-              onClick={() => setShowModal(false)}
-            >
+            <Button variant="secondary" className="mt-2" onClick={() => setShowModal(false)}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              className="mt-2"
-              onClick={handleSave}
-            >
+            <Button type="submit" variant="primary" className="mt-2" onClick={handleSave}>
               Save Changes
             </Button>
           </Modal.Footer>
         </Modal>
       )}
+
+{selectedMovie && (
+  <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} centered>
+    <Modal.Header closeButton>
+      <Modal.Title>{selectedMovie.title}</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+      <div className="detail-modal">
+        <div className="poster-detail-container">
+          <img
+            src={selectedMovie.poster || "https://via.placeholder.com/100x150?text=No+Image"}
+            alt={selectedMovie.title}
+            className="poster-detail"
+          />
+          <Button
+            variant="primary"
+            className="edit-button"
+            onClick={() => {
+              setShowDetailModal(false);
+              handleEdit(selectedMovie);
+            }}
+          >
+            Edit
+          </Button>
+        </div>
+        <div className="detail-content">
+          <p><strong>Year:</strong> {selectedMovie.release_year || "Unknown"}</p>
+          <p><strong>Genres:</strong> {selectedMovie.Genres}</p>
+          <p><strong>Actors:</strong> {selectedMovie.Actors}</p>
+          <p><strong>Synopsis:</strong></p>
+          <p>{selectedMovie.synopsis}</p>
+        </div>
+      </div>
+    </Modal.Body>
+    <Modal.Footer>
+      <Button variant="secondary" onClick={() => setShowDetailModal(false)}>
+        Close
+      </Button>
+    </Modal.Footer>
+  </Modal>
+)}
+
     </Container>
   );
 };

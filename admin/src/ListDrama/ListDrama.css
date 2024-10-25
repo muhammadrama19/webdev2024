@@ -12,7 +12,7 @@
 .drama-table th,
 .drama-table td {
   vertical-align: middle;
-  text-align: left;
+  text-align: center !important;
   padding: 10px;
 }
 
@@ -62,42 +62,127 @@
   color: white;
 }
 
+.poster-image {
+  width: 100px; /* Atur lebar sesuai kebutuhan */
+  height: auto; /* Menjaga proporsi gambar */
+  object-fit: cover; /* Memastikan gambar tidak terdistorsi */
+  border-radius: 5px; /* Opsional: Menambahkan sudut melengkung */
+}
+
+/* Untuk menambahkan hover dan cursor pointer di judul film */
+.title-column {
+  width: 200px !important;
+  max-width: 200px !important;
+  min-width: 50px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  cursor: pointer; /* Ubah cursor menjadi pointer saat hover */
+  transition: color 0.3s ease; /* Beri transisi untuk efek hover */
+}
+
+.title-column:hover {
+  color: #3c82fa; /* Ubah warna saat hover agar terlihat responsif */
+  text-decoration: underline; /* Beri efek underline saat hover */
+}
+
+
+.genres-column {
+  width: 300px !important; /* Pastikan lebar tetap */
+  max-width: 300px !important;
+  min-width: 50px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.action-button {
+  display: flex !important; /* Mengatur tata letak tombol */
+  justify-content: center !important; /* Memusatkan tombol secara horizontal */
+  align-items: center !important; /* Memusatkan tombol secara vertikal */
+}
+
+.detail-modal {
+  display: flex;
+  align-items: flex-start;
+  width: 100%; /* Pastikan modal menggunakan lebar penuh */
+  max-width: 800px; /* Atur agar modal tidak terlalu kecil */
+}
+
+.poster-detail-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 20px;
+  flex-shrink: 0; /* Pastikan gambar tidak menyusut */
+}
+
+.poster-detail {
+  width: 150px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.edit-button {
+  width: 100px; /* Atur lebar tombol Edit */
+  margin-top: 10px;
+}
+
+.detail-content {
+  flex-grow: 1;
+  max-height: 400px; /* Batasi tinggi agar ada ruang untuk scroll */
+  overflow-y: auto; /* Tambahkan scroll pada konten */
+  padding-right: 10px; /* Tambahkan padding kanan agar scroll terlihat rapi */
+}
+
+.detail-content p {
+  margin: 0 0 10px 0;
+}
+
+/* Tambahkan padding agar tombol "Close" dan modal tetap rapi */
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px;
+}
+
+
+
+
 /* Responsive for devices with width <= 992px */
 @media screen and (max-width: 992px) {
   .list-drama-container {
-      padding: 15px;
-      height: auto;
+    padding: 15px;
+    height: auto;
   }
-  
+
   .search-input {
-      width: 180px;
+    width: 180px;
   }
 
   .drama-table th,
   .drama-table td {
-      font-size: 14px;
+    font-size: 14px;
   }
 }
 
 /* Responsive for devices with width <= 768px */
 @media screen and (max-width: 768px) {
   .list-drama-container {
-      padding: 10px;
-      height: auto;
+    padding: 10px;
+    height: auto;
   }
-  
+
   .search-input {
-      width: 160px;
+    width: 160px;
   }
 
   .drama-table th,
   .drama-table td {
-      font-size: 13px;
+    font-size: 13px;
   }
 
   .edit-link,
   .delete-link {
-      font-size: 12px;
+    font-size: 12px;
   }
 }
 
@@ -105,43 +190,42 @@
 /* Responsive for devices with width <= 576px */
 @media screen and (max-width: 576px) {
   .list-drama-container {
-      padding: 5px;
-      height: auto;
-      border-radius: 5px;
+    padding: 5px;
+    height: auto;
+    border-radius: 5px;
   }
 
   /* Mengatur flex direction menjadi kolom */
   .list-drama-header {
-      flex-direction: column;
-      align-items: flex-start; /* Mengatur posisi elemen di kiri */
+    flex-direction: column;
+    align-items: flex-start; /* Mengatur posisi elemen di kiri */
   }
 
   /* Atur jarak antar elemen agar lebih rapi */
   .dropdown-toggle {
-      margin-bottom: 10px; /* Tambahkan margin bawah untuk dropdown */
+    margin-bottom: 10px; /* Tambahkan margin bawah untuk dropdown */
   }
 
   .search-input {
-      width: 140px;
-      padding: 5px;
+    width: 140px;
+    padding: 5px;
   }
 
   .drama-table {
-      font-size: 12px;
+    font-size: 12px;
   }
 
   .drama-table th,
   .drama-table td {
-      font-size: 12px;
+    font-size: 12px;
   }
 
   .edit-link,
   .delete-link {
-      font-size: 11px;
+    font-size: 11px;
   }
-  
+
   .dropdown-toggle {
-      font-size: 12px;
+    font-size: 12px;
   }
 }
-

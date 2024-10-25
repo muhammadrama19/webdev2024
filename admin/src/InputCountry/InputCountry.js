@@ -36,23 +36,29 @@ const CountryManager = () => {
         setNewCountry("");
     };
 
-    const handleAddCountry = () => {
+    const handleAddCountry = async () => {
         const trimmedCountry = newCountry.trim();
 
         if (trimmedCountry) {
-            if (countries.some(country => country.name.toLowerCase() === trimmedCountry.toLowerCase())) {
+            if (countries.some(country => country.country_name.toLowerCase() === trimmedCountry.toLowerCase())) {
                 alert("Country already exists!");
             } else {
-                setCountries([
-                    ...countries,
-                    {
-                        id: countries.length + 1,
-                        country_name: trimmedCountry,
-                        isDefault: false,
-                    },
-                ]);
-                setNewCountry("");
-                handleCloseModal();
+                try {
+                    const response = await fetch('http://localhost:8001/countries', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ country_name: trimmedCountry }),
+                    });
+
+                    const data = await response.json();
+                    setCountries([...countries, data]);
+                    setNewCountry("");
+                    handleCloseModal();
+                } catch (error) {
+                    console.error("Error adding country:", error);
+                }
             }
         } else {
             alert("Country name cannot be empty or just spaces!");
@@ -60,35 +66,38 @@ const CountryManager = () => {
     };
 
 
-    const handleDeleteCountry = (id) => {
-        const country = countries.find((country) => countries.id === id);
-        if (country.isDefault) {
-            alert("You cannot delete the default country. Please change the default country first.");
-        } else {
+    const handleDeleteCountry = async (id) => {
+        try {
+            await fetch(`http://localhost:8001/countries/${id}`, {
+                method: 'DELETE',
+            });
             setCountries(countries.filter((country) => country.id !== id));
+        } catch (error) {
+            console.error("Error deleting country:", error);
         }
     };
 
-    const handleRenameCountry = (id) => {
+    const handleRenameCountry = async (id) => {
         if (editName.trim()) {
-            setCountries(
-                countries.map((country) =>
-                    country.id === id ? { ...country, name: editName } : country
-                )
-            );
-            setEditing(null);
-            setEditName("");
+            try {
+                await fetch(`http://localhost:8001/countries/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ country_name: editName }),
+                });
+                setCountries(
+                    countries.map((country) =>
+                        country.id === id ? { ...country, country_name: editName } : country
+                    )
+                );
+                setEditing(null);
+                setEditName("");
+            } catch (error) {
+                console.error("Error updating country:", error);
+            }
         }
-    };
-
-    const handleSetDefault = (id) => {
-        setCountries(
-            countries.map((country) =>
-                country.id === id
-                    ? { ...country, isDefault: true }
-                    : { ...country, isDefault: false }
-            )
-        );
     };
 
     // Function untuk filter drama berdasarkan search term (sebelum pagination)
@@ -163,7 +172,7 @@ const CountryManager = () => {
                     />
                 </Container>
 
-                {/* Button to Add New Genre */}
+                {/* Button to Add New Country */}
                 <Button
                     variant="success"
                     className="d-flex align-items-center w-auto px-4 py-2"
@@ -178,8 +187,9 @@ const CountryManager = () => {
                     <Modal.Title>Add New Country</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Form onSubmit={(e) => { e.preventDefault(); handleAddCountry(); }}>
+                    <Form>
                         <Form.Group className="mb-3">
+                            <Form.Label>Country</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={newCountry}
@@ -190,11 +200,24 @@ const CountryManager = () => {
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button type="submit" variant="primary" className="mt-2" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}>
-                        Submit
+                    <Button
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={handleCloseModal}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-2"
+                        onClick={handleAddCountry}
+                        style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
+                    >
+                        Add Country
                     </Button>
                 </Modal.Footer>
             </Modal>
+
 
             {loading ? (
                 <p>Loading data...</p>
@@ -252,7 +275,7 @@ const CountryManager = () => {
                                                         className="me-2"
                                                         onClick={() => {
                                                             setEditing(country.id);
-                                                            setEditName(country.name);
+                                                            setEditName(country.country_name);
                                                         }}
                                                         disabled={editing !== null}
                                                     >
@@ -267,16 +290,6 @@ const CountryManager = () => {
                                                     >
                                                         Delete
                                                     </Button>
-                                                    {!country.isDefault && (
-                                                        <Button
-                                                            variant="outline-secondary"
-                                                            size="sm"
-                                                            onClick={() => handleSetDefault(country.id)}
-                                                            disabled={editing !== null}
-                                                        >
-                                                            Set Default
-                                                        </Button>
-                                                    )}
                                                 </Container>
                                             )}
                                         </td>

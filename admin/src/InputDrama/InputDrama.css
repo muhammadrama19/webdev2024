@@ -145,10 +145,10 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  border: 1px solid #ccc;
+  border: 1px solid #001c4a;
   max-height: 100px;
   overflow-y: auto;
-  background-color: #443939;
+  background-color: #0d2a54;
   position: absolute;
   width: 100%; /* Buat selebar elemen input */
   z-index: 10;
@@ -157,13 +157,26 @@
   max-width: calc(100% - 1px); /* Tambahkan sedikit ruang agar tidak terlalu melebar */
 }
 
+.actor-suggestions::-webkit-scrollbar {
+  width: 8px;
+}
+
+.actor-suggestions::-webkit-scrollbar-thumb {
+  background-color: #888; /* Warna scrollbar */
+  border-radius: 10px;
+}
+
+.actor-suggestions::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Warna background scrollbar */
+}
+
 .actor-suggestions li {
   padding: 10px;
   cursor: pointer;
 }
 
 .actor-suggestions li:hover {
-  background-color: #181616;
+  background-color: #26439b;
 }
 
 .selected-actors {
@@ -193,6 +206,7 @@
   margin-right: 5px;
   margin-bottom: 5px;
   cursor: pointer;
+  background-color: #5d91c8 !important;
 }
 
 .actor-badge .remove-actor {
@@ -200,6 +214,38 @@
   color: white;
 }
 
+/* Contoh styling tambahan untuk dropdown */
+.form-select {
+  border-radius: 5px;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+}
+
+.form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Untuk dropdown react-select */
+.select {
+  position: relative;
+  z-index: 1000; /* Pastikan dropdown berada di atas konten lainnya */
+  color: #000000; /* Warna teks yang kontras */
+}
+
+.select__control {
+  max-height: 60px;
+  overflow-y: auto; /* Scrollbar muncul jika konten melebihi tinggi maksimal */
+  background-color: #ffffff; /* Warna latar belakang dropdown */
+  color: #000000; /* Warna teks yang kontras */
+  border: 1px solid #ccc; /* Gaya border */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan halus */
+  z-index: 10; /* Menambahkan z-index agar berada di atas konten lain */
+}
+
+.select__menu {
+  z-index: 999999; /* Pastikan dropdown selalu berada di atas konten lainnya */
+}
 
 
 /* Responsive styling */
