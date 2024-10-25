@@ -54,36 +54,45 @@ const LoginForm = () => {
   };
 
   return (
+    <div className="login">
+      <AuthForm
+        title="Login"
+        linkText="Don't have an account?"
+        linkHref="/register"
+      >
+        <form onSubmit={handleSubmit}>
+          <FormInput
+            label="Email"
+            type="email"
+            name="email"
+            placeholder="user@email.com"
+            value={values.email}
+            onChange={handleInputChange}
+          />
+          <FormInput
+            label="Password"
+            type="password"
+            name="password"
+            placeholder="********"
+            value={values.password}
+            onChange={handleInputChange}
+          />
 
-    <div className='login'>
-      <AuthForm title="Login" linkText="Don't have an account?" linkHref="/register">
-      <form onSubmit={handleSubmit}>
+          <Container>
+            <a
+              href="/forgot-password"
+              className="text-gray-800"
+            >
+              Forgot password?
+            </a>
+          </Container>
+          <Button type="submit" className="loginButton">
+            Login
+          </Button>
+          <GoogleLogin label={"Login with Google"} />
+        </form>
+      </AuthForm>
 
-        <FormInput
-          label="Email"
-          type="email"
-          name="email"
-          placeholder="user@email.com"
-          value={values.email}
-          onChange={handleInputChange}
-        />
-        <FormInput
-          label="Password"
-          type="password"
-          name="password"
-          placeholder="********"
-          value={values.password}
-          onChange={handleInputChange}
-        />
-
-        <Button type="submit" className="loginButton">
-          Login
-        </Button>
-        <GoogleLogin label={"Login with Google"} />
-        
-
-      </form>
-    </AuthForm>
     </div>
     
   );

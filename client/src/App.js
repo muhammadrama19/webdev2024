@@ -4,10 +4,17 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/navbar/navbar';
 import Register from './register/register';
 import Login from './login/login';
+
+import OTPInput from "./login/OTPInput";
 import TestFetch from './test/testFetch';
 import Detailmovie from './detailmovie/detailmovie';
 import SearchResult from './search/searchResult';
-import ForgotPassword from './forgotPassword/forgotPassword';
+import ForgotPassword from "./login/forgotPassowrd";
+import ResetPassword from "./login/reset";
+
+import Profile from './profile/profile';
+
+
 import { SearchProvider } from './context/searchContext'; // Import SearchProvider
 
 function App() {
@@ -23,8 +30,7 @@ function App() {
           <Route path="/movies/:id" element={<Detailmovie />} />
           <Route path="/searchresult" element={<SearchResult />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-
-          
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </Router>
     </SearchProvider>
