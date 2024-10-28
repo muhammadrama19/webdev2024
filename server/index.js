@@ -1327,13 +1327,8 @@ app.post('/add-drama', upload.fields([{ name: 'poster' }, { name: 'background' }
       INSERT INTO movies (poster, title, alt_title, release_year, synopsis, trailer, director, background, imdb_score, view)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-<<<<<<< HEAD
-    const movieValues = [poster, title, alt_title, release_year, synopsis, trailer, director, background, imdb_score, view];
-    
-=======
     const movieValues = [poster, title, alt_title, release_year, synopsis, trailer, director, background];
 
->>>>>>> 171f9775c3f54cfdf59e9496be4ce83ba3a3076f
     const [movieResult] = await db.query(movieQuery, movieValues);
     const movieId = movieResult.insertId;  // Get the newly inserted movie's ID
 
