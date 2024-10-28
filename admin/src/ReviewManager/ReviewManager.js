@@ -21,20 +21,47 @@ const ReviewManager = () => {
             } catch (error) {
                 console.error("Error fetching actors:", error);
                 setLoading(false);
-
             }
         };
         Reviews();
     }, []);
 
-    const handleApproveReview = (id) => {
-        setReviews(reviews.map((review) =>
-            review.id === id ? { ...review, status: "Approved" } : review
-        ));
+    const approveReview = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:8001/reviews/${id}`, {
+                method: "PUT",
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setReviews(reviews.map((review) =>
+                    review.id === id ? { ...review, status: 1 } : review
+                ));
+                window.location.reload();
+                console.log(data.message);
+            } else {
+                console.error("Error approving review:", data.error);
+            }
+        } catch (error) {
+            console.error("Error approving review:", error);
+        }
     };
 
-    const handleDeleteReview = (id) => {
-        setReviews(reviews.filter((review) => review.id !== id));
+    const deleteReview = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:8001/reviews/${id}`, {
+                method: "DELETE",
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setReviews(reviews.filter((review) => review.id !== id));
+                window.location.reload();
+                console.log(data.message);
+            } else {
+                console.error("Error deleting review:", data.error);
+            }
+        } catch (error) {
+            console.error("Error deleting review:", error);
+        }
     };
 
     const handleFilterChange = (selectedFilter) => setFilter(selectedFilter);
@@ -137,7 +164,7 @@ const ReviewManager = () => {
                             </thead>
                             <tbody>
                                 {currentReviews.map((review) => (
-                                    <tr key={review.id}>
+                                    <tr key={review.review_id}>
                                         <td>{review.user_name}</td>
                                         <td>
                                             <Container className="rate-container">
@@ -154,7 +181,7 @@ const ReviewManager = () => {
                                                         variant="success"
                                                         className="me-2"
                                                         size="sm"
-                                                        onClick={() => handleApproveReview(review.id)}
+                                                        onClick={() => approveReview(review.review_id)}
                                                     >
                                                         Approve
                                                     </Button>
@@ -162,7 +189,7 @@ const ReviewManager = () => {
                                                 <Button
                                                     variant="danger"
                                                     size="sm"
-                                                    onClick={() => handleDeleteReview(review.id)}
+                                                    onClick={() => deleteReview(review.review_id)}
                                                 >
                                                     Delete
                                                 </Button>

@@ -44,6 +44,7 @@ const AwardsManager = () => {
             // Reset the newActor state
             setNewAward({ country_name: '', awards_years: '', awards_name: '' });
         }
+        window.location.reload();
     };
 
     const handleInputChange = (e) => {
@@ -63,21 +64,17 @@ const AwardsManager = () => {
 
     const checkCountryExists = async (countryName) => {
         try {
-            const response = await fetch(`http://localhost:8001/countries?name=${countryName}`);
-            const data = await response.json();
-            // Memeriksa apakah data ada dan mengembalikan ID negara
-            if (data.length > 0) {
-                console.log("Country found:", data[0]);
-                return data[0].id; // Mengembalikan ID negara
-            } else {
-                console.log("Country not found");
-                return false; // Jika negara tidak ditemukan
+            const response = await fetch(`http://localhost:8001/countries/${countryName}`);
+            if (!response.ok) {
+                return false; // Return false if country is not found (404)
             }
+            const data = await response.json();
+            return !!data; // Return true if data is found, false otherwise
         } catch (error) {
             console.error("Error checking country existence:", error);
             return false;
         }
-    };
+    }; 
 
     const handleAddAward = async (e) => {
         e.preventDefault();
