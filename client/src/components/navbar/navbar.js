@@ -143,7 +143,7 @@ const Navbar = ({ loggedInUsername }) => {
             <div className="profile-dropdown">
               <div className="profile-header">
                 <img
-                  src="https://via.placeholder.com/100" 
+                  src="/assets/Oval.svg" 
                   alt="profile"
                   className="profile-image"
                 />
@@ -162,7 +162,6 @@ const Navbar = ({ loggedInUsername }) => {
         </div>
       </div>
 
-      {/* Sidebar Menu */}
       <div className={`sidebar ${sidebarVisible ? "active" : ""}`}>
         <div className="sidebar-header">
           <span className="logo-brand" onClick={() => navigate("/")}>
