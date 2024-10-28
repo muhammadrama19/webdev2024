@@ -5,6 +5,7 @@ import { Button } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { Container } from "react-bootstrap";
 
 import GoogleLogin from "../components/googleButton/googleButton";
 

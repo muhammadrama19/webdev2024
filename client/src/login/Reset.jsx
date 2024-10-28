@@ -21,8 +21,22 @@ const ResetPassword = () => {
         navigate("/login"); // Redirect to login page
       })
       .catch((err) => {
-        console.log(err);
-        alert("Error resetting password");
+
+        if (err.response) {
+          const { status, data } = err.response;
+
+          if (status === 400) {
+            alert(data.message || "Invalid or expired token. Please try again.");
+          } else if (status === 404) {
+            alert("User not found. Please request a new reset link.");
+          } else if (status === 500) {
+            alert("Internal server error. Please try again later.");
+          } else {
+            alert("Error resetting password. Please check your input and try again.");
+          }
+        } else {
+          alert("Network error. Please check your connection.");
+        }
       });
   };
 
