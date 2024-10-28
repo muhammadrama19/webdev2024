@@ -1590,7 +1590,7 @@ app.post('/register', (req, res) => {
       });
     });
   });
-})});
+});
 
 
 // Forgot Password

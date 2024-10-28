@@ -4,14 +4,12 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/navbar/navbar';
 import Register from './register/register';
 import Login from './login/login';
-
-import OTPInput from "./login/OTPInput";
+import Dashboard from './dashboard/Home';
 import TestFetch from './test/testFetch';
 import Detailmovie from './detailmovie/detailmovie';
 import SearchResult from './search/searchResult';
 import ForgotPassword from "./login/forgotPassowrd";
-import ResetPassword from "./login/reset";
-
+import ResetPassword from "./login/Reset";
 import Profile from './profile/profile';
 
 
