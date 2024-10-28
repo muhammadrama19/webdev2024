@@ -35,6 +35,7 @@ const CountryManager = () => {
     const handleCloseModal = () => {
         setShowModal(false);
         setNewCountry("");
+        window.location.reload();
     };
 
     const handleInputChange = (e) => {
@@ -96,26 +97,30 @@ const CountryManager = () => {
 
     const handleRenameCountry = async (e) => {
         e.preventDefault();
-        
+
         if (editName.trim()) {
-            try {
-                await fetch(`http://localhost:8001/countries/${editing}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ country_name: editName }),
-                });
-                setCountries(
-                    countries.map((country) =>
-                        country.id === editing ? { ...country, country_name: editName } : country
-                    )
-                );
-                setEditing(null);
-                setShowModal(false);
-                setEditName("");
-            } catch (error) {
-                console.error("Error updating country:", error);
+            if (countries.some(country => country.country_name.toLowerCase() === editName.toLowerCase())) {
+                alert("Country already exists!");
+            } else {
+                try {
+                    await fetch(`http://localhost:8001/countries/${editing}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ country_name: editName }),
+                    });
+                    setCountries(
+                        countries.map((country) =>
+                            country.id === editing ? { ...country, country_name: editName } : country
+                        )
+                    );
+                    setEditing(null);
+                    setShowModal(false);
+                    setEditName("");
+                } catch (error) {
+                    console.error("Error updating country:", error);
+                }
             }
         }
     };

@@ -5,13 +5,13 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 // const googleAuth = require('./routes/googleAuth');
-const passport= require('./middleware/passport-setup')
+const passport = require('./middleware/passport-setup')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const router = express.Router();
-const path = require('path'); 
+const path = require('path');
 const fs = require('fs');
 
 const { isAuthenticated, hasAdminRole } = require('./middleware/auth');
@@ -45,7 +45,7 @@ app.use(express.static('public'));
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "", 
+  password: "",
   database: "lalajoeuydb"
 });
 
@@ -162,7 +162,7 @@ app.get('/movies/movie', (req, res) => {
   if (filterConditions.length) {
     query += ` AND ${filterConditions.join(' AND ')}`;
   }
-  
+
 
   // Handle genre filtering
   if (genre && genre.trim()) {
@@ -178,9 +178,9 @@ app.get('/movies/movie', (req, res) => {
   query += ` GROUP BY m.id`;
 
   if (sort) {
-    query += ` ORDER BY m.title ${sort.toUpperCase()}`; 
+    query += ` ORDER BY m.title ${sort.toUpperCase()}`;
   } else {
-    query += ` ORDER BY m.id`; 
+    query += ` ORDER BY m.id`;
   }
 
   // Add pagination limits
@@ -277,7 +277,7 @@ app.get("/search", (req, res) => {
     LIMIT 10
   `;
   const searchTerm = `%${query}%`;
-  
+
   db.query(sql, [searchTerm], (err, results) => {
     if (err) throw err;
     res.json(results);
@@ -336,7 +336,7 @@ app.get('/movies/detail/:id', (req, res) => {
     WHERE
       movies.id = ? AND status = 1
   `;
-  
+
   db.query(query, [id], (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
@@ -441,7 +441,7 @@ app.get('/movies/detail/review/:id', (req, res) => {
     WHERE
       reviews.movie_id = ?
   `;
-  
+
   db.query(query, [id], (err, results) => {
     if (err) {
       res.status(500).json({ error: 'Database query failed' });
@@ -477,24 +477,24 @@ app.get('/filters', async (req, res) => {
   try {
     // Fetch years first to calculate decades
     const [yearRows] = await db.promise().query(queries.years);
-    
+
     if (yearRows.length) {
       const minYear = yearRows[0].minYear;
       const maxYear = yearRows[0].maxYear;
-      
-     
+
+
       const different = minYear % 10;
-      const normalizedMinYear = minYear - different; 
+      const normalizedMinYear = minYear - different;
       const decades = [];
 
       for (let year = normalizedMinYear; year <= maxYear; year += 10) {
         decades.push({
           start: year,
-          end: year + 10, 
+          end: year + 10,
         });
       }
 
-      results.years = decades; 
+      results.years = decades;
     } else {
       results.years = [];
     }
@@ -534,7 +534,7 @@ app.get('/filters', async (req, res) => {
       name: row.name,
     }));
 
-    res.json(results); 
+    res.json(results);
   } catch (error) {
     console.error('Error fetching filters:', error.message);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -568,7 +568,7 @@ app.get('/featured', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    
+
     res.json(results); // Send the top 10 movies to the front-end
   });
 }
@@ -685,7 +685,7 @@ app.get('/movie-list', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    res.json(results);  
+    res.json(results);
   });
 });
 
@@ -701,7 +701,7 @@ app.get('/users', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
-    res.json(results);  
+    res.json(results);
   });
 });
 
@@ -1123,9 +1123,9 @@ app.delete('/awards/:id', (req, res) => {
   });
 });
 
-
-  app.get('/reviews', (req, res) => {
-    const query = `
+// route to fetch all reviews
+app.get('/reviews', (req, res) => {
+  const query = `
     SELECT 
       reviews.id AS review_id,
       reviews.content,
@@ -1143,7 +1143,7 @@ app.delete('/awards/:id', (req, res) => {
       users ON reviews.user_id = users.id
     ORDER BY reviews.id ASC
   `;
-  
+
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error executing query:', err.message);
@@ -1151,6 +1151,44 @@ app.delete('/awards/:id', (req, res) => {
       return;
     }
     res.json(results);
+  });
+});
+
+// route to approve a review
+app.put('/reviews/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = 'UPDATE reviews SET status = 1 WHERE id = ?';
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error approving review:', err.message);
+      return res.status(500).json({ error: 'Failed to approve review.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Review not found.' });
+    }
+
+    res.json({ message: 'Review approved successfully.' });
+  });
+});
+
+// route to delete a review
+app.delete('/reviews/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = 'DELETE FROM reviews WHERE id = ?';
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting review:', err.message);
+      return res.status(500).json({ error: 'Failed to delete review.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Review not found.' });
+    }
+
+    res.json({ message: 'Review deleted successfully.' });
   });
 });
 
@@ -1185,7 +1223,7 @@ app.post('/add-drama', upload.fields([{ name: 'poster' }, { name: 'background' }
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const movieValues = [poster, title, alt_title, release_year, synopsis, trailer, director, background];
-    
+
     const [movieResult] = await db.query(movieQuery, movieValues);
     const movieId = movieResult.insertId;  // Get the newly inserted movie's ID
 
@@ -1321,7 +1359,7 @@ app.post('/login', (req, res) => {
 
           if (result) {
             const token = jwt.sign(
-              { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
+              { username: user.username, email: user.email, role: user.role, user_id: user.id },
               "our-jsonwebtoken-secret-key",
               { expiresIn: '1d' }
             );
@@ -1337,7 +1375,7 @@ app.post('/login', (req, res) => {
               username: user.username,
               email: user.email,
               role: user.role,
-              token: token 
+              token: token
             });
           } else {
             return res.json({ Message: "Incorrect Password" });
@@ -1367,9 +1405,9 @@ app.get('/auth/google', passport.authenticate('google', {
 
 // Google OAuth callback route
 app.get('/auth/google/callback',
-  passport.authenticate('google', { 
-    failureRedirect: 'http://localhost:3001/login?error=google-auth-failed', 
-    failureMessage: true 
+  passport.authenticate('google', {
+    failureRedirect: 'http://localhost:3001/login?error=google-auth-failed',
+    failureMessage: true
   }),
   (req, res) => {
     // Handle successful login
@@ -1377,13 +1415,13 @@ app.get('/auth/google/callback',
 
     // Buat token JWT dengan informasi user
     const token = jwt.sign(
-      { username: user.username, email: user.email, role: user.role, user_id: user.id }, 
-      "our-jsonwebtoken-secret-key", 
+      { username: user.username, email: user.email, role: user.role, user_id: user.id },
+      "our-jsonwebtoken-secret-key",
       { expiresIn: '1d' }
     );
 
     // Simpan token ke cookie
-    res.cookie('token', token, { 
+    res.cookie('token', token, {
       httpOnly: false,  // Set ke false jika token perlu diakses client-side
       sameSite: 'Strict',
       secure: false, // Set to true in production with HTTPS
@@ -1400,21 +1438,21 @@ app.get('/auth/google/callback',
 
 app.post('/forgot-password', (req, res) => {
   const { email } = req.body;
-  
+
   // Check if user exists with the given email
   const checkUserSql = "SELECT * FROM users WHERE email = ?";
   db.query(checkUserSql, [email], (err, userData) => {
     if (err || userData.length === 0) {
       return res.status(404).json({ message: "User with this email doesn't exist", success: false });
     }
-    
+
     const user = userData[0];
     const resetToken = jwt.sign({ id: user.id }, "RESET_PASSWORD_SECRET", { expiresIn: '1h' });
-    
+
     // Create reset link
     const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
     const templatePathReset = path.join(__dirname, 'template', 'forgotPassword.html');
-    
+
     // Read the email template file
     fs.readFile(templatePathReset, 'utf8', (err, htmlTemplate) => {
       if (err) {
@@ -1482,7 +1520,7 @@ app.post('/reset-password/:token', (req, res) => {
 
 
 //movie check if reviewed or not
-app.get('/movies/:movieId/reviewed/:userId', isAuthenticated,(req, res) => {
+app.get('/movies/:movieId/reviewed/:userId', isAuthenticated, (req, res) => {
   const userId = req.params.userId;
   const movieId = req.params.movieId;
 
@@ -1511,7 +1549,7 @@ app.get('/confirm-email/:token', (req, res) => {
 
     // Update the user to mark their email as confirmed
     const updateSql = "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
-    
+
     db.query(updateSql, [email], (err, result) => {
       if (err) {
         return res.json({ message: 'Error confirming email' });
@@ -1574,14 +1612,14 @@ app.post('/register', (req, res) => {
             from: process.env.EMAIL,
             to: email,
             subject: 'Please confirm your email',
-            html: emailHtml 
+            html: emailHtml
           };
 
 
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            return res.json({ message: 'Error sending confirmation email', success: false });
-          }
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              return res.json({ message: 'Error sending confirmation email', success: false });
+            }
             res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
             //redirect into login
             res.redirect('http://localhost:3001/login');
