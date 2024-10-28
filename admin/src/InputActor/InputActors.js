@@ -46,20 +46,24 @@ const ActorManager = () => {
 
     const checkCountryExists = async (countryName) => {
         try {
-            const response = await fetch(`http://localhost:8001/countries?name=${countryName}`);
+            const response = await fetch(`http://localhost:8001/countries/${countryName}`);
+            if (!response.ok) {
+                return false; // Return false if country is not found (404)
+            }
             const data = await response.json();
-            return data.length > 0;
+            return !!data; // Return true if data is found, false otherwise
         } catch (error) {
             console.error("Error checking country existence:", error);
             return false;
         }
-    };
+    };    
 
     const handleAddActor = async (e) => {
         e.preventDefault();
 
         // Check if country exists in the backend
         const countryExists = await checkCountryExists(newActor.country_name);
+        console.log(countryExists);
         if (!countryExists) {
             alert("Country does not exist. Please add the country first.");
             return;
@@ -174,6 +178,7 @@ const ActorManager = () => {
             // Reset the newActor state
             setNewActor({ country_name: "", name: "", birthdate: null, actor_picture: "" });
         }
+        window.location.reload();
     };
 
     const handlePhotoChange = (e) => {
