@@ -4,6 +4,7 @@ import FormInput from "../components/forminput/formInput";
 import { Button } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import Swal from "sweetalert2";
 import "./reset.scss";
 
 const ResetPassword = () => {
@@ -17,25 +18,29 @@ const ResetPassword = () => {
     axios
       .post(`http://localhost:8001/reset-password/${token}`, { newPassword })
       .then((res) => {
-        alert(res.data.message); // Show success message
-        navigate("/login"); // Redirect to login page
+        Swal.fire({
+          title: "Success",
+          text: res.data.message,
+          icon: "success",
+        }).then(() => {
+          navigate("/login"); // Redirect to login page
+        });
       })
       .catch((err) => {
-
         if (err.response) {
           const { status, data } = err.response;
 
           if (status === 400) {
-            alert(data.message || "Invalid or expired token. Please try again.");
+            Swal.fire("Error", data.message || "Invalid or expired token. Please try again.", "error");
           } else if (status === 404) {
-            alert("User not found. Please request a new reset link.");
+            Swal.fire("Error", "User not found. Please request a new reset link.", "error");
           } else if (status === 500) {
-            alert("Internal server error. Please try again later.");
+            Swal.fire("Error", "Internal server error. Please try again later.", "error");
           } else {
-            alert("Error resetting password. Please check your input and try again.");
+            Swal.fire("Error", "Error resetting password. Please check your input and try again.", "error");
           }
         } else {
-          alert("Network error. Please check your connection.");
+          Swal.fire("Network Error", "Please check your connection and try again.", "error");
         }
       });
   };

@@ -6,6 +6,7 @@ import GoogleLogin from "../components/googleButton/googleButton";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./register.scss";
+import Swal from "sweetalert2";
 
 const RegisterForm = () => {
   const [values, setValues] = useState({
@@ -62,12 +63,19 @@ const RegisterForm = () => {
               "Registration successful. Please check your email to confirm your account."
             );
           } else {
-            alert(res.data.message);
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: res.data.message,
+            });
           }
         })
         .catch((err) => {
-          console.error("Error during registration:", err);
-          alert("An error occurred during registration.");
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: err.data.message,
+          });
         })
         .finally(() => {
           setIsSubmitting(false); // Mencegah submit ulang
