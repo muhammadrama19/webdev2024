@@ -35,6 +35,7 @@ const GenreManager = () => {
     const handleCloseModal = () => {
         setIsEditing(false);
         setShowModal(false);
+        window.location.reload();
     };
 
     const handleInputChange = (e) => {
@@ -98,24 +99,28 @@ const GenreManager = () => {
         e.preventDefault();
 
         if (editName.trim()) {
-            try {
-                await fetch(`http://localhost:8001/genres/${editing}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ name: editName }),
-                });
-                setGenres(
-                    genres.map((genre) =>
-                        genre.id === editing ? { ...genre, name: editName } : genre
-                    )
-                );
-                setEditing(null);
-                setShowModal(false);
-                setEditName("");
-            } catch (error) {
-                console.error("Error updating genre:", error);
+            if (genres.some(genre => genre.name.toLowerCase() === editName.toLowerCase())) {
+                alert("Genre already exists!");
+            } else {
+                try {
+                    await fetch(`http://localhost:8001/genres/${editing}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name: editName }),
+                    });
+                    setGenres(
+                        genres.map((genre) =>
+                            genre.id === editing ? { ...genre, name: editName } : genre
+                        )
+                    );
+                    setEditing(null);
+                    setShowModal(false);
+                    setEditName("");
+                } catch (error) {
+                    console.error("Error updating genre:", error);
+                }
             }
         }
     };
