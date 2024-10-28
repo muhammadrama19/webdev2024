@@ -7,15 +7,20 @@ import {
   Container,
   Image,
   Badge,
+  FormLabel,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "../InputDrama/InputDrama.css";
 import Select from 'react-select';  // Import react-select  
+import Rating from 'react-rating-stars-component';  // Import star rating component
+
 
 const DramaInput = () => {
   const [formData, setFormData] = useState({
+    view: "",
     title: "",
     alternativeTitle: "",
+    director: "",
     year: "",
     country: "",
     synopsis: "",
@@ -25,6 +30,7 @@ const DramaInput = () => {
     trailer: "",
     award: [],
     image: null,
+    imdbScore: 0, 
   });
 
   const [genresList, setGenresList] = useState([]); // State untuk genres dari backend
@@ -208,13 +214,22 @@ const DramaInput = () => {
     }
   };
 
+  const handleRatingChange = (newRating) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      imdbScore: newRating,  // This can now be a float (e.g., 3.5)
+    }));
+  };  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Create a FormData object to handle file uploads
     const formDataObj = new FormData();
+    formDataObj.append('view', formData.view);
     formDataObj.append('title', formData.title);
     formDataObj.append('alt_title', formData.alternativeTitle);
+    formDataObj.append('director', formData.director);
     formDataObj.append('release_year', formData.year);
     formDataObj.append('country', formData.country);
     formDataObj.append('synopsis', formData.synopsis);
@@ -223,6 +238,8 @@ const DramaInput = () => {
     formDataObj.append('actors', formData.actors); // Array
     formDataObj.append('trailer', formData.trailer);
     formDataObj.append('award', formData.award); // Array
+    formDataObj.append('imdb_score', formData.imdbScore);
+    
     if (formData.image) {
       formDataObj.append('poster', formData.image); // Poster image file
     }
@@ -288,6 +305,28 @@ const DramaInput = () => {
                 />
               </Form.Group>
             </div>
+            <Form.Group className="mb-3 imdb-score-label">
+              <FormLabel className="imdb-score-label">IMDB SCORE</FormLabel>
+              <Rating
+                count={5}
+                value={formData.imdbScore}
+                onChange={handleRatingChange}
+                size={32}
+                isHalf={true}                     // Allow half-star ratings
+                fractions={2}   
+                activeColor="#ffd700"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="view"
+                placeholder="Total Views"
+                value={formData.view}
+                onChange={handleChange}
+                className="view-input"
+              />
+            </Form.Group>
           </Col>
 
           {/* Form input */}
@@ -307,6 +346,15 @@ const DramaInput = () => {
                 name="alternativeTitle"
                 placeholder="Alternative Title"
                 value={formData.alternativeTitle}
+                onChange={handleChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="director"
+                placeholder="Director Name"
+                value={formData.director}
                 onChange={handleChange}
               />
             </Form.Group>
