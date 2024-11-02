@@ -698,7 +698,7 @@ app.get("/movie-list", (req, res) => {
   });
 });
 
-app.get("/users", (req, res) => {
+app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
   const query = `
     SELECT id, username, role, email, Status_Account FROM users WHERE Status_Account != 3
   `;
@@ -858,7 +858,7 @@ app.get("/actors", (req, res) => {
 });
 
 // Route to add a new actor
-app.post("/actors", upload.single("actor_picture"), (req, res) => {
+app.post("/actors",  isAuthenticated, hasAdminRole, upload.single("actor_picture"), (req, res) => {
   const { name, birthdate, country_name } = req.body;
   const actor_picture = req.file ? req.file.filename : null;
 
@@ -989,7 +989,7 @@ app.get("/genres", (req, res) => {
 });
 
 // Add a new genre
-app.post("/genres", (req, res) => {
+app.post("/genres",  isAuthenticated, hasAdminRole, (req, res) => {
   const { name } = req.body;
   if (!name) {
     return res.status(400).json({ error: "Genre name is required" });
@@ -1048,7 +1048,7 @@ app.get("/countries", (req, res) => {
 });
 
 // Get a single country berdasarkan country_name
-app.get("/countries/:country_name", (req, res) => {
+app.get("/countries/:country_name", isAuthenticated, hasAdminRole, (req, res) => {
   const { country_name } = req.params;
   const query = "SELECT id, country_name FROM countries WHERE country_name = ?";
   db.query(query, [country_name], (err, results) => {
@@ -1067,7 +1067,7 @@ app.get("/countries/:country_name", (req, res) => {
 });
 
 // Add a new country
-app.post("/countries", (req, res) => {
+app.post("/countries",  isAuthenticated, hasAdminRole,(req, res) => {
   const { country_name } = req.body;
   if (!country_name) {
     return res.status(400).json({ error: "Country name is required" });
@@ -1305,22 +1305,22 @@ app.put("/reviews/:id", (req, res) => {
   });
 });
 
-// route to delete a review 
-app.delete("/reviews/:id", (req, res) => {
+// route to delete a review
+app.delete('/reviews/:id', (req, res) => {
   const { id } = req.params;
 
-  const query = "DELETE FROM reviews WHERE id = ?";
+  const query = 'DELETE FROM reviews WHERE id = ?';
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error("Error deleting review:", err.message);
-      return res.status(500).json({ error: "Failed to delete review." });
+      console.error('Error deleting review:', err.message);
+      return res.status(500).json({ error: 'Failed to delete review.' });
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Review not found." });
+      return res.status(404).json({ error: 'Review not found.' });
     }
 
-    res.json({ message: "Review deleted successfully." });
+    res.json({ message: 'Review deleted successfully.' });
   });
 });
 
@@ -1413,8 +1413,6 @@ app.post("/add-drama", async (req, res) => {
         const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
         await db.promise().query(movieGenreQuery, [movieId, genreId]);
       }
-    }
-
     // Insert into movie_actors with roles
     for (const actor of actors) {
       const actorQuery = `SELECT id FROM actors WHERE name = ?`;
@@ -1425,7 +1423,6 @@ app.post("/add-drama", async (req, res) => {
         const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id, role) VALUES (?, ?, ?)`;
         await db.promise().query(movieActorQuery, [movieId, actorId, actor.role]);
       }
-    }
 
     // Insert into movie_countries
     const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
@@ -1455,7 +1452,6 @@ app.post("/add-drama", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 //SET TRASH
 app.put("/movie-delete/:id", (req, res) => {
@@ -1634,16 +1630,23 @@ app.post("/forgot-password", (req, res) => {
   const checkUserSql = "SELECT * FROM users WHERE email = ?";
   db.query(checkUserSql, [email], (err, userData) => {
     if (err || userData.length === 0) {
-      return res.status(404).json({
-        message: "User with this email doesn't exist",
-        success: false,
-      });
+      return res
+        .status(404)
+        .json({
+          message: "User with this email doesn't exist",
+          success: false,
+        });
     }
 
     const user = userData[0];
-    const resetToken = jwt.sign({ id: user.id }, "RESET_PASSWORD_SECRET", {
-      expiresIn: "1h",
-    });
+    const resetToken = jwt.sign(
+      {
+        id: user.id,
+        passwordVersion: user.password, 
+      },
+      "RESET_PASSWORD_SECRET",
+      { expiresIn: "1h" }
+    );
 
     // Create reset link
     const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
@@ -1701,27 +1704,38 @@ app.post("/reset-password/:token", (req, res) => {
         .json({ message: "Invalid or expired token", success: false });
     }
 
-    const userId = decoded.id;
+    const { id, passwordVersion } = decoded;
 
-    // Hash the new password
-    const saltRounds = 10;
-    bcrypt.hash(newPassword, saltRounds, (hashErr, hashedPassword) => {
-      if (hashErr) {
-        return res
-          .status(500)
-          .json({ message: "Error hashing password", success: false });
+    const getUserSql = "SELECT * FROM users WHERE id = ?";
+    db.query(getUserSql, [id], (err, rows) => {
+      if (err || rows.length === 0) {
+        return res.status(404).json({ message: "User not found", success: false });
       }
 
-      // Update password in the database
-      const updatePasswordSql = "UPDATE users SET password = ? WHERE id = ?";
-      db.query(updatePasswordSql, [hashedPassword, userId], (updateErr) => {
-        if (updateErr) {
-          return res
-            .status(500)
-            .json({ message: "Error updating password", success: false });
+      const user = rows[0];
+      const currentPasswordVersion = user.password;
+
+      // Check if the password has changed since the token was issued
+      if (passwordVersion !== currentPasswordVersion) {
+        return res.status(400).json({ message: "Invalid token due to password change", success: false });
+      }
+
+      // Proceed with password reset
+      const saltRounds = 10;
+      bcrypt.hash(newPassword, saltRounds, (hashErr, hashedPassword) => {
+        if (hashErr) {
+          return res.status(500).json({ message: 'Error hashing password', success: false });
         }
 
-        res.json({ message: "Password updated successfully", success: true });
+        // Update password in the database
+        const updatePasswordSql = "UPDATE users SET password = ? WHERE id = ?";
+        db.query(updatePasswordSql, [hashedPassword, user.id], (updateErr) => {
+          if (updateErr) {
+            return res.status(500).json({ message: 'Error updating password', success: false });
+          }
+
+          res.json({ message: 'Password updated successfully', success: true });
+        });
       });
     });
   });
