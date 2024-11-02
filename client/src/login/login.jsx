@@ -6,7 +6,8 @@ import { Button } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
-
+import { Container } from "react-bootstrap";
+import Swal from 'sweetalert2';
 import GoogleLogin from "../components/googleButton/googleButton";
 
 import "./login.scss";
@@ -41,7 +42,11 @@ const LoginForm = () => {
           navigate('/');
           window.location.reload();
         } else {
-          alert(res.data.Message);
+            Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: res.data.Message,
+            });
         }
       })
       .catch(err => console.log("Login Error:", err));

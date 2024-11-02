@@ -1,0 +1,284 @@
+.drama-input-container {
+  padding: 20px;
+  background-color: var(--main-color);
+  border-radius: 8px;
+  height: 100%;
+}
+
+.image-upload-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.camera-icon {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 150px;
+  background-color: #fff;
+  border-radius: 8px;
+  position: relative; /* Menambahkan relative positioning */
+}
+
+.camera-icon img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+.camera-icon i {
+  font-size: 48px;
+  color: #aaa;
+  z-index: 1;
+  display: block;
+}
+
+.file-input-container {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.genres,
+.actors {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.genres .form-check,
+.actors .form-check {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.form-group-submit {
+  margin-top: 30px;
+}
+
+.small-image-upload-container {
+  text-align: center;
+  margin: auto;
+  width: 100%; /* Buat lebar kontainer menyesuaikan layar */
+}
+
+.small-camera-icon {
+  border: 2px dashed #ccc;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%; /* Lebar kontainer menyesuaikan dengan layar */
+  max-width: 250px; /* Batas lebar maksimal pada layar besar */
+  height: 300px; /* Tinggi kontainer default */
+  background-color: #fff;
+  border-radius: 8px;
+  position: relative; /* Menambahkan relative positioning */
+  margin: auto;
+}
+
+.small-camera-icon img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+.small-camera-icon i {
+  font-size: 32px; /* Ukuran ikon lebih kecil */
+  color: #aaa;
+  z-index: 1;
+  display: block;
+}
+
+.small-file-input-container {
+  margin: 10px auto;
+  width: 100%; /* Buat input menyesuaikan layar */
+  max-width: 250px; /* Batas lebar maksimal pada layar besar */
+}
+
+.upload-text {
+  font-size: 14px;
+  color: #000000; /* Sesuaikan warna dengan warna yang lebih lembut */
+  position: absolute;
+  bottom: 10px; /* Mengatur jarak teks dari bagian bawah */
+  text-align: center;
+  width: 100%;
+  z-index: 1;
+}
+
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 60px; /* Batas tinggi maksimal, sesuaikan dengan jumlah genre */
+  overflow-y: auto; /* Tambahkan scrollbar jika konten melebihi batas tinggi */
+  padding-right: 10px; /* Tambahkan sedikit padding agar tidak terpotong oleh scrollbar */
+}
+
+.genres .form-check {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+/* Style untuk scrollbar */
+.genres::-webkit-scrollbar {
+  width: 8px;
+}
+
+.genres::-webkit-scrollbar-thumb {
+  background-color: #888; /* Warna scrollbar */
+  border-radius: 10px;
+}
+
+.genres::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Warna background scrollbar */
+}
+
+.actor-suggestions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #001c4a;
+  max-height: 100px;
+  overflow-y: auto;
+  background-color: #0d2a54;
+  position: absolute;
+  width: 100%; /* Buat selebar elemen input */
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+  white-space: nowrap;
+  max-width: calc(100% - 1px); /* Tambahkan sedikit ruang agar tidak terlalu melebar */
+}
+
+.actor-suggestions::-webkit-scrollbar {
+  width: 8px;
+}
+
+.actor-suggestions::-webkit-scrollbar-thumb {
+  background-color: #888; /* Warna scrollbar */
+  border-radius: 10px;
+}
+
+.actor-suggestions::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Warna background scrollbar */
+}
+
+.actor-suggestions li {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.actor-suggestions li:hover {
+  background-color: #26439b;
+}
+
+.selected-actors {
+  margin-top: 10px;
+  max-height: 40px; /* Batas tinggi maksimal sebelum muncul scrollbar */
+  overflow-y: auto; /* Scrollbar akan muncul jika konten melebihi batas */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* Style untuk scrollbar (opsional) */
+.selected-actors::-webkit-scrollbar {
+  width: 8px;
+}
+
+.selected-actors::-webkit-scrollbar-thumb {
+  background-color: #888; /* Warna scrollbar */
+  border-radius: 10px;
+}
+
+.selected-actors::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Warna background scrollbar */
+}
+
+.actor-badge {
+  margin-right: 5px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  background-color: #5d91c8 !important;
+}
+
+.actor-badge .remove-actor {
+  margin-left: 5px;
+  color: white;
+}
+
+/* Contoh styling tambahan untuk dropdown */
+.form-select {
+  border-radius: 5px;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+}
+
+.form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Untuk dropdown react-select */
+.select {
+  position: relative;
+  z-index: 1000; /* Pastikan dropdown berada di atas konten lainnya */
+  color: #000000; /* Warna teks yang kontras */
+}
+
+.select__control {
+  max-height: 60px;
+  overflow-y: auto; /* Scrollbar muncul jika konten melebihi tinggi maksimal */
+  background-color: #ffffff; /* Warna latar belakang dropdown */
+  color: #000000; /* Warna teks yang kontras */
+  border: 1px solid #ccc; /* Gaya border */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan halus */
+  z-index: 10; /* Menambahkan z-index agar berada di atas konten lain */
+}
+
+.select__menu {
+  z-index: 999999; /* Pastikan dropdown selalu berada di atas konten lainnya */
+}
+
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .small-camera-icon {
+    width: 200px; /* Lebar kontainer lebih kecil pada tablet */
+    height: 250px; /* Tinggi kontainer lebih kecil pada tablet */
+  }
+
+  .small-file-input-container {
+    width: 200px; /* Lebar input lebih kecil pada tablet */
+  }
+
+  .actor-suggestions {
+    width: 100%; /* Di layar kecil, lebar kontainer akan mengikuti lebar input */
+    max-width: 100%; /* Memastikan lebar tidak melebihi layar */
+    left: 0; /* Posisi tetap */
+  }
+}
+
+@media (max-width: 576px) {
+  .small-camera-icon {
+    width: 150px; /* Lebar kontainer lebih kecil pada ponsel */
+    height: 200px; /* Tinggi kontainer lebih kecil pada ponsel */
+  }
+
+  .small-file-input-container {
+    width: 150px; /* Lebar input lebih kecil pada ponsel */
+  }
+
+  .actor-suggestions {
+    width: 100%; /* Di layar kecil, lebar kontainer akan mengikuti lebar input */
+    max-width: 100%; /* Memastikan lebar tidak melebihi layar */
+    left: 0; /* Posisi tetap */
+  }
+}
