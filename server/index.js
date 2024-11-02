@@ -77,7 +77,7 @@ const transporter = nodemailer.createTransport({
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/images");
+    cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
     cb(
@@ -578,7 +578,7 @@ app.get("/featured", (req, res) => {
 });
 
 //CMS
-app.get("/dashboard",  (req, res) => {
+app.get("/dashboard", (req, res) => {
   const queryMovies = "SELECT COUNT(*) AS movieCount FROM movies";
   const queryGenres = "SELECT COUNT(*) AS genreCount FROM genres";
   const queryCountries = "SELECT COUNT(*) AS countryCount FROM countries";
@@ -698,11 +698,9 @@ app.get("/movie-list", (req, res) => {
   });
 });
 
-
-
 app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
   const query = `
-    SELECT id, username, role, email FROM users
+    SELECT id, username, role, email, Status_Account FROM users WHERE Status_Account != 3
   `;
 
   // Eksekusi query dan kirim hasil ke frontend
@@ -714,6 +712,120 @@ app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
     }
     res.json(results);
   });
+});
+
+// POST endpoint untuk menambah user baru
+app.post("/users", async (req, res) => {
+  const { username, email, password, profile_picture, role } = req.body;
+
+  // Validasi input
+  if (!username || !email || !password || !role) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  try {
+    // Hash password sebelum menyimpan ke database
+    const hashedPassword = await bcrypt.hash(password, 10); // Salt rounds = 10
+
+    // Query untuk menambahkan user baru
+    const query = `
+      INSERT INTO users (username, email, password, role, Status_Account)
+      VALUES (?, ?, ?, ?, 1)
+    `;
+    // Menggunakan password yang sudah di-hash untuk disimpan
+    const [result] = await db.query(query, [
+      username,
+      email,
+      hashedPassword,
+      profile_picture,
+      role,
+    ]);
+
+    // Mengembalikan response user yang baru ditambahkan tanpa menampilkan password
+    res.status(200).json({ id: result.insertId, username, email, role });
+  } catch (err) {
+    console.error("Error executing query:", err.message);
+    return res.status(500).json({ error: "Failed to add user" });
+  }
+});
+
+// PUT endpoint untuk mengupdate user yang sudah ada
+app.put("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { username, email, role, profile_picture, password } = req.body;
+
+  // Validasi input
+  if (!username || !email || !role) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  const query = `
+    UPDATE users
+    SET username = ?, email = ?, role = ?, profile_picture = ?, password = ?
+    WHERE id = ?
+  `;
+
+  try {
+    await db.query(query, [
+      username,
+      email,
+      role,
+      profile_picture,
+      password,
+      id,
+    ]);
+    res.status(200).json({ message: "User updated successfully" });
+  } catch (err) {
+    console.error("Error executing query:", err.message);
+    return res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+// DELETE endpoint untuk menghapus user
+app.delete("/users/:id", async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    // Update nilai Status_Account menjadi 3
+    const query = `UPDATE users SET Status_Account = 3 WHERE id = ?`;
+    await db.query(query, [userId]);
+
+    res.status(200).json({ message: "User suspended successfully" });
+  } catch (err) {
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Failed to update user status" });
+  }
+});
+
+// Endpoint untuk menangguhkan user (Status_Account = 2)
+app.put("/users/suspend/:id", async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    // Update nilai Status_Account menjadi 2 (suspend)
+    const query = `UPDATE users SET Status_Account = 2 WHERE id = ?`;
+    await db.query(query, [userId]);
+
+    res.status(200).json({ message: "User suspended successfully" });
+  } catch (err) {
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Failed to suspend user" });
+  }
+});
+
+app.put("/users/unlock/:id", async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    // Update nilai Status_Account menjadi 1
+    const query = `UPDATE users SET Status_Account = 1 WHERE id = ?`;
+    await db.query(query, [userId]);
+
+    res.status(200).json({ message: "User unlocked successfully" });
+  } catch (err) {
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Failed to unlock user" });
+  }
 });
 
 // Route to fetch all actors
@@ -842,7 +954,7 @@ app.put("/actors/:id", (req, res) => {
 });
 
 // Route to delete an actor
-app.delete("/actors/:id",   (req, res) => {
+app.delete("/actors/:id", (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -864,7 +976,7 @@ app.delete("/actors/:id",   (req, res) => {
 });
 
 // Get all genres
-app.get("/genres",(req, res) => {
+app.get("/genres", (req, res) => {
   const query = "SELECT id, name FROM genres ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
@@ -893,7 +1005,7 @@ app.post("/genres",  isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Update an existing genre
-app.put("/genres/:id",(req, res) => {
+app.put("/genres/:id", (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -971,7 +1083,7 @@ app.post("/countries",  isAuthenticated, hasAdminRole,(req, res) => {
 });
 
 // Update an existing country
-app.put("/countries/:id",(req, res) => {
+app.put("/countries/:id", (req, res) => {
   const { id } = req.params;
   const { country_name } = req.body;
 
@@ -989,7 +1101,7 @@ app.put("/countries/:id",(req, res) => {
 });
 
 // Delete a country
-app.delete("/countries/:id",(req, res) => {
+app.delete("/countries/:id", (req, res) => {
   const { id } = req.params;
   const query = "DELETE FROM countries WHERE id = ?";
   db.query(query, [id], (err) => {
@@ -1074,7 +1186,7 @@ app.post("/awards", (req, res) => {
 });
 
 // Route to update an existing award with country existence check
-app.put("/awards/:id",  (req, res) => {
+app.put("/awards/:id", (req, res) => {
   const { id } = req.params;
   const { awards_name, country_name, awards_years } = req.body;
 
@@ -1122,7 +1234,7 @@ app.put("/awards/:id",  (req, res) => {
 });
 
 // Route to delete an award
-app.delete("/awards/:id",(req, res) => {
+app.delete("/awards/:id", (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -1143,7 +1255,8 @@ app.delete("/awards/:id",(req, res) => {
   });
 });
 
-app.get("/reviews",(req, res) => {
+// route to fetch all reviews
+app.get("/reviews", (req, res) => {
   const query = `
     SELECT 
       reviews.id AS review_id,
@@ -1173,6 +1286,25 @@ app.get("/reviews",(req, res) => {
   });
 });
 
+// route to approve a review
+app.put("/reviews/:id", (req, res) => {
+  const { id } = req.params;
+
+  const query = "UPDATE reviews SET status = 1 WHERE id = ?";
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error("Error approving review:", err.message);
+      return res.status(500).json({ error: "Failed to approve review." });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Review not found." });
+    }
+
+    res.json({ message: "Review approved successfully." });
+  });
+});
+
 // route to delete a review
 app.delete('/reviews/:id', (req, res) => {
   const { id } = req.params;
@@ -1192,115 +1324,134 @@ app.delete('/reviews/:id', (req, res) => {
   });
 });
 
+app.get("/status", (req, res) => {
+  const query = `
+    SELECT id, name
+    FROM status
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching availability data:", err);
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch availability data" });
+    }
+
+    res.json(results); // Mengirimkan hasil dalam bentuk JSON
+  });
+});
 
 //CRUD
 
 //ADD MOVIES
-app.post(
-  "/add-drama",
-  upload.fields([{ name: "poster" }, { name: "background" }]),
-  async (req, res) => {
-    const {
+app.post("/add-drama", async (req, res) => {
+  const {
+    imdb_score,
+    status,
+    view,
+    title,
+    alt_title,
+    director,
+    release_year,
+    country,
+    synopsis,
+    availability,
+    trailer,
+    posterUrl,
+    backgroundUrl,
+  } = req.body;
+
+  console.log(req.body);
+
+  try {
+    // Query to get `availability_id`
+    const availabilityQuery = `SELECT id FROM availability WHERE platform_name = ?`;
+    const [availabilityResult] = await db.promise().query(availabilityQuery, [availability]);
+    const availabilityId = availabilityResult.length > 0 ? availabilityResult[0].id : null;
+
+    // Query to get `status_id`
+    const statusQuery = `SELECT id FROM status WHERE name = ?`;
+    const [statusResult] = await db.promise().query(statusQuery, [status]);
+    const status_id = statusResult.length > 0 ? statusResult[0].id : null;
+
+    // Insert into movies table
+    const movieQuery = `
+      INSERT INTO movies (title, alt_title, release_year, imdb_score, synopsis, view, poster, background, trailer, director, status, status_id, availability_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+    `;
+    const movieValues = [
       title,
       alt_title,
       release_year,
-      country, // This is a country name or identifier sent by the client
+      imdb_score,
       synopsis,
-      availability, // This is the availability platform name or identifier sent by the client
+      view,
+      posterUrl,
+      backgroundUrl,
       trailer,
-      director, // Assuming this is coming from the client
-    } = req.body;
+      director,
+      status_id,
+      availabilityId,
+    ];
+
+    const [movieResult] = await db.promise().query(movieQuery, movieValues);
+    const movieId = movieResult.insertId;
 
     // Parse fields that might be arrays from strings (if needed)
-    const genres =
-      typeof req.body.genres === "string"
-        ? req.body.genres.split(",")
-        : req.body.genres;
-    const actors =
-      typeof req.body.actors === "string"
-        ? req.body.actors.split(",")
-        : req.body.actors;
+    const genres = typeof req.body.genres === "string" ? req.body.genres.split(",") : req.body.genres;
+    const actors = typeof req.body.actors === "string" ? req.body.actors.split(",") : req.body.actors;
+    const awards = typeof req.body.awards === "string" ? req.body.awards.split(",") : req.body.awards;
 
-    // Get file paths from uploaded files
-    const poster = req.files["poster"] ? req.files["poster"][0].path : null;
-    const background = req.files["background"]
-      ? req.files["background"][0].path
-      : null;
+    // Insert into movie_genres
+    for (const genre of genres) {
+      const genreQuery = `SELECT id FROM genres WHERE name = ?`;
+      const [genreResult] = await db.promise().query(genreQuery, [genre]);
+      const genreId = genreResult.length > 0 ? genreResult[0].id : null;
 
-    try {
-      // Insert into movies table
-      const movieQuery = `
-      INSERT INTO movies (poster, title, alt_title, release_year, synopsis, trailer, director, background)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-      const movieValues = [
-        poster,
-        title,
-        alt_title,
-        release_year,
-        synopsis,
-        trailer,
-        director,
-        background,
-      ];
+      if (genreId) {
+        const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
+        await db.promise().query(movieGenreQuery, [movieId, genreId]);
+      }
+    // Insert into movie_actors with roles
+    for (const actor of actors) {
+      const actorQuery = `SELECT id FROM actors WHERE name = ?`;
+      const [actorResult] = await db.promise().query(actorQuery, [actor.name]);
+      const actorId = actorResult.length > 0 ? actorResult[0].id : null;
 
-      const [movieResult] = await db.query(movieQuery, movieValues);
-      const movieId = movieResult.insertId; // Get the newly inserted movie's ID
-
-      // Insert into movie_countries
-      const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
-      const [countryResult] = await db.query(countryQuery, [country]);
-      const countryId = countryResult.length > 0 ? countryResult[0].id : null;
-
-      if (countryId) {
-        const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
-        await db.query(movieCountryQuery, [movieId, countryId]);
+      if (actorId) {
+        const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id, role) VALUES (?, ?, ?)`;
+        await db.promise().query(movieActorQuery, [movieId, actorId, actor.role]);
       }
 
-      // Insert into movie_availability
-      const availabilityQuery = `SELECT id FROM platforms WHERE platform_name = ?`;
-      const [availabilityResult] = await db.query(availabilityQuery, [
-        availability,
-      ]);
-      const availabilityId =
-        availabilityResult.length > 0 ? availabilityResult[0].id : null;
+    // Insert into movie_countries
+    const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
+    const [countryResult] = await db.promise().query(countryQuery, [country]);
+    const countryId = countryResult.length > 0 ? countryResult[0].id : null;
 
-      if (availabilityId) {
-        const movieAvailabilityQuery = `INSERT INTO movie_availability (movie_id, availability_id) VALUES (?, ?)`;
-        await db.query(movieAvailabilityQuery, [movieId, availabilityId]);
-      }
-
-      // Insert genres (assuming genres already exist in a 'genres' table)
-      for (const genre of genres) {
-        const genreQuery = `SELECT id FROM genres WHERE genre_name = ?`;
-        const [genreResult] = await db.query(genreQuery, [genre]);
-        const genreId = genreResult.length > 0 ? genreResult[0].id : null;
-
-        if (genreId) {
-          const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
-          await db.query(movieGenreQuery, [movieId, genreId]);
-        }
-      }
-
-      // Insert actors (assuming actors already exist in an 'actors' table)
-      for (const actor of actors) {
-        const actorQuery = `SELECT id FROM actors WHERE actor_name = ?`;
-        const [actorResult] = await db.query(actorQuery, [actor]);
-        const actorId = actorResult.length > 0 ? actorResult[0].id : null;
-
-        if (actorId) {
-          const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id) VALUES (?, ?)`;
-          await db.query(movieActorQuery, [movieId, actorId]);
-        }
-      }
-
-      res.status(200).json({ message: "Drama added successfully", movieId });
-    } catch (err) {
-      console.error("Error executing query:", err.message);
-      res.status(500).json({ error: "Internal Server Error" });
+    if (countryId) {
+      const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
+      await db.promise().query(movieCountryQuery, [movieId, countryId]);
     }
+
+    // Insert into movie_awards
+    for (const award of awards) {
+      const awardQuery = `SELECT id FROM awards WHERE awards_name = ?`;
+      const [awardResult] = await db.promise().query(awardQuery, [award]);
+      const awardId = awardResult.length > 0 ? awardResult[0].id : null;
+
+      if (awardId) {
+        const movieAwardQuery = `INSERT INTO movie_awards (movie_id, awards_id) VALUES (?, ?)`;
+        await db.promise().query(movieAwardQuery, [movieId, awardId]);
+      }
+    }
+
+    res.status(200).json({ message: "Drama added successfully", movieId });
+  } catch (err) {
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
-);
+});
 
 //SET TRASH
 app.put("/movie-delete/:id", (req, res) => {
@@ -1352,7 +1503,7 @@ app.put("/movie-restore/:id", (req, res) => {
 
 //LOGIN
 app.post("/login", (req, res) => {
-  const query = "SELECT * FROM users WHERE email = ?";
+  const query = "SELECT * FROM users WHERE Status_Account = 1 AND email = ?";
 
   db.query(query, [req.body.email], (err, data) => {
     if (err) {

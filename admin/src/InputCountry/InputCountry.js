@@ -9,10 +9,15 @@ const CountryManager = () => {
     const [editing, setEditing] = useState(null);
     const [editName, setEditName] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true); // To handle loading state
     const [currentPage, setCurrentPage] = useState(1); // State for current page
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
+
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [CountryToDelete, setCountryToDelete] = useState(null);
 
     const handleShowModal = () => setShowModal(true);
 
@@ -34,6 +39,14 @@ const CountryManager = () => {
     const handleCloseModal = () => {
         setShowModal(false);
         setNewCountry("");
+    };
+
+    const handleInputChange = (e) => {
+        if (isEditing) {
+            setEditName(e.target.value);
+        } else {
+            setNewCountry(e.target.value);
+        }
     };
 
     const handleAddCountry = async () => {
@@ -66,36 +79,55 @@ const CountryManager = () => {
     };
 
 
-    const handleDeleteCountry = async (id) => {
-        try {
-            await fetch(`http://localhost:8001/countries/${id}`, {
-                method: 'DELETE',
-            });
-            setCountries(countries.filter((country) => country.id !== id));
-        } catch (error) {
-            console.error("Error deleting country:", error);
+    const handleDeleteCountry = async () => {
+        if (CountryToDelete) {
+            try {
+                await fetch(`http://localhost:8001/countries/${CountryToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setCountries(countries.filter((country) => country.id !== CountryToDelete.id));
+                setShowDeleteModal(false);
+                setCountryToDelete(null);
+            } catch (error) {
+                console.error("Error deleting country:", error);
+            }
         }
     };
 
-    const handleRenameCountry = async (id) => {
+    const handleEditCounry = (id) => {
+        setEditing(id);
+        const country = countries.find((country) => country.id === id);
+        setEditName(country);
+        setIsEditing(true);
+        setShowModal(true);
+    };
+
+    const handleRenameCountry = async (e) => {
+        e.preventDefault();
+
         if (editName.trim()) {
-            try {
-                await fetch(`http://localhost:8001/countries/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ country_name: editName }),
-                });
-                setCountries(
-                    countries.map((country) =>
-                        country.id === id ? { ...country, country_name: editName } : country
-                    )
-                );
-                setEditing(null);
-                setEditName("");
-            } catch (error) {
-                console.error("Error updating country:", error);
+            if (countries.some(country => country.country_name.toLowerCase() === editName.toLowerCase())) {
+                alert("Country already exists!");
+            } else {
+                try {
+                    await fetch(`http://localhost:8001/countries/${editing}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ country_name: editName }),
+                    });
+                    setCountries(
+                        countries.map((country) =>
+                            country.id === editing ? { ...country, country_name: editName } : country
+                        )
+                    );
+                    setEditing(null);
+                    setShowModal(false);
+                    setEditName("");
+                } catch (error) {
+                    console.error("Error updating country:", error);
+                }
             }
         }
     };
@@ -184,7 +216,7 @@ const CountryManager = () => {
             </Container>
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
-                    <Modal.Title>Add New Country</Modal.Title>
+                    <Modal.Title>{isEditing ? "Edit Country" : "Add New Country"}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
@@ -192,8 +224,8 @@ const CountryManager = () => {
                             <Form.Label>Country</Form.Label>
                             <Form.Control
                                 type="text"
-                                value={newCountry}
-                                onChange={(e) => setNewCountry(e.target.value)}
+                                value={isEditing ? editName.country_name : newCountry.name}
+                                onChange={handleInputChange}
                                 placeholder="Enter country name"
                             />
                         </Form.Group>
@@ -210,11 +242,25 @@ const CountryManager = () => {
                         type="submit"
                         variant="primary"
                         className="mt-2"
-                        onClick={handleAddCountry}
+                        onClick={isEditing ? handleRenameCountry : handleAddCountry}
                         style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
                     >
-                        Add Country
+                        {isEditing ? "Save Changes" : "Add Country"}
                     </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the country "{CountryToDelete?.country_name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteCountry}>Delete</Button>
                 </Modal.Footer>
             </Modal>
 
@@ -237,61 +283,29 @@ const CountryManager = () => {
                                 {currentCountries.map((country) => (
                                     <tr key={country.id}>
                                         <td>{country.id}</td>
+                                        <td>{country.country_name}</td>
                                         <td>
-                                            {editing === country.id ? (
-                                                <Form.Control
-                                                    type="text"
-                                                    value={editName}
-                                                    onChange={(e) => setEditName(e.target.value)}
-                                                />
-                                            ) : (
-                                                country.country_name
-                                            )}
-                                        </td>
-                                        <td>
-                                            {editing === country.id ? (
-                                                <>
-                                                    <Button
-                                                        variant="success"
-                                                        size="sm"
-                                                        onClick={() => handleRenameCountry(country.id)}
-                                                        className="me-2"
-                                                    >
-                                                        Save
-                                                    </Button>
-                                                    <Button
-                                                        variant="secondary"
-                                                        size="sm"
-                                                        onClick={() => setEditing(null)}
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                </>
-                                            ) : (
-                                                <Container className="action-button">
-                                                    <Button
-                                                        variant="primary"
-                                                        size="sm"
-                                                        className="me-2"
-                                                        onClick={() => {
-                                                            setEditing(country.id);
-                                                            setEditName(country.country_name);
-                                                        }}
-                                                        disabled={editing !== null}
-                                                    >
-                                                        Rename
-                                                    </Button>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        className="me-2"
-                                                        onClick={() => handleDeleteCountry(country.id)}
-                                                        disabled={editing !== null}
-                                                    >
-                                                        Delete
-                                                    </Button>
-                                                </Container>
-                                            )}
+                                            <Container className="action-button">
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    className="me-2"
+                                                    onClick={() => handleEditCounry(country.id)}
+                                                >
+                                                    Rename
+                                                </Button>
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    className="me-2"
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setCountryToDelete(country);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </Container>
                                         </td>
                                     </tr>
                                 ))}

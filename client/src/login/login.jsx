@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AuthForm from "../components/authform/authForm";
+import { Container } from "react-bootstrap";
 import FormInput from "../components/forminput/formInput";
 import { Button } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";

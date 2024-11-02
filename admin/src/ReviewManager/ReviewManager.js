@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Table, Button, Dropdown, Pagination } from 'react-bootstrap';
+import { Container, Row, Col, Table, Button, Modal, Dropdown, Pagination } from 'react-bootstrap';
 import "./ReviewManager.css";
 
 const ReviewManager = () => {
@@ -9,6 +9,9 @@ const ReviewManager = () => {
     const [loading, setLoading] = useState(true); // To handle loading state
     const [currentPage, setCurrentPage] = useState(1); // State for current page
 
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [reviewToDelete, setReviewToDelete] = useState(null);
 
     useEffect(() => {
         const Reviews = async () => {
@@ -21,20 +24,49 @@ const ReviewManager = () => {
             } catch (error) {
                 console.error("Error fetching actors:", error);
                 setLoading(false);
-
             }
         };
         Reviews();
     }, []);
 
-    const handleApproveReview = (id) => {
-        setReviews(reviews.map((review) =>
-            review.id === id ? { ...review, status: "Approved" } : review
-        ));
+    const approveReview = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:8001/reviews/${id}`, {
+                method: "PUT",
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setReviews(reviews.map((review) =>
+                    review.id === id ? { ...review, status: 1 } : review
+                ));
+                window.location.reload();
+            } else {
+                console.error("Error approving review:", data.error);
+            }
+        } catch (error) {
+            console.error("Error approving review:", error);
+        }
     };
 
-    const handleDeleteReview = (id) => {
-        setReviews(reviews.filter((review) => review.id !== id));
+    const deleteReview = async () => {
+        if (reviewToDelete) {
+            try {
+                const response = await fetch(`http://localhost:8001/reviews/${reviewToDelete.id}`, {
+                    method: "DELETE",
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    setReviews(reviews.filter((review) => review.id !== reviewToDelete.id));
+                    window.location.reload();
+                    setShowDeleteModal(false);
+                    setReviewToDelete(null);
+                } else {
+                    console.error("Error deleting review:", data.error);
+                }
+            } catch (error) {
+                console.error("Error deleting review:", error);
+            }
+        }
     };
 
     const handleFilterChange = (selectedFilter) => setFilter(selectedFilter);
@@ -117,6 +149,20 @@ const ReviewManager = () => {
                 </Col>
             </Row>
 
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete Genre</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the Review ?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={deleteReview}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
+
             {loading ? (
                 <p>Loading data...</p>
             ) : (
@@ -137,7 +183,7 @@ const ReviewManager = () => {
                             </thead>
                             <tbody>
                                 {currentReviews.map((review) => (
-                                    <tr key={review.id}>
+                                    <tr key={review.review_id}>
                                         <td>{review.user_name}</td>
                                         <td>
                                             <Container className="rate-container">
@@ -154,7 +200,7 @@ const ReviewManager = () => {
                                                         variant="success"
                                                         className="me-2"
                                                         size="sm"
-                                                        onClick={() => handleApproveReview(review.id)}
+                                                        onClick={() => approveReview(review.review_id)}
                                                     >
                                                         Approve
                                                     </Button>
@@ -162,7 +208,7 @@ const ReviewManager = () => {
                                                 <Button
                                                     variant="danger"
                                                     size="sm"
-                                                    onClick={() => handleDeleteReview(review.id)}
+                                                    onClick={() => deleteReview(review.review_id)}
                                                 >
                                                     Delete
                                                 </Button>
