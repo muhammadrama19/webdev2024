@@ -1413,6 +1413,8 @@ app.post("/add-drama", async (req, res) => {
         const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
         await db.promise().query(movieGenreQuery, [movieId, genreId]);
       }
+    }
+
     // Insert into movie_actors with roles
     for (const actor of actors) {
       const actorQuery = `SELECT id FROM actors WHERE name = ?`;
@@ -1423,6 +1425,7 @@ app.post("/add-drama", async (req, res) => {
         const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id, role) VALUES (?, ?, ?)`;
         await db.promise().query(movieActorQuery, [movieId, actorId, actor.role]);
       }
+    }
 
     // Insert into movie_countries
     const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
@@ -1452,6 +1455,7 @@ app.post("/add-drama", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 //SET TRASH
 app.put("/movie-delete/:id", (req, res) => {
