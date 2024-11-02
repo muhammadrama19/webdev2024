@@ -19,6 +19,10 @@ const ActorManager = () => {
     const [showCount, setShowCount] = useState(10); // Items per page
     const [file, setFile] = useState();
 
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [actorToDelete, setActorToDelete] = useState(null);
+
     useEffect(() => {
         const fetchActors = async () => {
             try {
@@ -46,9 +50,12 @@ const ActorManager = () => {
 
     const checkCountryExists = async (countryName) => {
         try {
-            const response = await fetch(`http://localhost:8001/countries?name=${countryName}`);
+            const response = await fetch(`http://localhost:8001/countries/${countryName}`);
+            if (!response.ok) {
+                return false; // Return false if country is not found (404)
+            }
             const data = await response.json();
-            return data.length > 0;
+            return !!data; // Return true if data is found, false otherwise
         } catch (error) {
             console.error("Error checking country existence:", error);
             return false;
@@ -60,6 +67,7 @@ const ActorManager = () => {
 
         // Check if country exists in the backend
         const countryExists = await checkCountryExists(newActor.country_name);
+        console.log(countryExists);
         if (!countryExists) {
             alert("Country does not exist. Please add the country first.");
             return;
@@ -93,14 +101,18 @@ const ActorManager = () => {
         }
     };
 
-    const handleDeleteActor = async (id) => {
-        try {
-            await fetch(`http://localhost:8001/actors/${id}`, {
-                method: 'DELETE',
-            });
-            setActors((prevActors) => prevActors.filter((actor) => actor.id !== id));
-        } catch (error) {
-            console.error("Error deleting actor:", error);
+    const handleDeleteActor = async () => {
+        if (actorToDelete) {
+            try {
+                await fetch(`http://localhost:8001/actors/${actorToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setActors((prevActors) => prevActors.filter((actor) => actor.id !== actorToDelete.id));
+                setShowDeleteModal(false);
+                setActorToDelete(null);
+            } catch (error) {
+                console.error("Error deleting actor:", error);
+            }
         }
     };
 
@@ -122,7 +134,7 @@ const ActorManager = () => {
                 birthdate: editActor.birthdate,
                 actor_picture: editActor.actor_picture
             }
-            
+
             // Check if the edited country exists in the backend
             const countryExists = await checkCountryExists(editActor.country_name);
             if (!countryExists) {
@@ -174,6 +186,7 @@ const ActorManager = () => {
             // Reset the newActor state
             setNewActor({ country_name: "", name: "", birthdate: null, actor_picture: "" });
         }
+        window.location.reload();
     };
 
     const handlePhotoChange = (e) => {
@@ -360,6 +373,20 @@ const ActorManager = () => {
                     </Button>
                 </Modal.Footer>
             </Modal >
+
+            {/* Modal for Delete Confirmation */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete Actor</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the actor "{actorToDelete?.name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteActor}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
             {loading ? (
                 <p>Loading data...</p>
             ) : (
@@ -404,7 +431,13 @@ const ActorManager = () => {
                                                 <Button className="btn btn-sm btn-primary me-2" onClick={() => handleEditActor(actor.id)}>
                                                     Edit
                                                 </Button>
-                                                <Button className="btn btn-sm btn-danger" onClick={() => handleDeleteActor(actor.id)}>
+                                                <Button
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setActorToDelete(actor);
+                                                    }}
+                                                >
                                                     Delete
                                                 </Button>
                                             </Container>
@@ -416,7 +449,8 @@ const ActorManager = () => {
                     </Container >
                     {renderPagination()}
                 </>
-            )}
+            )
+            }
         </Container >
 
     );

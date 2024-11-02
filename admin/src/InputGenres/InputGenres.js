@@ -9,10 +9,15 @@ const GenreManager = () => {
     const [editing, setEditing] = useState(null);
     const [editName, setEditName] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true); // To handle loading state
     const [currentPage, setCurrentPage] = useState(1); // State for current page
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
+
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [genreToDelete, setGenreToDelete] = useState(null);
 
     const handleShowModal = () => setShowModal(true);
 
@@ -32,8 +37,16 @@ const GenreManager = () => {
     }, []);
 
     const handleCloseModal = () => {
+        setIsEditing(false);
         setShowModal(false);
-        setNewGenre("");
+    };
+
+    const handleInputChange = (e) => {
+        if (isEditing) {
+            setEditName(e.target.value);
+        } else {
+            setNewGenre(e.target.value);
+        }
     };
 
     const handleAddGenre = async () => {
@@ -53,7 +66,7 @@ const GenreManager = () => {
                     });
 
                     const data = await response.json();
-                    setGenres([...genres, data]); 
+                    setGenres([...genres, data]);
                     setNewGenre("");
                     handleCloseModal();
                 } catch (error) {
@@ -66,40 +79,58 @@ const GenreManager = () => {
     };
 
 
-    const handleDeleteGenre = async (id) => {
-        try {
-            await fetch(`http://localhost:8001/genres/${id}`, {
-                method: 'DELETE',
-            });
-            setGenres(genres.filter((genre) => genre.id !== id));
-        } catch (error) {
-            console.error("Error deleting genre:", error);
-        }
-    };
-
-    const handleRenameGenre = async (id) => {
-        if (editName.trim()) {
+    const handleDeleteGenre = async () => {
+        if (genreToDelete) {
             try {
-                await fetch(`http://localhost:8001/genres/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ name: editName }),
+                await fetch(`http://localhost:8001/genres/${genreToDelete.id}`, {
+                    method: 'DELETE',
                 });
-                setGenres(
-                    genres.map((genre) =>
-                        genre.id === id ? { ...genre, name: editName } : genre
-                    )
-                );
-                setEditing(null);
-                setEditName("");
+                setGenres(genres.filter((genre) => genre.id !== genreToDelete.id));
+                setShowDeleteModal(false);
+                setGenreToDelete(null);
             } catch (error) {
-                console.error("Error updating genre:", error);
+                console.error("Error deleting genre:", error);
             }
         }
     };
 
+    const handleEditGenre = (id) => {
+        setEditing(id);
+        const genre = genres.find((genre) => genre.id === id);
+        setEditName(genre);
+        setIsEditing(true);
+        setShowModal(true);
+    };
+
+    const handleRenameGenre = async (e) => {
+        e.preventDefault();
+
+        if (editName.trim()) {
+            if (genres.some(genre => genre.name.toLowerCase() === editName.toLowerCase())) {
+                alert("Genre already exists!");
+            } else {
+                try {
+                    await fetch(`http://localhost:8001/genres/${editing}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name: editName }),
+                    });
+                    setGenres(
+                        genres.map((genre) =>
+                            genre.id === editing ? { ...genre, name: editName } : genre
+                        )
+                    );
+                    setEditing(null);
+                    setShowModal(false);
+                    setEditName("");
+                } catch (error) {
+                    console.error("Error updating genre:", error);
+                }
+            }
+        }
+    };
 
     // Function untuk filter drama berdasarkan search term (sebelum pagination)
     const filteredGenres = genres.filter((genre) =>
@@ -185,7 +216,7 @@ const GenreManager = () => {
 
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
-                    <Modal.Title>Add New Genre</Modal.Title>
+                    <Modal.Title>{isEditing ? "Edit Genre" : "Add New Genre"}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
@@ -193,10 +224,9 @@ const GenreManager = () => {
                             <Form.Label className="me-2">Genre</Form.Label>
                             <Form.Control
                                 type="text"
-                                value={newGenre}
-                                onChange={(e) => setNewGenre(e.target.value)}
+                                value={isEditing ? editName.name : newGenre.name}
+                                onChange={handleInputChange}
                                 placeholder="Enter genre name"
-                                className="me-2"
                             />
                         </Form.Group>
                     </Form>
@@ -212,11 +242,25 @@ const GenreManager = () => {
                         type="submit"
                         variant="primary"
                         className="mt-2"
-                        onClick={handleAddGenre}
+                        onClick={isEditing ? handleRenameGenre : handleAddGenre}
                         style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
                     >
-                        Add Genre
+                        {isEditing ? "Save Changes" : "Add Genre"}
                     </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete Genre</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the genre "{genreToDelete?.name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteGenre}>Delete</Button>
                 </Modal.Footer>
             </Modal>
 
@@ -238,62 +282,28 @@ const GenreManager = () => {
                                 {currentGenres.map((genre) => (
                                     <tr key={genre.id}>
                                         <td>{genre.id}</td>
-                                        <td>
-                                            {editing === genre.id ? (
-                                                <Form.Control
-                                                    type="text"
-                                                    value={editName}
-                                                    onChange={(e) => setEditName(e.target.value)}
-                                                />
-                                            ) : (
-                                                genre.name
-                                            )}
-                                        </td>
+                                        <td>{genre.name}</td>
                                         <td>
                                             <Container className="action-button">
-                                                {editing === genre.id ? (
-                                                    <>
-                                                        <Button
-                                                            variant="success"
-                                                            size="sm"
-                                                            onClick={() => handleRenameGenre(genre.id)}
-                                                            className="me-2"
-                                                        >
-                                                            Save
-                                                        </Button>
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="sm"
-                                                            onClick={() => setEditing(null)}
-                                                        >
-                                                            Cancel
-                                                        </Button>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Button
-                                                            variant="primary"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setEditing(genre.id);
-                                                                setEditName(genre.name);
-                                                            }}
-                                                            className="me-2"
-                                                            disabled={editing !== null}
-                                                        >
-                                                            Rename
-                                                        </Button>
-                                                        <Button
-                                                            variant="danger"
-                                                            size="sm"
-                                                            onClick={() => handleDeleteGenre(genre.id)}
-                                                            className="me-2"
-                                                            disabled={editing !== null}
-                                                        >
-                                                            Delete
-                                                        </Button>
-                                                    </>
-                                                )}
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    className="me-2"
+                                                    onClick={() => handleEditGenre(genre.id)}
+                                                >
+                                                    Rename
+                                                </Button>
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    className="me-2"
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setGenreToDelete(genre);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </Button>
                                             </Container>
                                         </td>
                                     </tr>
