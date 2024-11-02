@@ -1,104 +1,114 @@
-require('dotenv').config();
-const express = require('express');
-const session = require('express-session');
-const cors = require('cors');
-const mysql = require('mysql2');
-const bodyParser = require('body-parser');
+require("dotenv").config();
+const express = require("express");
+const session = require("express-session");
+const cors = require("cors");
+const mysql = require("mysql2");
+const bodyParser = require("body-parser");
 // const googleAuth = require('./routes/googleAuth');
-const passport = require('./middleware/passport-setup')
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
+const passport = require("./middleware/passport-setup");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
+const path = require("path");
+const fs = require("fs");
 
-const { isAuthenticated, hasAdminRole } = require('./middleware/auth');
-const multer = require('multer');
+const { isAuthenticated, hasAdminRole } = require("./middleware/auth");
+const multer = require("multer");
 const app = express();
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    // Check if the request origin is in the allowedOrigins array
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true // Untuk mengizinkan penggunaan cookie
-}));
+      // Check if the request origin is in the allowedOrigins array
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // Untuk mengizinkan penggunaan cookie
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static('public'));
-
-
+app.use(express.static("public"));
 
 // MySQL connection setup
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "lalajoeuydb"
+  database: "lalajoeuydb",
 });
-
 
 db.connect((err) => {
   if (err) {
-    console.error('Error connecting to MySQL:', err);
+    console.error("Error connecting to MySQL:", err);
     return;
   }
-  console.log('Connected to MySQL!');
+  console.log("Connected to MySQL!");
 });
 
-
-app.use(session({
-  secret: process.env.JWT_SECRET,
-  resave: false,
-  saveUninitialized: false,
-}));
+app.use(
+  session({
+    secret: process.env.JWT_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 
-
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASSWORD
-  }
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/images');
+    cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + '_' + Date.now() + path.extname(file.originalname));
+    cb(
+      null,
+      file.fieldname + "_" + Date.now() + path.extname(file.originalname)
+    );
   },
 });
 
 const upload = multer({
-  storage: storage
-})
-
-// Logout route
-app.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/');
+  storage: storage,
 });
 
+// Logout route
+app.get("/logout", (req, res) => {
+  req.logout();
+  res.redirect("/");
+});
 
-app.get('/movies/movie', (req, res) => {
-  const { page = 1, limit = 10, yearRange, genre, status, availability, country_release, sort, awards } = req.query;
+app.get("/movies/movie", (req, res) => {
+  const {
+    page = 1,
+    limit = 10,
+    yearRange,
+    genre,
+    status,
+    availability,
+    country_release,
+    sort,
+    awards,
+  } = req.query;
   const offset = (page - 1) * limit;
 
   let filterConditions = [];
@@ -112,7 +122,7 @@ app.get('/movies/movie', (req, res) => {
       filterConditions.push(`m.release_year BETWEEN ? AND ?`);
     } catch (error) {
       console.error("Error parsing yearRange:", error);
-      return res.status(400).json({ error: 'Invalid yearRange format' });
+      return res.status(400).json({ error: "Invalid yearRange format" });
     }
   }
 
@@ -130,7 +140,6 @@ app.get('/movies/movie', (req, res) => {
     filterConditions.push(`s.name = ?`);
     queryParams.push(status);
   }
-
 
   if (availability) {
     filterConditions.push(`av.platform_name = ?`);
@@ -160,9 +169,8 @@ app.get('/movies/movie', (req, res) => {
 
   // Apply filters
   if (filterConditions.length) {
-    query += ` AND ${filterConditions.join(' AND ')}`;
+    query += ` AND ${filterConditions.join(" AND ")}`;
   }
-
 
   // Handle genre filtering
   if (genre && genre.trim()) {
@@ -190,7 +198,7 @@ app.get('/movies/movie', (req, res) => {
   // Execute the main movie query
   db.query(query, queryParams, (err, results) => {
     if (err) {
-      res.status(500).json({ error: 'Database query failed' });
+      res.status(500).json({ error: "Database query failed" });
       return;
     }
 
@@ -214,7 +222,7 @@ app.get('/movies/movie', (req, res) => {
 
     // Apply filters to count query as well
     if (filterConditions.length) {
-      countQuery += ` AND ${filterConditions.join(' AND ')}`;
+      countQuery += ` AND ${filterConditions.join(" AND ")}`;
     }
 
     if (genre && genre.trim()) {
@@ -229,7 +237,7 @@ app.get('/movies/movie', (req, res) => {
     // Execute the count query with the correct parameters
     db.query(countQuery, countQueryParams, (countErr, countResults) => {
       if (countErr) {
-        res.status(500).json({ error: 'Failed to get movie count' });
+        res.status(500).json({ error: "Failed to get movie count" });
         return;
       }
 
@@ -243,7 +251,7 @@ app.get('/movies/movie', (req, res) => {
 });
 
 // Rute baru untuk mengambil availability/platforms dari database
-app.get('/platforms', (req, res) => {
+app.get("/platforms", (req, res) => {
   const query = `
     SELECT id, platform_name 
     FROM availability
@@ -252,7 +260,9 @@ app.get('/platforms', (req, res) => {
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error fetching availability data:", err);
-      return res.status(500).json({ error: 'Failed to fetch availability data' });
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch availability data" });
     }
 
     res.json(results); // Mengirimkan hasil dalam bentuk JSON
@@ -284,7 +294,7 @@ app.get("/search", (req, res) => {
   });
 });
 
-app.get('/movies/detail/:id', (req, res) => {
+app.get("/movies/detail/:id", (req, res) => {
   const { id } = req.params;
   const query = `
     SELECT
@@ -339,12 +349,12 @@ app.get('/movies/detail/:id', (req, res) => {
 
   db.query(query, [id], (err, results) => {
     if (err) {
-      res.status(500).json({ error: 'Database query failed' });
+      res.status(500).json({ error: "Database query failed" });
       return;
     }
 
     if (results.length === 0) {
-      res.status(404).json({ error: 'Movie not found' });
+      res.status(404).json({ error: "Movie not found" });
       return;
     }
 
@@ -366,20 +376,20 @@ app.get('/movies/detail/:id', (req, res) => {
       actors: [],
       awards: [],
       availability: results[0].availability_platform_name,
-      status: results[0].status_name
+      status: results[0].status_name,
     };
 
     const genreMap = new Map();
-    const countryMap = new Map();  // Added for country
+    const countryMap = new Map(); // Added for country
     const actorMap = new Map();
     const awardMap = new Map();
 
-    results.forEach(row => {
+    results.forEach((row) => {
       // Handle genres
       if (row.genre_id && !genreMap.has(row.genre_id)) {
         genreMap.set(row.genre_id, {
           id: row.genre_id,
-          name: row.genre_name
+          name: row.genre_name,
         });
       }
 
@@ -387,7 +397,7 @@ app.get('/movies/detail/:id', (req, res) => {
       if (row.country_id && !countryMap.has(row.country_id)) {
         countryMap.set(row.country_id, {
           id: row.country_id,
-          name: row.country_name
+          name: row.country_name,
         });
       }
 
@@ -397,7 +407,7 @@ app.get('/movies/detail/:id', (req, res) => {
           id: row.actor_id,
           name: row.actor_name,
           role: row.role,
-          actor_picture: row.actor_picture
+          actor_picture: row.actor_picture,
         });
       }
 
@@ -405,7 +415,7 @@ app.get('/movies/detail/:id', (req, res) => {
       if (row.awards_id && !awardMap.has(row.awards_id)) {
         awardMap.set(row.awards_id, {
           id: row.awards_id,
-          name: row.awards_name
+          name: row.awards_name,
         });
       }
     });
@@ -419,11 +429,8 @@ app.get('/movies/detail/:id', (req, res) => {
   });
 });
 
-
-
-
 //fetch movie review
-app.get('/movies/detail/review/:id', (req, res) => {
+app.get("/movies/detail/review/:id", (req, res) => {
   const { id } = req.params;
   const query = `
     SELECT
@@ -444,12 +451,12 @@ app.get('/movies/detail/review/:id', (req, res) => {
 
   db.query(query, [id], (err, results) => {
     if (err) {
-      res.status(500).json({ error: 'Database query failed' });
+      res.status(500).json({ error: "Database query failed" });
       return;
     }
 
     if (results.length === 0) {
-      res.status(404).json({ error: 'Review not found' });
+      res.status(404).json({ error: "Review not found" });
       return;
     }
 
@@ -457,19 +464,19 @@ app.get('/movies/detail/review/:id', (req, res) => {
   });
 });
 
-
-
-
 //fetch all filter criteria
 
-app.get('/filters', async (req, res) => {
+app.get("/filters", async (req, res) => {
   const queries = {
-    years: 'SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies',
-    genres: 'SELECT id, name FROM genres ORDER BY name ASC',
-    awards: 'SELECT id, awards_name FROM awards ORDER BY awards_name ASC',
-    countries: 'SELECT id, country_name FROM countries ORDER BY country_name ASC',
-    availability: 'SELECT id, platform_name FROM availability ORDER BY platform_name ASC',
-    status: 'SELECT id, name FROM status ORDER BY name ASC',
+    years:
+      "SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies",
+    genres: "SELECT id, name FROM genres ORDER BY name ASC",
+    awards: "SELECT id, awards_name FROM awards ORDER BY awards_name ASC",
+    countries:
+      "SELECT id, country_name FROM countries ORDER BY country_name ASC",
+    availability:
+      "SELECT id, platform_name FROM availability ORDER BY platform_name ASC",
+    status: "SELECT id, name FROM status ORDER BY name ASC",
   };
 
   const results = {};
@@ -481,7 +488,6 @@ app.get('/filters', async (req, res) => {
     if (yearRows.length) {
       const minYear = yearRows[0].minYear;
       const maxYear = yearRows[0].maxYear;
-
 
       const different = minYear % 10;
       const normalizedMinYear = minYear - different;
@@ -501,117 +507,122 @@ app.get('/filters', async (req, res) => {
 
     // Fetch genres
     const [genreRows] = await db.promise().query(queries.genres);
-    results.genres = genreRows.map(row => ({
+    results.genres = genreRows.map((row) => ({
       id: row.id,
       name: row.name,
     }));
 
     // Fetch awards
     const [awardRows] = await db.promise().query(queries.awards);
-    results.awards = awardRows.map(row => ({
+    results.awards = awardRows.map((row) => ({
       id: row.id,
       name: row.awards_name,
     }));
 
     // Fetch countries
     const [countryRows] = await db.promise().query(queries.countries);
-    results.countries = countryRows.map(row => ({
+    results.countries = countryRows.map((row) => ({
       id: row.id,
       name: row.country_name,
     }));
 
     // Fetch availability
     const [availabilityRows] = await db.promise().query(queries.availability);
-    results.availability = availabilityRows.map(row => ({
+    results.availability = availabilityRows.map((row) => ({
       id: row.id,
       name: row.platform_name,
     }));
 
     // Fetch status
     const [statusRows] = await db.promise().query(queries.status);
-    results.status = statusRows.map(row => ({
+    results.status = statusRows.map((row) => ({
       id: row.id,
       name: row.name,
     }));
 
     res.json(results);
   } catch (error) {
-    console.error('Error fetching filters:', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error fetching filters:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-
-
-
-
 // Fetch top 10 highest-rated movies
-app.get('/top-rated', (req, res) => {
-  const query = 'SELECT title, background, imdb_score FROM movies ORDER BY imdb_score DESC LIMIT 15';
+app.get("/top-rated", (req, res) => {
+  const query =
+    "SELECT title, background, imdb_score FROM movies ORDER BY imdb_score DESC LIMIT 15";
 
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     res.json(results); // Send the top 10 movies to the front-end
   });
 });
 
-app.get('/featured', (req, res) => {
-  const query = 'SELECT id, title, background, poster, imdb_score, synopsis FROM movies WHERE release_year=2024 ORDER BY imdb_score DESC LIMIT 10';
+app.get("/featured", (req, res) => {
+  const query =
+    "SELECT id, title, background, poster, imdb_score, synopsis FROM movies WHERE release_year=2024 ORDER BY imdb_score DESC LIMIT 10";
 
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
 
     res.json(results); // Send the top 10 movies to the front-end
   });
-}
-);
-
+});
 
 //CMS
-app.get('/dashboard', (req, res) => {
-  const queryMovies = 'SELECT COUNT(*) AS movieCount FROM movies';
-  const queryGenres = 'SELECT COUNT(*) AS genreCount FROM genres';
-  const queryCountries = 'SELECT COUNT(*) AS countryCount FROM countries';
-  const queryAwards = 'SELECT COUNT(*) AS awardCount FROM awards';
+app.get("/dashboard", (req, res) => {
+  const queryMovies = "SELECT COUNT(*) AS movieCount FROM movies";
+  const queryGenres = "SELECT COUNT(*) AS genreCount FROM genres";
+  const queryCountries = "SELECT COUNT(*) AS countryCount FROM countries";
+  const queryAwards = "SELECT COUNT(*) AS awardCount FROM awards";
 
-  const getMoviesCount = () => new Promise((resolve, reject) => {
-    db.query(queryMovies, (err, results) => {
-      if (err) reject(err);
-      else resolve(results[0].movieCount);
+  const getMoviesCount = () =>
+    new Promise((resolve, reject) => {
+      db.query(queryMovies, (err, results) => {
+        if (err) reject(err);
+        else resolve(results[0].movieCount);
+      });
     });
-  });
 
-  const getGenresCount = () => new Promise((resolve, reject) => {
-    db.query(queryGenres, (err, results) => {
-      if (err) reject(err);
-      else resolve(results[0].genreCount);
+  const getGenresCount = () =>
+    new Promise((resolve, reject) => {
+      db.query(queryGenres, (err, results) => {
+        if (err) reject(err);
+        else resolve(results[0].genreCount);
+      });
     });
-  });
 
-  const getCountriesCount = () => new Promise((resolve, reject) => {
-    db.query(queryCountries, (err, results) => {
-      if (err) reject(err);
-      else resolve(results[0].countryCount);
+  const getCountriesCount = () =>
+    new Promise((resolve, reject) => {
+      db.query(queryCountries, (err, results) => {
+        if (err) reject(err);
+        else resolve(results[0].countryCount);
+      });
     });
-  });
 
-  const getAwardsCount = () => new Promise((resolve, reject) => {
-    db.query(queryAwards, (err, results) => {
-      if (err) reject(err);
-      else resolve(results[0].awardCount);
+  const getAwardsCount = () =>
+    new Promise((resolve, reject) => {
+      db.query(queryAwards, (err, results) => {
+        if (err) reject(err);
+        else resolve(results[0].awardCount);
+      });
     });
-  });
 
   // Run all queries in parallel and return the response
-  Promise.all([getMoviesCount(), getGenresCount(), getCountriesCount(), getAwardsCount()])
+  Promise.all([
+    getMoviesCount(),
+    getGenresCount(),
+    getCountriesCount(),
+    getAwardsCount(),
+  ])
     .then(([movieCount, genreCount, countryCount, awardCount]) => {
       const response = {
         movieCount,
@@ -621,13 +632,13 @@ app.get('/dashboard', (req, res) => {
       };
       res.json(response);
     })
-    .catch(err => {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+    .catch((err) => {
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
     });
 });
 
-app.get('/movie-genre-count-by-decade', (req, res) => {
+app.get("/movie-genre-count-by-decade", (req, res) => {
   const query = `
     SELECT 
       FLOOR(YEAR(m.release_year) / 10) * 10 AS decade,  -- Mengelompokkan berdasarkan dekade
@@ -641,17 +652,15 @@ app.get('/movie-genre-count-by-decade', (req, res) => {
 
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
     } else {
       res.json(results);
     }
   });
 });
 
-
-
-app.get('/movie-list', (req, res) => {
+app.get("/movie-list", (req, res) => {
   const { status } = req.query; // Ambil query parameter status dari request
 
   let query = `
@@ -681,15 +690,15 @@ app.get('/movie-list', (req, res) => {
   // Eksekusi query dan kirim hasil ke frontend
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     res.json(results);
   });
 });
 
-app.get('/users', (req, res) => {
+app.get("/users", (req, res) => {
   const query = `
     SELECT id, username, role, email, Status_Account FROM users WHERE Status_Account != 3
   `;
@@ -697,8 +706,8 @@ app.get('/users', (req, res) => {
   // Eksekusi query dan kirim hasil ke frontend
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     res.json(results);
@@ -706,12 +715,12 @@ app.get('/users', (req, res) => {
 });
 
 // POST endpoint untuk menambah user baru
-app.post('/users', async (req, res) => {
+app.post("/users", async (req, res) => {
   const { username, email, password, profile_picture, role } = req.body;
 
   // Validasi input
   if (!username || !email || !password || !role) {
-    return res.status(400).json({ error: 'All fields are required' });
+    return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
@@ -724,25 +733,30 @@ app.post('/users', async (req, res) => {
       VALUES (?, ?, ?, ?, 1)
     `;
     // Menggunakan password yang sudah di-hash untuk disimpan
-    const [result] = await db.query(query, [username, email, hashedPassword, profile_picture, role]);
-    
+    const [result] = await db.query(query, [
+      username,
+      email,
+      hashedPassword,
+      profile_picture,
+      role,
+    ]);
+
     // Mengembalikan response user yang baru ditambahkan tanpa menampilkan password
     res.status(200).json({ id: result.insertId, username, email, role });
-
   } catch (err) {
-    console.error('Error executing query:', err.message);
-    return res.status(500).json({ error: 'Failed to add user' });
+    console.error("Error executing query:", err.message);
+    return res.status(500).json({ error: "Failed to add user" });
   }
 });
 
 // PUT endpoint untuk mengupdate user yang sudah ada
-app.put('/users/:id', async (req, res) => {
+app.put("/users/:id", async (req, res) => {
   const { id } = req.params;
   const { username, email, role, profile_picture, password } = req.body;
 
   // Validasi input
   if (!username || !email || !role) {
-    return res.status(400).json({ error: 'All fields are required' });
+    return res.status(400).json({ error: "All fields are required" });
   }
 
   const query = `
@@ -752,65 +766,70 @@ app.put('/users/:id', async (req, res) => {
   `;
 
   try {
-    await db.query(query, [username, email, role, profile_picture, password, id]);
-    res.status(200).json({ message: 'User updated successfully' });
+    await db.query(query, [
+      username,
+      email,
+      role,
+      profile_picture,
+      password,
+      id,
+    ]);
+    res.status(200).json({ message: "User updated successfully" });
   } catch (err) {
-    console.error('Error executing query:', err.message);
-    return res.status(500).json({ error: 'Failed to update user' });
+    console.error("Error executing query:", err.message);
+    return res.status(500).json({ error: "Failed to update user" });
   }
 });
 
 // DELETE endpoint untuk menghapus user
-app.delete('/users/:id', async (req, res) => {
+app.delete("/users/:id", async (req, res) => {
   const userId = req.params.id;
-  
+
   try {
     // Update nilai Status_Account menjadi 3
     const query = `UPDATE users SET Status_Account = 3 WHERE id = ?`;
     await db.query(query, [userId]);
 
-    res.status(200).json({ message: 'User suspended successfully' });
+    res.status(200).json({ message: "User suspended successfully" });
   } catch (err) {
-    console.error('Error executing query:', err.message);
-    res.status(500).json({ error: 'Failed to update user status' });
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Failed to update user status" });
   }
 });
 
 // Endpoint untuk menangguhkan user (Status_Account = 2)
-app.put('/users/suspend/:id', async (req, res) => {
+app.put("/users/suspend/:id", async (req, res) => {
   const userId = req.params.id;
-  
+
   try {
     // Update nilai Status_Account menjadi 2 (suspend)
     const query = `UPDATE users SET Status_Account = 2 WHERE id = ?`;
     await db.query(query, [userId]);
 
-    res.status(200).json({ message: 'User suspended successfully' });
+    res.status(200).json({ message: "User suspended successfully" });
   } catch (err) {
-    console.error('Error executing query:', err.message);
-    res.status(500).json({ error: 'Failed to suspend user' });
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Failed to suspend user" });
   }
 });
 
-app.put('/users/unlock/:id', async (req, res) => {
+app.put("/users/unlock/:id", async (req, res) => {
   const userId = req.params.id;
-  
+
   try {
     // Update nilai Status_Account menjadi 1
     const query = `UPDATE users SET Status_Account = 1 WHERE id = ?`;
     await db.query(query, [userId]);
 
-    res.status(200).json({ message: 'User unlocked successfully' });
+    res.status(200).json({ message: "User unlocked successfully" });
   } catch (err) {
-    console.error('Error executing query:', err.message);
-    res.status(500).json({ error: 'Failed to unlock user' });
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Failed to unlock user" });
   }
 });
 
-
-
 // Route to fetch all actors
-app.get('/actors', (req, res) => {
+app.get("/actors", (req, res) => {
   const query = `
     SELECT 
       a.id, 
@@ -830,8 +849,8 @@ app.get('/actors', (req, res) => {
 
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     res.json(results);
@@ -839,12 +858,12 @@ app.get('/actors', (req, res) => {
 });
 
 // Route to add a new actor
-app.post('/actors', upload.single('actor_picture'), (req, res) => {
+app.post("/actors", upload.single("actor_picture"), (req, res) => {
   const { name, birthdate, country_name } = req.body;
   const actor_picture = req.file ? req.file.filename : null;
 
   if (!name || !birthdate || !country_name) {
-    return res.status(400).json({ error: 'Missing required fields.' });
+    return res.status(400).json({ error: "Missing required fields." });
   }
 
   // Check if the country exists in the database
@@ -854,13 +873,15 @@ app.post('/actors', upload.single('actor_picture'), (req, res) => {
 
   db.query(checkCountryQuery, [country_name], (err, countryResult) => {
     if (err) {
-      console.error('Error checking country:', err.message);
-      return res.status(500).json({ error: 'Failed to check country.' });
+      console.error("Error checking country:", err.message);
+      return res.status(500).json({ error: "Failed to check country." });
     }
 
     if (countryResult.length === 0) {
       // If country doesn't exist, return an error
-      return res.status(400).json({ error: 'Country not found. Please add the country first.' });
+      return res
+        .status(400)
+        .json({ error: "Country not found. Please add the country first." });
     }
 
     // If country exists, proceed with adding the actor
@@ -874,34 +895,37 @@ app.post('/actors', upload.single('actor_picture'), (req, res) => {
 
     db.query(addActorQuery, values, (err, result) => {
       if (err) {
-        console.error('Error inserting actor:', err.message);
-        return res.status(500).json({ error: 'Failed to add actor.' });
+        console.error("Error inserting actor:", err.message);
+        return res.status(500).json({ error: "Failed to add actor." });
       }
-      res.status(201).json({ message: 'Actor added successfully.', id: result.insertId });
+      res
+        .status(201)
+        .json({ message: "Actor added successfully.", id: result.insertId });
     });
   });
 });
 
-
 // Route to update an existing actor with country existence check
-app.put('/actors/:id', (req, res) => {
+app.put("/actors/:id", (req, res) => {
   const { id } = req.params;
   const { name, birthdate, country_name, actor_picture } = req.body;
 
   if (!name || !birthdate || !country_name) {
-    return res.status(400).json({ error: 'Missing required fields.' });
+    return res.status(400).json({ error: "Missing required fields." });
   }
 
   // Check if country exists before updating actor
-  const checkCountryQuery = 'SELECT id FROM countries WHERE country_name = ?';
+  const checkCountryQuery = "SELECT id FROM countries WHERE country_name = ?";
   db.query(checkCountryQuery, [country_name], (err, countryResult) => {
     if (err) {
-      console.error('Error checking country existence:', err.message);
-      return res.status(500).json({ error: 'Failed to check country existence.' });
+      console.error("Error checking country existence:", err.message);
+      return res
+        .status(500)
+        .json({ error: "Failed to check country existence." });
     }
 
     if (countryResult.length === 0) {
-      return res.status(400).json({ error: 'Country does not exist.' });
+      return res.status(400).json({ error: "Country does not exist." });
     }
 
     // If country exists, proceed to update actor
@@ -916,22 +940,21 @@ app.put('/actors/:id', (req, res) => {
 
     db.query(updateQuery, values, (err, result) => {
       if (err) {
-        console.error('Error updating actor:', err.message);
-        return res.status(500).json({ error: 'Failed to update actor.' });
+        console.error("Error updating actor:", err.message);
+        return res.status(500).json({ error: "Failed to update actor." });
       }
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Actor not found.' });
+        return res.status(404).json({ error: "Actor not found." });
       }
 
-      res.json({ message: 'Actor updated successfully.' });
+      res.json({ message: "Actor updated successfully." });
     });
   });
 });
 
-
 // Route to delete an actor
-app.delete('/actors/:id', (req, res) => {
+app.delete("/actors/:id", (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -940,25 +963,25 @@ app.delete('/actors/:id', (req, res) => {
   `;
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error('Error deleting actor:', err.message);
-      return res.status(500).json({ error: 'Failed to delete actor.' });
+      console.error("Error deleting actor:", err.message);
+      return res.status(500).json({ error: "Failed to delete actor." });
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Actor not found.' });
+      return res.status(404).json({ error: "Actor not found." });
     }
 
-    res.json({ message: 'Actor deleted successfully.' });
+    res.json({ message: "Actor deleted successfully." });
   });
 });
 
 // Get all genres
-app.get('/genres', (req, res) => {
-  const query = 'SELECT id, name FROM genres ORDER BY id ASC ';
+app.get("/genres", (req, res) => {
+  const query = "SELECT id, name FROM genres ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     res.json(results);
@@ -966,58 +989,58 @@ app.get('/genres', (req, res) => {
 });
 
 // Add a new genre
-app.post('/genres', (req, res) => {
+app.post("/genres", (req, res) => {
   const { name } = req.body;
   if (!name) {
-    return res.status(400).json({ error: 'Genre name is required' });
+    return res.status(400).json({ error: "Genre name is required" });
   }
 
-  const query = 'INSERT INTO genres (name) VALUES (?)';
+  const query = "INSERT INTO genres (name) VALUES (?)";
   db.query(query, [name], (err, result) => {
     if (err) {
-      return res.status(500).json({ error: 'Failed to add genre' });
+      return res.status(500).json({ error: "Failed to add genre" });
     }
     res.json({ id: result.insertId, name });
   });
 });
 
 // Update an existing genre
-app.put('/genres/:id', (req, res) => {
+app.put("/genres/:id", (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
 
   if (!name) {
-    return res.status(400).json({ error: 'Genre name is required' });
+    return res.status(400).json({ error: "Genre name is required" });
   }
 
-  const query = 'UPDATE genres SET name = ? WHERE id = ?';
+  const query = "UPDATE genres SET name = ? WHERE id = ?";
   db.query(query, [name, id], (err) => {
     if (err) {
-      return res.status(500).json({ error: 'Failed to update genre' });
+      return res.status(500).json({ error: "Failed to update genre" });
     }
-    res.json({ message: 'Genre updated successfully' });
+    res.json({ message: "Genre updated successfully" });
   });
 });
 
 // Delete a genre
-app.delete('/genres/:id', (req, res) => {
+app.delete("/genres/:id", (req, res) => {
   const { id } = req.params;
-  const query = 'DELETE FROM genres WHERE id = ?';
+  const query = "DELETE FROM genres WHERE id = ?";
   db.query(query, [id], (err) => {
     if (err) {
-      return res.status(500).json({ error: 'Failed to delete genre' });
+      return res.status(500).json({ error: "Failed to delete genre" });
     }
-    res.json({ message: 'Genre deleted successfully' });
+    res.json({ message: "Genre deleted successfully" });
   });
 });
 
 // Get all countries
-app.get('/countries', (req, res) => {
-  const query = 'SELECT id, country_name FROM countries ORDER BY id ASC ';
+app.get("/countries", (req, res) => {
+  const query = "SELECT id, country_name FROM countries ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     res.json(results);
@@ -1025,18 +1048,18 @@ app.get('/countries', (req, res) => {
 });
 
 // Get a single country berdasarkan country_name
-app.get('/countries/:country_name', (req, res) => {
+app.get("/countries/:country_name", (req, res) => {
   const { country_name } = req.params;
-  const query = 'SELECT id, country_name FROM countries WHERE country_name = ?';
+  const query = "SELECT id, country_name FROM countries WHERE country_name = ?";
   db.query(query, [country_name], (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
 
     if (results.length === 0) {
-      return res.status(404).json({ error: 'Country not found' });
+      return res.status(404).json({ error: "Country not found" });
     }
 
     res.json(results[0]);
@@ -1044,53 +1067,53 @@ app.get('/countries/:country_name', (req, res) => {
 });
 
 // Add a new country
-app.post('/countries', (req, res) => {
+app.post("/countries", (req, res) => {
   const { country_name } = req.body;
   if (!country_name) {
-    return res.status(400).json({ error: 'Country name is required' });
+    return res.status(400).json({ error: "Country name is required" });
   }
 
-  const query = 'INSERT INTO countries (country_name) VALUES (?)';
+  const query = "INSERT INTO countries (country_name) VALUES (?)";
   db.query(query, [country_name], (err, result) => {
     if (err) {
-      return res.status(500).json({ error: 'Failed to add country' });
+      return res.status(500).json({ error: "Failed to add country" });
     }
     res.json({ id: result.insertId, country_name });
   });
 });
 
 // Update an existing country
-app.put('/countries/:id', (req, res) => {
+app.put("/countries/:id", (req, res) => {
   const { id } = req.params;
   const { country_name } = req.body;
 
   if (!country_name) {
-    return res.status(400).json({ error: 'Country name is required' });
+    return res.status(400).json({ error: "Country name is required" });
   }
 
-  const query = 'UPDATE countries SET country_name = ? WHERE id = ?';
+  const query = "UPDATE countries SET country_name = ? WHERE id = ?";
   db.query(query, [country_name, id], (err) => {
     if (err) {
-      return res.status(500).json({ error: 'Failed to update country' });
+      return res.status(500).json({ error: "Failed to update country" });
     }
-    res.json({ message: 'Country updated successfully' });
+    res.json({ message: "Country updated successfully" });
   });
 });
 
 // Delete a country
-app.delete('/countries/:id', (req, res) => {
+app.delete("/countries/:id", (req, res) => {
   const { id } = req.params;
-  const query = 'DELETE FROM countries WHERE id = ?';
+  const query = "DELETE FROM countries WHERE id = ?";
   db.query(query, [id], (err) => {
     if (err) {
-      return res.status(500).json({ error: 'Failed to delete country' });
+      return res.status(500).json({ error: "Failed to delete country" });
     }
-    res.json({ message: 'Country deleted successfully' });
+    res.json({ message: "Country deleted successfully" });
   });
 });
 
 // Get all awards
-app.get('/awards', (req, res) => {
+app.get("/awards", (req, res) => {
   const query = `
     SELECT 
       a.id, 
@@ -1108,8 +1131,8 @@ app.get('/awards', (req, res) => {
   `;
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     res.json(results);
@@ -1117,11 +1140,11 @@ app.get('/awards', (req, res) => {
 });
 
 // Route to add a new Award
-app.post('/awards', (req, res) => {
+app.post("/awards", (req, res) => {
   const { awards_name, country_name, awards_years } = req.body;
 
   if (!awards_name || !country_name || !awards_years) {
-    return res.status(400).json({ error: 'Missing required fields.' });
+    return res.status(400).json({ error: "Missing required fields." });
   }
   // Check if the country exists in the database
   const checkCountryQuery = `
@@ -1130,13 +1153,15 @@ app.post('/awards', (req, res) => {
 
   db.query(checkCountryQuery, [country_name], (err, countryResult) => {
     if (err) {
-      console.error('Error checking country:', err.message);
-      return res.status(500).json({ error: 'Failed to check country.' });
+      console.error("Error checking country:", err.message);
+      return res.status(500).json({ error: "Failed to check country." });
     }
 
     if (countryResult.length === 0) {
       // If country doesn't exist, return an error
-      return res.status(400).json({ error: 'Country not found. Please add the country first.' });
+      return res
+        .status(400)
+        .json({ error: "Country not found. Please add the country first." });
     }
 
     // If country exists, proceed with adding the award
@@ -1150,33 +1175,37 @@ app.post('/awards', (req, res) => {
 
     db.query(addAwardQuery, values, (err, result) => {
       if (err) {
-        console.error('Error inserting award:', err.message);
-        return res.status(500).json({ error: 'Failed to add award.' });
+        console.error("Error inserting award:", err.message);
+        return res.status(500).json({ error: "Failed to add award." });
       }
-      res.status(201).json({ message: 'Award added successfully.', id: result.insertId });
+      res
+        .status(201)
+        .json({ message: "Award added successfully.", id: result.insertId });
     });
   });
 });
 
 // Route to update an existing award with country existence check
-app.put('/awards/:id', (req, res) => {
+app.put("/awards/:id", (req, res) => {
   const { id } = req.params;
   const { awards_name, country_name, awards_years } = req.body;
 
   if (!awards_name || !country_name || !awards_years) {
-    return res.status(400).json({ error: 'Missing required fields.' });
+    return res.status(400).json({ error: "Missing required fields." });
   }
 
   // Check if country exists before updating award
-  const checkCountryQuery = 'SELECT id FROM countries WHERE country_name = ?';
+  const checkCountryQuery = "SELECT id FROM countries WHERE country_name = ?";
   db.query(checkCountryQuery, [country_name], (err, countryResult) => {
     if (err) {
-      console.error('Error checking country existence:', err.message);
-      return res.status(500).json({ error: 'Failed to check country existence.' });
+      console.error("Error checking country existence:", err.message);
+      return res
+        .status(500)
+        .json({ error: "Failed to check country existence." });
     }
 
     if (countryResult.length === 0) {
-      return res.status(400).json({ error: 'Country does not exist.' });
+      return res.status(400).json({ error: "Country does not exist." });
     }
 
     // If country exists, proceed with update the award
@@ -1191,21 +1220,21 @@ app.put('/awards/:id', (req, res) => {
 
     db.query(updateQuery, values, (err, result) => {
       if (err) {
-        console.error('Error updating award:', err.message);
-        return res.status(500).json({ error: 'Failed to update award.' });
+        console.error("Error updating award:", err.message);
+        return res.status(500).json({ error: "Failed to update award." });
       }
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Award not found.' });
+        return res.status(404).json({ error: "Award not found." });
       }
 
-      res.json({ message: 'Award updated successfully.' });
+      res.json({ message: "Award updated successfully." });
     });
   });
 });
 
 // Route to delete an award
-app.delete('/awards/:id', (req, res) => {
+app.delete("/awards/:id", (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -1214,20 +1243,20 @@ app.delete('/awards/:id', (req, res) => {
   `;
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error('Error deleting award:', err.message);
-      return res.status(500).json({ error: 'Failed to delete award.' });
+      console.error("Error deleting award:", err.message);
+      return res.status(500).json({ error: "Failed to delete award." });
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Award not found.' });
+      return res.status(404).json({ error: "Award not found." });
     }
 
-    res.json({ message: 'Award deleted successfully.' });
+    res.json({ message: "Award deleted successfully." });
   });
 });
 
 // route to fetch all reviews
-app.get('/reviews', (req, res) => {
+app.get("/reviews", (req, res) => {
   const query = `
     SELECT 
       reviews.id AS review_id,
@@ -1249,8 +1278,8 @@ app.get('/reviews', (req, res) => {
 
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     res.json(results);
@@ -1258,187 +1287,227 @@ app.get('/reviews', (req, res) => {
 });
 
 // route to approve a review
-app.put('/reviews/:id', (req, res) => {
+app.put("/reviews/:id", (req, res) => {
   const { id } = req.params;
 
-  const query = 'UPDATE reviews SET status = 1 WHERE id = ?';
+  const query = "UPDATE reviews SET status = 1 WHERE id = ?";
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error('Error approving review:', err.message);
-      return res.status(500).json({ error: 'Failed to approve review.' });
+      console.error("Error approving review:", err.message);
+      return res.status(500).json({ error: "Failed to approve review." });
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Review not found.' });
+      return res.status(404).json({ error: "Review not found." });
     }
 
-    res.json({ message: 'Review approved successfully.' });
+    res.json({ message: "Review approved successfully." });
   });
 });
 
-// route to delete a review
-app.delete('/reviews/:id', (req, res) => {
+// route to delete a review 
+app.delete("/reviews/:id", (req, res) => {
   const { id } = req.params;
 
-  const query = 'DELETE FROM reviews WHERE id = ?';
+  const query = "DELETE FROM reviews WHERE id = ?";
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error('Error deleting review:', err.message);
-      return res.status(500).json({ error: 'Failed to delete review.' });
+      console.error("Error deleting review:", err.message);
+      return res.status(500).json({ error: "Failed to delete review." });
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Review not found.' });
+      return res.status(404).json({ error: "Review not found." });
     }
 
-    res.json({ message: 'Review deleted successfully.' });
+    res.json({ message: "Review deleted successfully." });
   });
 });
 
+app.get("/status", (req, res) => {
+  const query = `
+    SELECT id, name
+    FROM status
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching availability data:", err);
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch availability data" });
+    }
+
+    res.json(results); // Mengirimkan hasil dalam bentuk JSON
+  });
+});
 
 //CRUD
 
 //ADD MOVIES
-app.post('/add-drama', upload.fields([{ name: 'poster' }, { name: 'background' }]), async (req, res) => {
+app.post("/add-drama", async (req, res) => {
   const {
+    imdb_score,
+    status,
     view,
     title,
     alt_title,
-    release_year,
-    country,   // This is a country name or identifier sent by the client
-    synopsis,
-    availability,  // This is the availability platform name or identifier sent by the client
-    trailer,
     director,
-    imdb_score,  // IMDB score coming from the client
+    release_year,
+    country,
+    synopsis,
+    availability,
+    trailer,
+    posterUrl,
+    backgroundUrl,
   } = req.body;
-  console.log(req.body);
-  // Parse fields that might be arrays from strings (if needed)
-  const genres = typeof req.body.genres === 'string' ? req.body.genres.split(',') : req.body.genres;
-  const actors = typeof req.body.actors === 'string' ? req.body.actors.split(',') : req.body.actors;
 
-  // Get file paths from uploaded files
-  const poster = req.files['poster'] ? req.files['poster'][0].path : null;
-  const background = req.files['background'] ? req.files['background'][0].path : null;
+  console.log(req.body);
 
   try {
-    // Insert into movies table
-    const movieQuery = `
-      INSERT INTO movies (poster, title, alt_title, release_year, synopsis, trailer, director, background, imdb_score, view)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    const movieValues = [poster, title, alt_title, release_year, synopsis, trailer, director, background];
-
-    const [movieResult] = await db.query(movieQuery, movieValues);
-    const movieId = movieResult.insertId;  // Get the newly inserted movie's ID
-
-    // Insert into movie_countries
-    const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
-    const [countryResult] = await db.query(countryQuery, [country]);
-    const countryId = countryResult.length > 0 ? countryResult[0].id : null;
-
-    if (countryId) {
-      const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
-      await db.query(movieCountryQuery, [movieId, countryId]);
-    }
-
-    // Insert into movie_availability
-    const availabilityQuery = `SELECT id FROM platforms WHERE platform_name = ?`;
-    const [availabilityResult] = await db.query(availabilityQuery, [availability]);
+    // Query to get `availability_id`
+    const availabilityQuery = `SELECT id FROM availability WHERE platform_name = ?`;
+    const [availabilityResult] = await db.promise().query(availabilityQuery, [availability]);
     const availabilityId = availabilityResult.length > 0 ? availabilityResult[0].id : null;
 
-    if (availabilityId) {
-      const movieAvailabilityQuery = `INSERT INTO movie_availability (movie_id, availability_id) VALUES (?, ?)`;
-      await db.query(movieAvailabilityQuery, [movieId, availabilityId]);
-    }
+    // Query to get `status_id`
+    const statusQuery = `SELECT id FROM status WHERE name = ?`;
+    const [statusResult] = await db.promise().query(statusQuery, [status]);
+    const status_id = statusResult.length > 0 ? statusResult[0].id : null;
 
-    // Insert genres (assuming genres already exist in a 'genres' table)
+    // Insert into movies table
+    const movieQuery = `
+      INSERT INTO movies (title, alt_title, release_year, imdb_score, synopsis, view, poster, background, trailer, director, status, status_id, availability_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+    `;
+    const movieValues = [
+      title,
+      alt_title,
+      release_year,
+      imdb_score,
+      synopsis,
+      view,
+      posterUrl,
+      backgroundUrl,
+      trailer,
+      director,
+      status_id,
+      availabilityId,
+    ];
+
+    const [movieResult] = await db.promise().query(movieQuery, movieValues);
+    const movieId = movieResult.insertId;
+
+    // Parse fields that might be arrays from strings (if needed)
+    const genres = typeof req.body.genres === "string" ? req.body.genres.split(",") : req.body.genres;
+    const actors = typeof req.body.actors === "string" ? req.body.actors.split(",") : req.body.actors;
+    const awards = typeof req.body.awards === "string" ? req.body.awards.split(",") : req.body.awards;
+
+    // Insert into movie_genres
     for (const genre of genres) {
-      const genreQuery = `SELECT id FROM genres WHERE genre_name = ?`;
-      const [genreResult] = await db.query(genreQuery, [genre]);
+      const genreQuery = `SELECT id FROM genres WHERE name = ?`;
+      const [genreResult] = await db.promise().query(genreQuery, [genre]);
       const genreId = genreResult.length > 0 ? genreResult[0].id : null;
 
       if (genreId) {
         const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
-        await db.query(movieGenreQuery, [movieId, genreId]);
+        await db.promise().query(movieGenreQuery, [movieId, genreId]);
       }
     }
 
-    // Insert actors (assuming actors already exist in an 'actors' table)
+    // Insert into movie_actors with roles
     for (const actor of actors) {
-      const actorQuery = `SELECT id FROM actors WHERE actor_name = ?`;
-      const [actorResult] = await db.query(actorQuery, [actor]);
+      const actorQuery = `SELECT id FROM actors WHERE name = ?`;
+      const [actorResult] = await db.promise().query(actorQuery, [actor.name]);
       const actorId = actorResult.length > 0 ? actorResult[0].id : null;
 
       if (actorId) {
-        const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id) VALUES (?, ?)`;
-        await db.query(movieActorQuery, [movieId, actorId]);
+        const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id, role) VALUES (?, ?, ?)`;
+        await db.promise().query(movieActorQuery, [movieId, actorId, actor.role]);
       }
     }
 
-    res.status(200).json({ message: 'Drama added successfully', movieId });
+    // Insert into movie_countries
+    const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
+    const [countryResult] = await db.promise().query(countryQuery, [country]);
+    const countryId = countryResult.length > 0 ? countryResult[0].id : null;
+
+    if (countryId) {
+      const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
+      await db.promise().query(movieCountryQuery, [movieId, countryId]);
+    }
+
+    // Insert into movie_awards
+    for (const award of awards) {
+      const awardQuery = `SELECT id FROM awards WHERE awards_name = ?`;
+      const [awardResult] = await db.promise().query(awardQuery, [award]);
+      const awardId = awardResult.length > 0 ? awardResult[0].id : null;
+
+      if (awardId) {
+        const movieAwardQuery = `INSERT INTO movie_awards (movie_id, awards_id) VALUES (?, ?)`;
+        await db.promise().query(movieAwardQuery, [movieId, awardId]);
+      }
+    }
+
+    res.status(200).json({ message: "Drama added successfully", movieId });
   } catch (err) {
-    console.error('Error executing query:', err.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 
-
-
-
 //SET TRASH
-app.put('/movie-delete/:id', (req, res) => {
+app.put("/movie-delete/:id", (req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 0 WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    res.status(200).json({ message: 'Movie moved to trash successfully' });
+    res.status(200).json({ message: "Movie moved to trash successfully" });
   });
 });
 
 //PERMANENT DELETE
 // Endpoint untuk mengubah status menjadi 3 (permanen delete dari trash)
-app.put('/movie-permanent-delete/:id', (req, res) => {
+app.put("/movie-permanent-delete/:id", (req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 4 WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    res.status(200).json({ message: 'Movie permanently deleted successfully' });
+    res.status(200).json({ message: "Movie permanently deleted successfully" });
   });
 });
 
-
 //RESTORE
-app.put('/movie-restore/:id', (req, res) => {
+app.put("/movie-restore/:id", (req, res) => {
   const movieId = req.params.id;
   const query = `UPDATE movies SET status = 1 WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    res.status(200).json({ message: 'Movie restored successfully' });
+    res.status(200).json({ message: "Movie restored successfully" });
   });
 });
 
-//LOGIN 
-app.post('/login', (req, res) => {
-  const query = "SELECT * FROM users WHERE email = ?";
+//LOGIN
+app.post("/login", (req, res) => {
+  const query = "SELECT * FROM users WHERE Status_Account = 1 AND email = ?";
 
   db.query(query, [req.body.email], (err, data) => {
     if (err) {
@@ -1465,15 +1534,26 @@ app.post('/login', (req, res) => {
 
           if (result) {
             const token = jwt.sign(
-              { username: user.username, email: user.email, role: user.role, user_id: user.id },
+              {
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                user_id: user.id,
+              },
               "our-jsonwebtoken-secret-key",
-              { expiresIn: '1d' }
+              { expiresIn: "1d" }
             );
 
             // Send token and user_id in cookies
-            res.cookie('token', token, { httpOnly: false, sameSite: 'strict' });
-            res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
-            res.cookie('role', user.role, { httpOnly: false, sameSite: 'strict' }); // Tambahkan role ke cookie
+            res.cookie("token", token, { httpOnly: false, sameSite: "strict" });
+            res.cookie("user_id", user.id, {
+              httpOnly: false,
+              sameSite: "strict",
+            });
+            res.cookie("role", user.role, {
+              httpOnly: false,
+              sameSite: "strict",
+            }); // Tambahkan role ke cookie
 
             return res.json({
               Status: "Login Success",
@@ -1481,7 +1561,7 @@ app.post('/login', (req, res) => {
               username: user.username,
               email: user.email,
               role: user.role,
-              token: token
+              token: token,
             });
           } else {
             return res.json({ Message: "Incorrect Password" });
@@ -1490,30 +1570,28 @@ app.post('/login', (req, res) => {
       } else {
         return res.json({ Message: "User not found or missing credentials." });
       }
-
     } else {
       return res.json({ Message: "No user found with that email." });
     }
   });
 });
 
-
-
-
-
 //Login with Google
 
-
 // Google OAuth login route
-app.get('/auth/google', passport.authenticate('google', {
-  scope: ['profile', 'email'],
-}));
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
 
 // Google OAuth callback route
-app.get('/auth/google/callback',
-  passport.authenticate('google', {
-    failureRedirect: 'http://localhost:3001/login?error=google-auth-failed',
-    failureMessage: true
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "http://localhost:3001/login?error=google-auth-failed",
+    failureMessage: true,
   }),
   (req, res) => {
     // Handle successful login
@@ -1521,49 +1599,67 @@ app.get('/auth/google/callback',
 
     // Buat token JWT dengan informasi user
     const token = jwt.sign(
-      { username: user.username, email: user.email, role: user.role, user_id: user.id },
+      {
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        user_id: user.id,
+      },
       "our-jsonwebtoken-secret-key",
-      { expiresIn: '1d' }
+      { expiresIn: "1d" }
     );
 
     // Simpan token ke cookie
-    res.cookie('token', token, {
-      httpOnly: false,  // Set ke false jika token perlu diakses client-side
-      sameSite: 'Strict',
+    res.cookie("token", token, {
+      httpOnly: false, // Set ke false jika token perlu diakses client-side
+      sameSite: "Strict",
       secure: false, // Set to true in production with HTTPS
-      maxAge: 24 * 60 * 60 * 1000 // Cookie expires in 1 day
+      maxAge: 24 * 60 * 60 * 1000, // Cookie expires in 1 day
     });
 
-    res.cookie('user_id', user.id, { httpOnly: false, sameSite: 'strict' });
-    res.cookie('role', user.role, { httpOnly: false, sameSite: 'strict' }); // Tambahkan role ke cookie
+    res.cookie("user_id", user.id, { httpOnly: false, sameSite: "strict" });
+    res.cookie("role", user.role, { httpOnly: false, sameSite: "strict" }); // Tambahkan role ke cookie
 
     // Redirect to the frontend after successful login
-    res.redirect(`http://localhost:3001/?username=${user.username}&email=${user.email}`);
+    res.redirect(
+      `http://localhost:3001/?username=${user.username}&email=${user.email}`
+    );
   }
 );
 
-app.post('/forgot-password', (req, res) => {
+app.post("/forgot-password", (req, res) => {
   const { email } = req.body;
 
   // Check if user exists with the given email
   const checkUserSql = "SELECT * FROM users WHERE email = ?";
   db.query(checkUserSql, [email], (err, userData) => {
     if (err || userData.length === 0) {
-      return res.status(404).json({ message: "User with this email doesn't exist", success: false });
+      return res.status(404).json({
+        message: "User with this email doesn't exist",
+        success: false,
+      });
     }
 
     const user = userData[0];
-    const resetToken = jwt.sign({ id: user.id }, "RESET_PASSWORD_SECRET", { expiresIn: '1h' });
+    const resetToken = jwt.sign({ id: user.id }, "RESET_PASSWORD_SECRET", {
+      expiresIn: "1h",
+    });
 
     // Create reset link
     const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
-    const templatePathReset = path.join(__dirname, 'template', 'forgotPassword.html');
+    const templatePathReset = path.join(
+      __dirname,
+      "template",
+      "forgotPassword.html"
+    );
 
     // Read the email template file
-    fs.readFile(templatePathReset, 'utf8', (err, htmlTemplate) => {
+    fs.readFile(templatePathReset, "utf8", (err, htmlTemplate) => {
       if (err) {
-        console.error('Error reading email template:', err);
-        return res.status(500).json({ message: 'Error reading email template', success: false });
+        console.error("Error reading email template:", err);
+        return res
+          .status(500)
+          .json({ message: "Error reading email template", success: false });
       }
 
       // Replace placeholders in the template with actual data
@@ -1575,31 +1671,34 @@ app.post('/forgot-password', (req, res) => {
       const mailOptions = {
         from: process.env.EMAIL,
         to: email,
-        subject: 'Password Reset',
-        html: emailHtml // Use the customized HTML content
+        subject: "Password Reset",
+        html: emailHtml, // Use the customized HTML content
       };
 
       // Send email
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          return res.status(500).json({ message: 'Error sending reset email', success: false });
+          return res
+            .status(500)
+            .json({ message: "Error sending reset email", success: false });
         }
 
-        res.json({ message: 'Password reset email sent', success: true });
+        res.json({ message: "Password reset email sent", success: true });
       });
     });
   });
 });
 
-
-app.post('/reset-password/:token', (req, res) => {
+app.post("/reset-password/:token", (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
 
   // Verify the token
   jwt.verify(token, "RESET_PASSWORD_SECRET", (err, decoded) => {
     if (err) {
-      return res.status(400).json({ message: "Invalid or expired token", success: false });
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired token", success: false });
     }
 
     const userId = decoded.id;
@@ -1608,57 +1707,61 @@ app.post('/reset-password/:token', (req, res) => {
     const saltRounds = 10;
     bcrypt.hash(newPassword, saltRounds, (hashErr, hashedPassword) => {
       if (hashErr) {
-        return res.status(500).json({ message: 'Error hashing password', success: false });
+        return res
+          .status(500)
+          .json({ message: "Error hashing password", success: false });
       }
 
       // Update password in the database
       const updatePasswordSql = "UPDATE users SET password = ? WHERE id = ?";
       db.query(updatePasswordSql, [hashedPassword, userId], (updateErr) => {
         if (updateErr) {
-          return res.status(500).json({ message: 'Error updating password', success: false });
+          return res
+            .status(500)
+            .json({ message: "Error updating password", success: false });
         }
 
-        res.json({ message: 'Password updated successfully', success: true });
+        res.json({ message: "Password updated successfully", success: true });
       });
     });
   });
 });
 
-
 //movie check if reviewed or not
-app.get('/movies/:movieId/reviewed/:userId', isAuthenticated, (req, res) => {
+app.get("/movies/:movieId/reviewed/:userId", isAuthenticated, (req, res) => {
   const userId = req.params.userId;
   const movieId = req.params.movieId;
 
-  const query = 'SELECT * FROM reviews WHERE user_id = ? AND movie_id = ?';
+  const query = "SELECT * FROM reviews WHERE user_id = ? AND movie_id = ?";
 
   db.query(query, [userId, movieId], (err, results) => {
     if (err) {
-      console.error('Error executing query:', err.message);
-      return res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error executing query:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
     res.json({ reviewed: results.length > 0 });
   });
 });
 
-app.get('/confirm-email/:token', (req, res) => {
+app.get("/confirm-email/:token", (req, res) => {
   const { token } = req.params;
 
   // Verify email confirmation token
-  jwt.verify(token, 'EMAIL_SECRET', (err, decoded) => {
+  jwt.verify(token, "EMAIL_SECRET", (err, decoded) => {
     if (err) {
-      return res.json({ message: 'Invalid or expired token' });
+      return res.json({ message: "Invalid or expired token" });
     }
 
     const email = decoded.email;
 
     // Update the user to mark their email as confirmed
-    const updateSql = "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
+    const updateSql =
+      "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
 
     db.query(updateSql, [email], (err, result) => {
       if (err) {
-        return res.json({ message: 'Error confirming email' });
+        return res.json({ message: "Error confirming email" });
       }
 
       res.json({ message: "Email confirmed successfully! You can now login." });
@@ -1666,11 +1769,12 @@ app.get('/confirm-email/:token', (req, res) => {
   });
 });
 
-app.post('/register', (req, res) => {
+app.post("/register", (req, res) => {
   const { username, email, password } = req.body;
 
   const checkSql = "SELECT * FROM users WHERE username = ? OR email = ?";
-  const sql = "INSERT INTO users (`username`, `email`, `password`, `isEmailConfirmed`) VALUES (?)";
+  const sql =
+    "INSERT INTO users (`username`, `email`, `password`, `isEmailConfirmed`) VALUES (?)";
   const saltRounds = 10;
 
   // Check if the username or email already exists
@@ -1680,7 +1784,10 @@ app.post('/register', (req, res) => {
       return res.json({ message: "Database error occurred", success: false });
     }
     if (checkData.length > 0) {
-      return res.json({ message: "Username or Email already exists", success: false });
+      return res.json({
+        message: "Username or Email already exists",
+        success: false,
+      });
     }
 
     // Proceed with password hashing and user creation if no duplicate found
@@ -1693,19 +1800,31 @@ app.post('/register', (req, res) => {
 
       db.query(sql, [values], (insertErr, insertData) => {
         if (insertErr) {
-          return res.json({ message: "Error during registration", success: false });
+          return res.json({
+            message: "Error during registration",
+            success: false,
+          });
         }
 
         // Generate Email Confirmation Token (JWT)
-        const emailToken = jwt.sign({ email }, "EMAIL_SECRET", { expiresIn: '1d' });
+        const emailToken = jwt.sign({ email }, "EMAIL_SECRET", {
+          expiresIn: "1d",
+        });
 
         // Send confirmation email
         const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
-        const templatePath = path.join(__dirname, 'template', 'emailTemplate.html');
-        fs.readFile(templatePath, 'utf8', (err, htmlTemplate) => {
+        const templatePath = path.join(
+          __dirname,
+          "template",
+          "emailTemplate.html"
+        );
+        fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
           if (err) {
-            console.error('Error reading email template:', err);
-            return res.json({ message: 'Error reading email template', success: false });
+            console.error("Error reading email template:", err);
+            return res.json({
+              message: "Error reading email template",
+              success: false,
+            });
           }
 
           // Replace placeholders with actual data
@@ -1717,25 +1836,30 @@ app.post('/register', (req, res) => {
           const mailOptions = {
             from: process.env.EMAIL,
             to: email,
-            subject: 'Please confirm your email',
-            html: emailHtml
+            subject: "Please confirm your email",
+            html: emailHtml,
           };
-
 
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-              return res.json({ message: 'Error sending confirmation email', success: false });
+              return res.json({
+                message: "Error sending confirmation email",
+                success: false,
+              });
             }
-            res.json({ message: "Registration successful. Please check your email for confirmation.", success: true });
+            res.json({
+              message:
+                "Registration successful. Please check your email for confirmation.",
+              success: true,
+            });
             //redirect into login
-            res.redirect('http://localhost:3001/login');
+            res.redirect("http://localhost:3001/login");
           });
         });
       });
     });
   });
 });
-
 
 // Forgot Password
 // OAuth2 client setup
@@ -1819,12 +1943,10 @@ app.post('/register', (req, res) => {
 //     .catch((error) => res.status(500).send(error.message));
 // });
 
-
 module.exports = router;
 
-
 //Input Review
-app.post('/reviews', (req, res) => {
+app.post("/reviews", (req, res) => {
   const { movie_id, user_id, content, rating } = req.body;
 
   const query = `
@@ -1834,16 +1956,16 @@ app.post('/reviews', (req, res) => {
 
   db.query(query, [movie_id, user_id, content, rating], (err, result) => {
     if (err) {
-      return res.status(500).json({ message: "Error inserting review", error: err });
+      return res
+        .status(500)
+        .json({ message: "Error inserting review", error: err });
     }
     res.status(201).json({ message: "Review saved successfully!" });
   });
 });
-
 
 // Starting the server
 const PORT = 8001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
