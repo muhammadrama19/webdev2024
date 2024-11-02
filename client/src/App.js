@@ -45,6 +45,7 @@ function App() {
           <Route path="/movies/:id" element={<Detailmovie />} />
           <Route path="/searchresult" element={<SearchResult />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword/>} />
         </Route>
 
         {/* Admin Routes */}
