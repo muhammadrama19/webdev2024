@@ -15,6 +15,10 @@ const CountryManager = () => {
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
 
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [CountryToDelete, setCountryToDelete] = useState(null);
+
     const handleShowModal = () => setShowModal(true);
 
     useEffect(() => {
@@ -35,7 +39,6 @@ const CountryManager = () => {
     const handleCloseModal = () => {
         setShowModal(false);
         setNewCountry("");
-        window.location.reload();
     };
 
     const handleInputChange = (e) => {
@@ -76,14 +79,18 @@ const CountryManager = () => {
     };
 
 
-    const handleDeleteCountry = async (id) => {
-        try {
-            await fetch(`http://localhost:8001/countries/${id}`, {
-                method: 'DELETE',
-            });
-            setCountries(countries.filter((country) => country.id !== id));
-        } catch (error) {
-            console.error("Error deleting country:", error);
+    const handleDeleteCountry = async () => {
+        if (CountryToDelete) {
+            try {
+                await fetch(`http://localhost:8001/countries/${CountryToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setCountries(countries.filter((country) => country.id !== CountryToDelete.id));
+                setShowDeleteModal(false);
+                setCountryToDelete(null);
+            } catch (error) {
+                console.error("Error deleting country:", error);
+            }
         }
     };
 
@@ -243,6 +250,20 @@ const CountryManager = () => {
                 </Modal.Footer>
             </Modal>
 
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the country "{CountryToDelete?.country_name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteCountry}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
+
 
             {loading ? (
                 <p>Loading data...</p>
@@ -277,7 +298,10 @@ const CountryManager = () => {
                                                     variant="danger"
                                                     size="sm"
                                                     className="me-2"
-                                                    onClick={() => handleDeleteCountry(country.id)}
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setCountryToDelete(country);
+                                                    }}
                                                 >
                                                     Delete
                                                 </Button>

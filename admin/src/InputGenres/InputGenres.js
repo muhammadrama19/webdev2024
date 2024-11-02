@@ -15,6 +15,10 @@ const GenreManager = () => {
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
 
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [genreToDelete, setGenreToDelete] = useState(null);
+
     const handleShowModal = () => setShowModal(true);
 
     useEffect(() => {
@@ -35,7 +39,6 @@ const GenreManager = () => {
     const handleCloseModal = () => {
         setIsEditing(false);
         setShowModal(false);
-        window.location.reload();
     };
 
     const handleInputChange = (e) => {
@@ -76,14 +79,18 @@ const GenreManager = () => {
     };
 
 
-    const handleDeleteGenre = async (id) => {
-        try {
-            await fetch(`http://localhost:8001/genres/${id}`, {
-                method: 'DELETE',
-            });
-            setGenres(genres.filter((genre) => genre.id !== id));
-        } catch (error) {
-            console.error("Error deleting genre:", error);
+    const handleDeleteGenre = async () => {
+        if (genreToDelete) {
+            try {
+                await fetch(`http://localhost:8001/genres/${genreToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setGenres(genres.filter((genre) => genre.id !== genreToDelete.id));
+                setShowDeleteModal(false);
+                setGenreToDelete(null);
+            } catch (error) {
+                console.error("Error deleting genre:", error);
+            }
         }
     };
 
@@ -243,6 +250,20 @@ const GenreManager = () => {
                 </Modal.Footer>
             </Modal>
 
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete Genre</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the genre "{genreToDelete?.name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteGenre}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
+
             {loading ? (
                 <p>Loading data...</p>
             ) : (
@@ -276,7 +297,10 @@ const GenreManager = () => {
                                                     variant="danger"
                                                     size="sm"
                                                     className="me-2"
-                                                    onClick={() => handleDeleteGenre(genre.id)}
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setGenreToDelete(genre);
+                                                    }}
                                                 >
                                                     Delete
                                                 </Button>
