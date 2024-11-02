@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col } from "react-bootstrap";
+import { Container, Row, Col, Button } from "react-bootstrap";
 import "./home.scss";
 import DropdownFilterCustom from "../components/dropdownfilter/dropdownFilter";
 import Featured from "../components/featured/featured";
@@ -8,9 +8,10 @@ import Card from "../components/card/card";
 import PaginationCustom from "../components/pagination/pagination";
 import { useNavigate } from "react-router-dom";
 import { Search } from "@mui/icons-material";
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const Home = () => {
-  const [searchQuery, setSearchQuery] = useState(""); // State for the search query
+  const [searchQuery, setSearchQuery] = useState(""); 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [movies, setMovies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -148,6 +149,10 @@ useEffect(() => {
     navigate(`/movies/${id}`);
   };
 
+  const handleAdminButtonClick = () => {
+    navigate("/dashboard");
+  };
+
   return (
     <div className="home">
       <Featured type="movie" />
@@ -166,58 +171,57 @@ useEffect(() => {
             <span>Filter by:</span>
           </Col>
         </Row>
-        <Row className="align-items-center" style={{ borderTop: "1px solid var(--primary-color)",  gap: "1rem"  }}>
-          <Col >
+        <Row className="align-items-center" style={{ borderTop: "1px solid var(--primary-color)", gap: "1rem" }}>
+          <Col>
             <DropdownFilterCustom
-              xs={6} sm={6} md={4} lg={2}
+              xs={12} sm={6} md={4} lg={2}
               label="Year"
               options={filters.years}
               onSelect={(option) => handleFilterChange("year", option)}
             />
           </Col>
-          <Col >
+          <Col>
             <DropdownFilterCustom
-            xs={6} sm={6} md={4} lg={2}
+              xs={12} sm={6} md={4} lg={2}
               label="Awards"
               options={filters.awards}
               onSelect={(option) => handleFilterChange("awards", option)}
             />
           </Col>
-          <Col >
+          <Col>
             <DropdownFilterCustom
-            xs={6} sm={6} md={4} lg={3}
+              xs={12} sm={6} md={4} lg={3}
               label="Genre"
               options={filters.genres}
               onSelect={(option) => handleFilterChange("genre", option)}
             />
           </Col>
-          <Col >
+          <Col>
             <DropdownFilterCustom
-            xs={6} sm={6} md={4} lg={2}
+              xs={12} sm={6} md={4} lg={2}
               label="Sort By:"
               options={sortOptions}
               onSelect={handleSortChange}
             />
           </Col>
-          <Col >
+          <Col>
             <DropdownFilterCustom
-            xs={6} sm={6} md={4} lg={2}
+              xs={12} sm={6} md={4} lg={2}
               label="Availability"
               options={filters.availability}
               onSelect={(option) => handleFilterChange("availability", option)}
             />
           </Col>
-          <Col >
+          <Col>
             <DropdownFilterCustom
-            xs={6} sm={6} md={4} lg={2}
+              xs={12} sm={6} md={4} lg={2}
               label="Status"
               options={filters.status}
               onSelect={(option) => handleFilterChange("status", option)}
             />
           </Col>
-          <Col xs={6} sm={6} md={4} lg={2}>
+          <Col xs={12} sm={6} md={4} lg={2}>
             <DropdownFilterCustom
-             
               label="Country"
               options={filters.countries}
               onSelect={(option) => handleFilterChange("country", option)}
@@ -265,6 +269,27 @@ useEffect(() => {
           onPageChange={handlePageChange}
         />
       </Container>
+      <Button
+        variant="primary"
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+          borderRadius: "50%",
+          width: "60px",
+          height: "60px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          color: "white",
+          backgroundColor: "var(--primary-color)",
+          border: "none",
+        }}
+        onClick={handleAdminButtonClick}
+      >
+        <AdminPanelSettingsIcon />
+      </Button>
     </div>
   );
 };

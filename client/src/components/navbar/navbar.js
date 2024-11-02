@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import SearchBar from "../searchInput/search";
+// import SearchBar from "../searchInput/search";
 import { BsPersonCircle } from "react-icons/bs"; 
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -133,7 +133,7 @@ const Navbar = ({ loggedInUsername }) => {
           </div>
         </div>
         <div className="right">
-          <SearchBar />
+          {/* <SearchBar /> */}
 
           <BsPersonCircle className="icon" onClick={toggleDropdown} />
           <span className="user-name" onClick={toggleDropdown}>

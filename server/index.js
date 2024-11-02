@@ -578,7 +578,7 @@ app.get("/featured", (req, res) => {
 });
 
 //CMS
-app.get("/dashboard", isAuthenticated, hasAdminRole, (req, res) => {
+app.get("/dashboard",  (req, res) => {
   const queryMovies = "SELECT COUNT(*) AS movieCount FROM movies";
   const queryGenres = "SELECT COUNT(*) AS genreCount FROM genres";
   const queryCountries = "SELECT COUNT(*) AS countryCount FROM countries";
@@ -698,7 +698,9 @@ app.get("/movie-list", (req, res) => {
   });
 });
 
-app.get("/users", (req, res) => {
+
+
+app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
   const query = `
     SELECT id, username, role, email FROM users
   `;
@@ -744,7 +746,7 @@ app.get("/actors", (req, res) => {
 });
 
 // Route to add a new actor
-app.post("/actors", upload.single("actor_picture"), (req, res) => {
+app.post("/actors",  isAuthenticated, hasAdminRole, upload.single("actor_picture"), (req, res) => {
   const { name, birthdate, country_name } = req.body;
   const actor_picture = req.file ? req.file.filename : null;
 
@@ -840,7 +842,7 @@ app.put("/actors/:id", (req, res) => {
 });
 
 // Route to delete an actor
-app.delete("/actors/:id", (req, res) => {
+app.delete("/actors/:id",   (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -862,7 +864,7 @@ app.delete("/actors/:id", (req, res) => {
 });
 
 // Get all genres
-app.get("/genres", (req, res) => {
+app.get("/genres",(req, res) => {
   const query = "SELECT id, name FROM genres ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
@@ -875,7 +877,7 @@ app.get("/genres", (req, res) => {
 });
 
 // Add a new genre
-app.post("/genres", (req, res) => {
+app.post("/genres",  isAuthenticated, hasAdminRole, (req, res) => {
   const { name } = req.body;
   if (!name) {
     return res.status(400).json({ error: "Genre name is required" });
@@ -891,7 +893,7 @@ app.post("/genres", (req, res) => {
 });
 
 // Update an existing genre
-app.put("/genres/:id", (req, res) => {
+app.put("/genres/:id",(req, res) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -934,7 +936,7 @@ app.get("/countries", (req, res) => {
 });
 
 // Get a single country berdasarkan country_name
-app.get("/countries/:country_name", (req, res) => {
+app.get("/countries/:country_name", isAuthenticated, hasAdminRole, (req, res) => {
   const { country_name } = req.params;
   const query = "SELECT id, country_name FROM countries WHERE country_name = ?";
   db.query(query, [country_name], (err, results) => {
@@ -953,7 +955,7 @@ app.get("/countries/:country_name", (req, res) => {
 });
 
 // Add a new country
-app.post("/countries", (req, res) => {
+app.post("/countries",  isAuthenticated, hasAdminRole,(req, res) => {
   const { country_name } = req.body;
   if (!country_name) {
     return res.status(400).json({ error: "Country name is required" });
@@ -969,7 +971,7 @@ app.post("/countries", (req, res) => {
 });
 
 // Update an existing country
-app.put("/countries/:id", (req, res) => {
+app.put("/countries/:id",(req, res) => {
   const { id } = req.params;
   const { country_name } = req.body;
 
@@ -987,7 +989,7 @@ app.put("/countries/:id", (req, res) => {
 });
 
 // Delete a country
-app.delete("/countries/:id", (req, res) => {
+app.delete("/countries/:id",(req, res) => {
   const { id } = req.params;
   const query = "DELETE FROM countries WHERE id = ?";
   db.query(query, [id], (err) => {
@@ -1072,7 +1074,7 @@ app.post("/awards", (req, res) => {
 });
 
 // Route to update an existing award with country existence check
-app.put("/awards/:id", (req, res) => {
+app.put("/awards/:id",  (req, res) => {
   const { id } = req.params;
   const { awards_name, country_name, awards_years } = req.body;
 
@@ -1120,7 +1122,7 @@ app.put("/awards/:id", (req, res) => {
 });
 
 // Route to delete an award
-app.delete("/awards/:id", (req, res) => {
+app.delete("/awards/:id",(req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -1141,7 +1143,7 @@ app.delete("/awards/:id", (req, res) => {
   });
 });
 
-app.get("/reviews", (req, res) => {
+app.get("/reviews",(req, res) => {
   const query = `
     SELECT 
       reviews.id AS review_id,
@@ -1170,6 +1172,26 @@ app.get("/reviews", (req, res) => {
     res.json(results);
   });
 });
+
+// route to delete a review
+app.delete('/reviews/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = 'DELETE FROM reviews WHERE id = ?';
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting review:', err.message);
+      return res.status(500).json({ error: 'Failed to delete review.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Review not found.' });
+    }
+
+    res.json({ message: 'Review deleted successfully.' });
+  });
+});
+
 
 //CRUD
 

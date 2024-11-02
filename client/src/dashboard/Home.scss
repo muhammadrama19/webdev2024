@@ -1,0 +1,36 @@
+/* Dashboard.module.scss */
+
+.dashboard {
+  padding: 20px;
+
+  .dashboard-card {
+    background-color: var(--main-color);
+    color: var(--primary-color);
+    text-align: center;
+    border: none;
+    box-shadow: var(--elevation-2);
+    transition: transform 0.3s ease-in-out;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--elevation-3);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--secondary-color);
+    }
+
+    .card-text {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-card {
+    margin-bottom: 1rem;
+  }
+}
