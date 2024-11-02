@@ -15,6 +15,10 @@ const AwardsManager = () => {
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
 
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [awardToDelete, setAwardToDelete] = useState(null);
+
     useEffect(() => {
         const fetchAwards = async () => {
             try {
@@ -74,7 +78,7 @@ const AwardsManager = () => {
             console.error("Error checking country existence:", error);
             return false;
         }
-    }; 
+    };
 
     const handleAddAward = async (e) => {
         e.preventDefault();
@@ -87,12 +91,12 @@ const AwardsManager = () => {
         }
 
         // Cek apakah tahun berisi tepat 4 angka
-        if (newAward.awards_years.length !== 4 || isNaN(newAward.awards_years) ) {
+        if (newAward.awards_years.length !== 4 || isNaN(newAward.awards_years)) {
             alert("Year must be exactly 4 digits");
             return;
         }
 
-        
+
         if (parseInt(newAward.awards_years) < 1950) {
             alert("Year must be greater than or equal to 1950");
             return;
@@ -173,14 +177,18 @@ const AwardsManager = () => {
     };
 
 
-    const handleDeleteAward = async (id) => {
-        try {
-            await fetch(`http://localhost:8001/awards/${id}`, {
-                method: 'DELETE',
-            });
-            setAwards((prevAwards) => prevAwards.filter((award) => award.id !== id));
-        } catch (error) {
-            console.error("Error deleting award:", error);
+    const handleDeleteAward = async () => {
+        if (awardToDelete) {
+            try {
+                await fetch(`http://localhost:8001/awards/${awardToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setAwards((prevAwards) => prevAwards.filter((award) => award.id !== awardToDelete.id));
+                setShowDeleteModal(false);
+                setAwardToDelete(null);
+            } catch (error) {
+                console.error("Error deleting award:", error);
+            }
         }
     };
 
@@ -327,6 +335,20 @@ const AwardsManager = () => {
                 </Modal.Footer>
             </Modal>
 
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the genre "{awardToDelete?.awards_name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteAward}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
+
             {loading ? (
                 <p>Loading data...</p>
             ) : (
@@ -365,7 +387,10 @@ const AwardsManager = () => {
                                                 </Button>
                                                 <Button
                                                     className="btn btn-sm btn-danger"
-                                                    onClick={() => handleDeleteAward(award.id)}
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setAwardToDelete(award);
+                                                    }}
                                                 >
                                                     Delete
                                                 </Button>
