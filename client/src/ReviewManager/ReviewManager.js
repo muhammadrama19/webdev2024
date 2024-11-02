@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Container, Button, Modal, Spinner, Form } from 'react-bootstrap';
+import { Table, Container, Button, Modal, Spinner, Form, InputGroup, FormControl } from 'react-bootstrap';
+import { FaSearch } from 'react-icons/fa';
 import PaginationCustom from "../components/pagination/pagination";
 import './ReviewManager.css';
 
@@ -31,12 +32,29 @@ const Reviews = () => {
     fetchReviews();
   }, [showCount]);
 
-  const handleShowDetail = (review) => {
-    setSelectedReview(review);
-    setShowDetailModal(true);
+  // Approve review function
+  const handleApproveReview = async (id) => {
+    const confirmApprove = window.confirm("Are you sure you want to approve this review?");
+    if (confirmApprove) {
+      try {
+        const response = await fetch(`http://localhost:8001/reviews/${id}`, {
+          method: "PUT",
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setReviews(reviews.map((review) =>
+            review.id === id ? { ...review, status: 1 } : review
+          ));
+          alert(data.message);
+          window.location.reload();
+        } else {
+          alert(data.error);
+        }
+      } catch (error) {
+        console.error("Error approving review:", error);
+      }
+    }
   };
-
-  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   // Delete review function
   const handleDeleteReview = async (id) => {
@@ -59,6 +77,13 @@ const Reviews = () => {
       }
     }
   };
+
+  const handleShowDetail = (review) => {
+    setSelectedReview(review);
+    setShowDetailModal(true);
+  };
+
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   const indexOfLastReview = currentPage * showCount;
   const indexOfFirstReview = indexOfLastReview - showCount;
@@ -84,63 +109,85 @@ const Reviews = () => {
 
   const currentReviews = filteredReviews.slice(indexOfFirstReview, indexOfLastReview);
 
+  // Helper function to truncate text
+  const truncateContent = (text, length = 50) => {
+    return text.length > length ? text.substring(0, length) + "..." : text;
+  };
+
   return (
     <Container className="review-list" style={{ padding: '20px' }}>
       <h2 className="my-4" style={{ textAlign: 'center' }}>Review List</h2>
+      <Container className="d-flex justify-content-end">
+        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+          <InputGroup.Text>
+            <FaSearch />
+          </InputGroup.Text>
+          <FormControl
+            placeholder="Search reviews, movie titles, or usernames..."
+            aria-label="Search"
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </InputGroup>
 
-      <Form.Control
-        type="text"
-        placeholder="Search reviews, movie titles, or usernames..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-4"
-        style={{ marginBottom: '20px' }}
-      />
-
-      <div className="mb-4">
-        <Form.Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '200px', display: 'inline-block' }}>
-          <option value="all">All Reviews</option>
-          <option value="approved">Approved</option>
-          <option value="not-approved">Not Approved</option>
-        </Form.Select>
-      </div>
+        <Container className="d-flex justify-content-end mb-4">
+          <Form.Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '150px', display: 'inline-block' }}>
+            <option value="all">All Reviews</option>
+            <option value="approved">Approved</option>
+            <option value="not-approved">Not Approved</option>
+          </Form.Select>
+        </Container>
+      </Container>
 
       {loading ? (
         <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
       ) : (
-        <Table striped bordered hover responsive className="text-center" style={{ marginTop: '20px' }}>
-          <thead>
-            <tr>
-              <th>Review ID</th>
-              <th>User Name</th>
-              <th>Movie Title</th>
-              <th>Rating</th>
-              <th>Content</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentReviews.map((review) => (
-              <tr key={review.review_id}>
-                <td>{review.review_id}</td>
-                <td>{review.user_name}</td>
-                <td>{review.movie_title}</td>
-                <td>{review.rating}</td>
-                <td>{review.content}</td>
-                <td>{review.status === 1 ? "Approved" : "Not Approved"}</td>
-                <td>
-                  <Button variant="info" onClick={() => handleShowDetail(review)} style={{ marginRight: '10px' }}>
-                    Details
-                  </Button>
-                  <Button variant="danger" onClick={() => handleDeleteReview(review.review_id)}>
-                    Delete
-                  </Button>
-                </td>
+        currentReviews.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#ccc', marginTop: '20px' }}>
+            No reviews with status 'Not Approved' were found.
+          </div>
+        ) : (
+          <Table striped bordered hover responsive className="text-center" style={{ marginTop: '20px' }}>
+            <thead>
+              <tr>
+                <th>Review ID</th>
+                <th>User Name</th>
+                <th>Movie Title</th>
+                <th>Rating</th>
+                <th>Content</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {currentReviews.map((review) => (
+                <tr key={review.review_id}>
+                  <td>{review.review_id}</td>
+                  <td>{review.user_name}</td>
+                  <td>{review.movie_title}</td>
+                  <td>{review.rating}</td>
+                  {/* Truncated content */}
+                  <td>{truncateContent(review.content, 100)}</td>
+                  <td>{review.status === 1 ? "Approved" : "Not Approved"}</td>
+                  <td>
+                    <Container className="d-flex justify-content-center">
+                      {review.status === 0 && (
+                        <Button variant="success" onClick={() => handleApproveReview(review.review_id)} style={{ marginRight: '10px' }}>
+                          Approve
+                        </Button>
+                      )}
+                      <Button variant="info" onClick={() => handleShowDetail(review)} style={{ marginRight: '10px' }}>
+                        Details
+                      </Button>
+                      <Button variant="danger" onClick={() => handleDeleteReview(review.review_id)}>
+                        Delete
+                      </Button>
+                    </Container>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )
       )}
 
       <PaginationCustom
