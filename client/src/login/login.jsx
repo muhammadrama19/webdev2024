@@ -39,6 +39,13 @@ const LoginForm = () => {
 
           navigate('/');
           window.location.reload();
+        } else if(res.data.Status === "Account Suspended") {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: res.data.Message,
+          });
+
         } else {
             Swal.fire({
             icon: 'error',
