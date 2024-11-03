@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Container, Table, Form, Button, Modal, Pagination, Dropdown, Col } from 'react-bootstrap';
-import { FaPlus } from "react-icons/fa";
-import "./InputCountry.css";
+import { Container, Table, Form, Button, Modal, Pagination, Row, Col, InputGroup, FormControl } from 'react-bootstrap';
+import { FaPlus, FaSearch } from "react-icons/fa";
+import "./InputCountry.scss";
 
 const CountryManager = () => {
     const [countries, setCountries] = useState([]);
@@ -179,41 +179,44 @@ const CountryManager = () => {
                 <h1 className="title">Country Manager</h1>
             </Container>
             {/* Form Section */}
-            <Container className="list-drama-header d-flex justify-content-between mb-3">
-                <Container className="d-flex">
-                    <Col xs="auto" className="d-flex me-3">
-                        <Dropdown onSelect={setShowCount}>
-                            <Dropdown.Toggle variant="light" id="dropdown-show">
-                                Shows: {showCount}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                {[10, 20, 50].map((count) => (
-                                    <Dropdown.Item key={count} eventKey={count}>
-                                        {count}
-                                    </Dropdown.Item>
-                                ))}
-                            </Dropdown.Menu>
-                        </Dropdown>
+            <Container className="d-flex justify-content-end">
+                <Row className="justify-content-end">
+                    <Col xs="auto" className="d-flex mb-4">
+                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                            <InputGroup.Text>
+                                <FaSearch />
+                            </InputGroup.Text>
+                            <FormControl
+                                type="text"
+                                placeholder="Search Country..."
+                                aria-label="Search"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </InputGroup>
                     </Col>
-                    <input
-                        type="text"
-                        className="search-input"
-                        placeholder="Search"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </Container>
+                    <Col xs="auto" className="d-flex mb-4">
+                        <Form.Select className="mb-4" value={showCount} onChange={(e) => setShowCount(e.target.value)} style={{ width: '80px', display: 'inline-block' }}>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </Form.Select>
+                    </Col>
 
-                {/* Button to Add New Country */}
-                <Button
-                    variant="success"
-                    className="d-flex align-items-center w-auto px-4 py-2"
-                    style={{ whiteSpace: 'nowrap' }} // Ini mencegah teks tombol pecah ke baris lain
-                    onClick={handleShowModal}>
-                    <FaPlus className="me-2" />
-                    Add New Country
-                </Button>
+                    {/* Button to Add New Country */}
+                    <Col xs="auto" className="d-flex mb-4">
+                        <Button
+                            variant="success"
+                            className="d-flex align-items-center w-auto px-4 py-2 mb-4"
+                            style={{ whiteSpace: 'nowrap' }} 
+                            onClick={handleShowModal}>
+                            <FaPlus className="me-2" />
+                            Add New Country
+                        </Button>
+                    </Col>
+                </Row>
             </Container>
+
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>{isEditing ? "Edit Country" : "Add New Country"}</Modal.Title>
