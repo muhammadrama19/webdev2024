@@ -1,236 +1,459 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Container, Button, Modal, Spinner, Form } from 'react-bootstrap';
-import axios from 'axios';
-import PaginationCustom from "../components/pagination/pagination"; // Import the custom pagination component
-import './InputActor.scss';
+import React, { useState, useEffect } from "react";
+import { Container, Table, Form, Button, Modal, Col, Dropdown, Pagination } from 'react-bootstrap';
+import { FaPlus } from "react-icons/fa";
+import "./InputActor.scss";
+import Icon from 'client/public/assets/Oval.svg';
+import DatePicker from "client/node_modules/react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
-const ActorList = () => {
-  const [showCount, setShowCount] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [actors, setActors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedActor, setSelectedActor] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [actorData, setActorData] = useState({
-    name: '',
-    birthdate: '',
-    country_name: '',
-    actor_picture: ''
-  });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+const ActorManager = () => {
+    const [newActor, setNewActor] = useState({ country_name: "", name: "", birthdate: "", actor_picture: "" });
+    const [editing, setEditing] = useState(null);
+    const [editActor, setEditActor] = useState({ country_name: "", name: "", birthdate: "", actor_picture: "" });
+    const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [actors, setActors] = useState([]);
+    const [loading, setLoading] = useState(true); // To handle loading state
+    const [currentPage, setCurrentPage] = useState(1); // State for current page
+    const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
+    const [showCount, setShowCount] = useState(10); // Items per page
+    const [file, setFile] = useState();
 
-  useEffect(() => {
-    const fetchActors = async () => {
-      try {
-        const response = await axios.get('http://localhost:8001/actors');
-        setActors(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching actors:", error);
-        setLoading(false);
-      }
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [actorToDelete, setActorToDelete] = useState(null);
+
+    useEffect(() => {
+        const fetchActors = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/actors');
+                const data = await response.json();
+                setActors(data);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching actors:", error);
+                setLoading(false);
+            }
+        };
+        fetchActors();
+    }, []);
+
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        if (isEditing) {
+            setEditActor((prev) => ({ ...prev, [name]: value }));
+        } else {
+            setNewActor((prev) => ({ ...prev, [name]: value }));
+        }
     };
-    fetchActors();
-  }, []);
 
-  const handleShowDetail = (actor) => {
-    setSelectedActor(actor);
-    setShowDetailModal(true);
-  };
+    const checkCountryExists = async (countryName) => {
+        try {
+            const response = await fetch(`http://localhost:8001/countries/${countryName}`);
+            if (!response.ok) {
+                return false; // Return false if country is not found (404)
+            }
+            const data = await response.json();
+            return !!data; // Return true if data is found, false otherwise
+        } catch (error) {
+            console.error("Error checking country existence:", error);
+            return false;
+        }
+    };
 
-  const handleShowEdit = (actor) => {
-    setActorData({
-      name: actor.name,
-      birthdate: actor.birthdate,
-      country_name: actor.country_name,
-      actor_picture: actor.actor_picture
-    });
-    setSelectedActor(actor);
-    setShowEditModal(true);
-  };
+    const handleAddActor = async (e) => {
+        e.preventDefault();
 
-  const handleShowDelete = (actor) => {
-    setSelectedActor(actor);
-    setShowDeleteModal(true);
-  };
+        // Check if country exists in the backend
+        const countryExists = await checkCountryExists(newActor.country_name);
+        console.log(countryExists);
+        if (!countryExists) {
+            alert("Country does not exist. Please add the country first.");
+            return;
+        }
 
-  const handleUpdateActor = async () => {
-    try {
-      const response = await axios.put(`http://localhost:8001/actors/${selectedActor.id}`, actorData);
-      setActors(actors.map(actor => actor.id === selectedActor.id ? { ...actor, ...actorData } : actor));
-      setShowEditModal(false);
-      setSelectedActor(null);
-    } catch (error) {
-      console.error("Error updating actor:", error);
-    }
-  };
+        if (newActor.name.trim() && newActor.country_name.trim()) {
+            // Create FormData to send file and other actor data
+            const formData = new FormData();
+            formData.append('name', newActor.name);
+            formData.append('country_name', newActor.country_name);
+            formData.append('birthdate', newActor.birthdate);
+            formData.append('actor_picture', file);
 
-  const handleDeleteActor = async () => {
-    try {
-      await axios.delete(`http://localhost:8001/actors/${selectedActor.id}`);
-      setActors(actors.filter(actor => actor.id !== selectedActor.id));
-      setShowDeleteModal(false);
-      setSelectedActor(null);
-    } catch (error) {
-      console.error("Error deleting actor:", error);
-    }
-  };
+            try {
+                const response = await fetch('http://localhost:8001/actors', {
+                    method: 'POST',
+                    body: formData,  // Sending FormData directly
+                });
 
-  const filteredActors = actors.filter(actor =>
-    actor.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+                const data = await response.json();
+                setActors((prevActors) => [...prevActors, data]);
+            } catch (error) {
+                console.error("Error adding actor:", error);
+            }
 
-  const indexOfLastActor = currentPage * showCount;
-  const indexOfFirstActor = indexOfLastActor - showCount;
-  const currentActors = filteredActors.slice(indexOfFirstActor, indexOfLastActor);
-  const totalPages = Math.ceil(filteredActors.length / showCount);
+            // Clear the form and reset state
+            setNewActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
+            setShowModal(false);
+        } else {
+            alert("All fields must be filled!");
+        }
+    };
 
-  return (
-    <Container className="actor-list" style={{ padding: '20px' }}>
-      <h2 className="my-4" style={{ textAlign: 'center' }}>Actor List</h2>
-      <Form.Control
-        type="text"
-        placeholder="Search actors..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-4"
-      />
-      {loading ? (
-        <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
-      ) : (
-        <Table striped bordered hover responsive className="text-center" style={{ marginTop: '20px' }}>
-          <thead>
-            <tr>
-              <th>Picture</th>
-              <th>Name</th>
-              <th>Birthdate</th>
-              <th>Country</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentActors.map((actor) => (
-              <tr key={actor.id}>
-                <td>
-                  <img src={actor.actor_picture} alt={actor.name} className="actor-img" style={{ width: '50px', height: '75px' }} />
-                </td>
-                <td>{actor.name}</td>
-                <td>{new Date(actor.birthdate).toLocaleDateString()}</td>
-                <td>{actor.country_name}</td>
-                <td>
-                  <Button variant="info" onClick={() => handleShowDetail(actor)} style={{ marginRight: '10px' }}>
-                    Details
-                  </Button>
-                  <Button variant="warning" onClick={() => handleShowEdit(actor)} style={{ marginRight: '10px' }}>
-                    Edit
-                  </Button>
-                  <Button variant="danger" onClick={() => handleShowDelete(actor)}>
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+    const handleDeleteActor = async () => {
+        if (actorToDelete) {
+            try {
+                await fetch(`http://localhost:8001/actors/${actorToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setActors((prevActors) => prevActors.filter((actor) => actor.id !== actorToDelete.id));
+                setShowDeleteModal(false);
+                setActorToDelete(null);
+            } catch (error) {
+                console.error("Error deleting actor:", error);
+            }
+        }
+    };
 
-      <PaginationCustom
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+    const handleEditActor = (id) => {
+        setEditing(id);
+        const actorToEdit = actors.find((actor) => actor.id === id);
+        setEditActor(actorToEdit);
+        setIsEditing(true);
+        setShowModal(true);
+    };
 
-      {/* Detail Modal */}
-      <Modal
-        show={showDetailModal}
-        onHide={() => setShowDetailModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{selectedActor?.name}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <img src={selectedActor?.actor_picture} alt={selectedActor?.name} className="detail-picture mb-3" style={{ width: '100%', height: 'auto' }} />
-          <p><strong>Birthdate:</strong> {new Date(selectedActor?.birthdate).toLocaleDateString()}</p>
-          <p><strong>Country:</strong> {selectedActor?.country_name}</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDetailModal(false)}>Close</Button>
-        </Modal.Footer>
-      </Modal>
+    const handleSaveEdit = async (e) => {
+        e.preventDefault();
 
-      {/* Edit Modal */}
-      <Modal
-        show={showEditModal}
-        onHide={() => setShowEditModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Actor</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="formActorName">
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={actorData.name}
-                onChange={(e) => setActorData({ ...actorData, name: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group controlId="formActorBirthdate">
-              <Form.Label>Birthdate</Form.Label>
-              <Form.Control
-                type="date"
-                value={actorData.birthdate}
-                onChange={(e) => setActorData({ ...actorData, birthdate: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group controlId="formActorCountry">
-              <Form.Label>Country</Form.Label>
-              <Form.Control
-                type="text"
-                value={actorData.country_name}
-                onChange={(e) => setActorData({ ...actorData, country_name: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group controlId="formActorPicture">
-              <Form.Label>Picture URL</Form.Label>
-              <Form.Control
-                type="text"
-                value={actorData.actor_picture}
-                onChange={(e) => setActorData({ ...actorData, actor_picture: e.target.value })}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>Close</Button>
-          <Button variant="primary" onClick={handleUpdateActor}>Save Changes</Button>
-        </Modal.Footer>
-      </Modal>
+        if (editActor.name && editActor.country_name && editActor.birthdate && editActor.actor_picture) {
+            const updatedActor = {
+                name: editActor.name,
+                country_name: editActor.country_name,
+                birthdate: editActor.birthdate,
+                actor_picture: editActor.actor_picture
+            }
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Deletion</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Are you sure you want to delete the actor <strong>{selectedActor?.name}</strong>?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-          <Button variant="danger" onClick={handleDeleteActor}>Delete</Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
-  );
+            // Check if the edited country exists in the backend
+            const countryExists = await checkCountryExists(editActor.country_name);
+            if (!countryExists) {
+                alert("Country does not exist. Please add the country first.");
+                return;
+            }
+
+            console.log(updatedActor);
+            console.log(editing);
+            console.log(editActor);
+
+            try {
+                const response = await fetch(`http://localhost:8001/actors/${editing}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedActor),
+                });
+
+                const data = await response.json();
+                setActors((prevActors) =>
+                    prevActors.map((actor) => (actor.id === editing ? data : actor))
+                );
+                setEditing(null);
+                setEditActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
+                setShowModal(false);
+            } catch (error) {
+                console.error("Error saving edit:", error);
+            }
+        } else {
+            alert("All fields must be filled!");
+        }
+    };
+
+
+    const handleShowModal = () => {
+        setIsEditing(false);
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        if (isEditing) {
+            // Reset the editing state and clear editActor data
+            setEditActor({ country_name: "", name: "", birthdate: null, actor_picture: "" });
+            setEditing(null);
+        } else {
+            // Reset the newActor state
+            setNewActor({ country_name: "", name: "", birthdate: null, actor_picture: "" });
+        }
+        window.location.reload();
+    };
+
+    const handlePhotoChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+
+    const handleDateChange = (date) => {
+        const formattedDate = date.toISOString().split("T")[0];
+        if (isEditing) {
+            setEditActor((prev) => ({ ...prev, birthdate: formattedDate }));
+        } else {
+            setNewActor((prev) => ({ ...prev, birthdate: formattedDate }));
+        }
+    };
+
+    // Function untuk filter actor berdasarkan search term (sebelum pagination)
+    const filteredActors = actors.filter((actor) =>
+        (actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (actor.birthdate && actor.birthdate.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    const indexOfLastActor = currentPage * showCount;
+    const indexOfFirstActor = indexOfLastActor - showCount;
+    const currentActors = filteredActors.slice(indexOfFirstActor, indexOfLastActor); // Paginate hasil pencarian
+    const totalPages = Math.ceil(filteredActors.length / showCount);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
+    // Logic to show only 3 pages (current, previous, next)
+    const renderPagination = () => {
+        let items = [];
+        const startPage = Math.max(1, currentPage - 1);
+        const endPage = Math.min(totalPages, currentPage + 1);
+
+        for (let number = startPage; number <= endPage; number++) {
+            items.push(
+                <Pagination.Item key={number} active={number === currentPage} onClick={() => handlePageChange(number)}>
+                    {number}
+                </Pagination.Item>
+            );
+        }
+        return (
+            <div className="d-flex justify-content-end">
+                <Pagination>
+                    <Pagination.First onClick={() => setCurrentPage(1)} />
+                    <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
+                    {items}
+                    <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
+                    <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
+                </Pagination>
+            </div>
+        );
+    };
+
+    return (
+        <Container>
+            <Container className="App">
+                <h1 className="title">Actors Manager</h1>
+            </Container>
+
+            <Container className="list-drama-header d-flex justify-content-between mb-3">
+                <Container className="d-flex">
+                    <Col xs="auto" className="d-flex me-3">
+                        <Dropdown onSelect={setShowCount}>
+                            <Dropdown.Toggle variant="light" id="dropdown-show">
+                                Shows: {showCount}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {[10, 20, 50].map((count) => (
+                                    <Dropdown.Item key={count} eventKey={count}>
+                                        {count}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </Col>
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Search"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </Container>
+
+                {/* Button to Add New Actor */}
+                <Button
+                    variant="success"
+                    className="d-flex align-items-center w-auto px-4 py-2"
+                    style={{ whiteSpace: 'nowrap' }} // Ini mencegah teks tombol pecah ke baris lain
+                    onClick={handleShowModal}>
+                    <FaPlus className="me-2" />
+                    Add New Actor
+                </Button>
+            </Container>
+
+            {/* Modal for Adding/Editing Actor */}
+            < Modal show={showModal} onHide={handleCloseModal} centered >
+                <Modal.Header closeButton>
+                    <Modal.Title>{isEditing ? "Edit Actor" : "Add New Actor"}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Actor Name</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="name"
+                                value={isEditing ? editActor.name : newActor.name}
+                                onChange={handleInputChange}
+                                placeholder="Enter actor name"
+                                required
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Country</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="country_name"
+                                value={isEditing ? editActor.country_name : newActor.country_name}
+                                onChange={handleInputChange}
+                                placeholder="Enter country"
+                                required
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Birth Date</Form.Label>
+                            <DatePicker
+                                selected={isEditing ? (editActor.birthdate ? new Date(editActor.birthdate) : null) : (newActor.birthdate ? new Date(newActor.birthdate) : null)}
+                                onChange={handleDateChange}
+                                dateFormat="dd-MM-yyyy"
+                                className="form-control ms-2"
+                                placeholderText="Select Birth Date"
+                            />
+
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Upload Picture</Form.Label>
+                            <Form.Control
+                                type="file"
+                                name="actor_picture"
+                                accept="image/*"
+                                onChange={handlePhotoChange}
+                            />
+                            {/* Preview Image */}
+                            {isEditing && editActor.actor_picture && (
+                                <div className="mt-2">
+                                    <img src={editActor.actor_picture.startsWith("http") || editActor.actor_picture.startsWith("https")
+                                        ? editActor.actor_picture
+                                        : 'http://localhost:8001/images/' + editActor.actor_picture} alt="Preview" width={100} />
+                                </div>
+                            )}
+                            {!isEditing && newActor.actor_picture && (
+                                <div className="mt-2">
+                                    <img src={newActor.actor_picture.startsWith("http") || newActor.actor_picture.startsWith("https")
+                                        ? newActor.actor_picture
+                                        : 'http://localhost:8001/images/' + newActor.actor_picture} alt="Preview" width={100} />
+                                </div>
+                            )}
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={handleCloseModal}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-2"
+                        onClick={isEditing ? handleSaveEdit : handleAddActor}
+                        style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
+                    >
+                        {isEditing ? "Save Changes" : "Add Actor"}
+                    </Button>
+                </Modal.Footer>
+            </Modal >
+
+            {/* Modal for Delete Confirmation */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete Actor</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the actor "{actorToDelete?.name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteActor}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
+            {loading ? (
+                <p>Loading data...</p>
+            ) : (
+                <>
+                    {/* Table Section */}
+                    < Container className="actor-table-wrapper" >
+                        <Table striped bordered hover className="actor-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Countries</th>
+                                    <th>Actor Name</th>
+                                    <th>Birth Date</th>
+                                    <th>Photos</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentActors.map((actor) => (
+                                    <tr key={actor.id}>
+                                        <td>{actor.id}</td>
+                                        <td>{actor.country_name}</td>
+                                        <td>{actor.name}</td>
+                                        <td>
+                                            {new Date(actor.birthdate).toLocaleDateString('id-ID', {
+                                                day: '2-digit',
+                                                month: 'long',
+                                                year: 'numeric'
+                                            })}
+                                        </td>
+                                        <td>
+                                            {actor.actor_picture && actor.actor_picture !== "N/A" ? (
+                                                <img src={actor.actor_picture.startsWith("http") || actor.actor_picture.startsWith("https")
+                                                    ? actor.actor_picture
+                                                    : 'http://localhost:8001/images/' + actor.actor_picture} alt={actor.name} width={50} />
+                                            ) : (
+                                                <img src={Icon} alt={actor.name} width={50} />
+                                            )}
+                                        </td>
+                                        <td>
+                                            <Container className="action-button">
+                                                <Button className="btn btn-sm btn-primary me-2" onClick={() => handleEditActor(actor.id)}>
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setActorToDelete(actor);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </Container>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Container >
+                    {renderPagination()}
+                </>
+            )
+            }
+        </Container >
+
+    );
 };
 
-export default ActorList;
+export default ActorManager;

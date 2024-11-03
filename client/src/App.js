@@ -48,6 +48,7 @@ function App() {
             />
           }
         >
+          <Route path="/movie-input" element={<DramaInput />} />
           <Route path="/movie-list" element={<ListDrama />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/validate-drama" element={<ValidateDrama />} />
@@ -58,6 +59,7 @@ function App() {
           <Route path="/manage-genre" element={<GenreManager />} />
           <Route path="/movie-trash" element={<MovieTrash />} />
           <Route path="/manage-actor" element={<ActorManager />} />
+          <Route path="/users" element={<UserSetting />} />
         </Route>
       </Routes>
     </Router>

@@ -1,226 +1,411 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Table, Modal, Form, Pagination } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Table, Form, Button, Modal, Pagination, Dropdown, Col } from 'react-bootstrap';
+import { FaPlus } from "react-icons/fa";
+import './InputAward.css';
 
-const AwardManager = () => {
-  const [awards, setAwards] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [awardsPerPage] = useState(5);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedAward, setSelectedAward] = useState(null);
-  const [awardsName, setAwardsName] = useState('');
-  const [countryName, setCountryName] = useState('');
-  const [awardsYears, setAwardsYears] = useState('');
+const AwardsManager = () => {
+    const [awards, setAwards] = useState([]);
+    const [newAward, setNewAward] = useState({ country_name: '', awards_years: '', awards_name: '' });
+    const [editing, setEditing] = useState(null);
+    const [editAward, setEditAward] = useState({ country_name: '', awards_years: '', awards_name: '' });
+    const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(true); // To handle loading state
+    const [currentPage, setCurrentPage] = useState(1); // State for current page
+    const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
+    const [showCount, setShowCount] = useState(10); // Items per page
 
-  // Fetch awards data
-  const fetchAwards = async () => {
-    try {
-      const response = await fetch('http://localhost:8001/awards');
-      const data = await response.json();
-      setAwards(data);
-    } catch (error) {
-      console.error("Error fetching awards:", error);
-    }
-  };
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [awardToDelete, setAwardToDelete] = useState(null);
 
-  useEffect(() => {
-    fetchAwards();
-  }, []);
+    useEffect(() => {
+        const fetchAwards = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/awards');
+                const data = await response.json();
+                setAwards(data);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching actors:", error);
+                setLoading(false);
+            }
+        };
+        fetchAwards();
+    }, []);
 
-  // Handle Add Award
-  const handleAddAward = async () => {
-    if (!awardsName || !countryName || !awardsYears) {
-      alert("All fields are required!");
-      return;
-    }
+    const handleShowModal = () => {
+        setIsEditing(false);
+        setShowModal(true);
+    };
 
-    try {
-      const response = await fetch('http://localhost:8001/awards', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ awards_name: awardsName, country_name: countryName, awards_years: awardsYears }),
-      });
-      if (response.ok) {
-        await fetchAwards();
-        setShowAddModal(false);
-        alert("Award added successfully!");
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error);
-      }
-    } catch (error) {
-      console.error("Error adding award:", error);
-    }
-  };
-
-  // Handle Update Award
-  const handleUpdateAward = async () => {
-    if (!awardsName || !countryName || !awardsYears) {
-      alert("All fields are required!");
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:8001/awards/${selectedAward.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ awards_name: awardsName, country_name: countryName, awards_years: awardsYears }),
-      });
-      if (response.ok) {
-        await fetchAwards();
-        setShowUpdateModal(false);
-        alert("Award updated successfully!");
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error);
-      }
-    } catch (error) {
-      console.error("Error updating award:", error);
-    }
-  };
-
-  // Handle Delete Award
-  const handleDeleteAward = async (id) => {
-    if (window.confirm("Are you sure you want to delete this award?")) {
-      try {
-        const response = await fetch(`http://localhost:8001/awards/${id}`, {
-          method: 'DELETE',
-        });
-        if (response.ok) {
-          await fetchAwards();
-          alert("Award deleted successfully!");
+    const handleCloseModal = () => {
+        setShowModal(false);
+        if (isEditing) {
+            // Reset the editing state and clear editActor data
+            setEditAward({ country_name: '', awards_years: '', awards_name: '' });
         } else {
-          const errorData = await response.json();
-          alert(errorData.error);
+            // Reset the newActor state
+            setNewAward({ country_name: '', awards_years: '', awards_name: '' });
         }
-      } catch (error) {
-        console.error("Error deleting award:", error);
-      }
-    }
-  };
+        window.location.reload();
+    };
 
-  // Pagination Logic
-  const indexOfLastAward = currentPage * awardsPerPage;
-  const indexOfFirstAward = indexOfLastAward - awardsPerPage;
-  const currentAwards = awards.filter(award =>
-    award.awards_name.toLowerCase().includes(searchTerm.toLowerCase())
-  ).slice(indexOfFirstAward, indexOfLastAward);
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
 
-  const totalPages = Math.ceil(awards.length / awardsPerPage);
+        if (name === 'awards_years' && (value.length > 4 || isNaN(value))) {
+            alert("Year must be exactly 4 digits");
+            return;
+        }
 
-  return (
-    <div className="container">
-      <h1>Awards Manager</h1>
-      <input
-        type="text"
-        placeholder="Search Awards..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="form-control mb-3"
-      />
-      <Button onClick={() => setShowAddModal(true)} variant="primary" className="mb-3">Add Award</Button>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Award Name</th>
-            <th>Country</th>
-            <th>Year</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentAwards.map(award => (
-            <tr key={award.id}>
-              <td>{award.id}</td>
-              <td>{award.awards_name}</td>
-              <td>{award.country_name}</td>
-              <td>{award.awards_years}</td>
-              <td>
-                <Button variant="warning" onClick={() => {
-                  setSelectedAward(award);
-                  setAwardsName(award.awards_name);
-                  setCountryName(award.country_name);
-                  setAwardsYears(award.awards_years);
-                  setShowUpdateModal(true);
-                }}>Update</Button>
-                <Button variant="danger" onClick={() => handleDeleteAward(award.id)}>Delete</Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+        if (isEditing) {
+            setEditAward((prev) => ({ ...prev, [name]: value }));
+        } else {
+            setNewAward((prev) => ({ ...prev, [name]: value }));
+        }
+    };
 
-      <Pagination>
-        <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
-        {Array.from({ length: totalPages }, (_, index) => (
-          <Pagination.Item key={index + 1} active={index + 1 === currentPage} onClick={() => setCurrentPage(index + 1)}>
-            {index + 1}
-          </Pagination.Item>
-        ))}
-        <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
-      </Pagination>
+    const checkCountryExists = async (countryName) => {
+        try {
+            const response = await fetch(`http://localhost:8001/countries/${countryName}`);
+            if (!response.ok) {
+                return false; // Return false if country is not found (404)
+            }
+            const data = await response.json();
+            return !!data; // Return true if data is found, false otherwise
+        } catch (error) {
+            console.error("Error checking country existence:", error);
+            return false;
+        }
+    };
 
-      {/* Add Award Modal */}
-      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Add Award</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="formAwardsName">
-              <Form.Label>Award Name</Form.Label>
-              <Form.Control type="text" value={awardsName} onChange={(e) => setAwardsName(e.target.value)} required />
-            </Form.Group>
-            <Form.Group controlId="formCountryName">
-              <Form.Label>Country Name</Form.Label>
-              <Form.Control type="text" value={countryName} onChange={(e) => setCountryName(e.target.value)} required />
-            </Form.Group>
-            <Form.Group controlId="formAwardsYears">
-              <Form.Label>Award Year</Form.Label>
-              <Form.Control type="number" value={awardsYears} onChange={(e) => setAwardsYears(e.target.value)} required />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAddModal(false)}>Close</Button>
-          <Button variant="primary" onClick={handleAddAward}>Add Award</Button>
-        </Modal.Footer>
-      </Modal>
+    const handleAddAward = async (e) => {
+        e.preventDefault();
 
-      {/* Update Award Modal */}
-      <Modal show={showUpdateModal} onHide={() => setShowUpdateModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Update Award</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="formUpdateAwardsName">
-              <Form.Label>Award Name</Form.Label>
-              <Form.Control type="text" value={awardsName} onChange={(e) => setAwardsName(e.target.value)} required />
-            </Form.Group>
-            <Form.Group controlId="formUpdateCountryName">
-              <Form.Label>Country Name</Form.Label>
-              <Form.Control type="text" value={countryName} onChange={(e) => setCountryName(e.target.value)} required />
-            </Form.Group>
-            <Form.Group controlId="formUpdateAwardsYears">
-              <Form.Label>Award Year</Form.Label>
-              <Form.Control type="number" value={awardsYears} onChange={(e) => setAwardsYears(e.target.value)} required />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowUpdateModal(false)}>Close</Button>
-          <Button variant="primary" onClick={handleUpdateAward}>Update Award</Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
-  );
+        // Check if country exists in the backend
+        const countryExists = await checkCountryExists(newAward.country_name);
+        if (!countryExists) {
+            alert("Country does not exist. Please add the country first.");
+            return;
+        }
+
+        // Cek apakah tahun berisi tepat 4 angka
+        if (newAward.awards_years.length !== 4 || isNaN(newAward.awards_years)) {
+            alert("Year must be exactly 4 digits");
+            return;
+        }
+
+
+        if (parseInt(newAward.awards_years) < 1950) {
+            alert("Year must be greater than or equal to 1950");
+            return;
+        }
+
+        if (newAward.awards_name && newAward.country_name && newAward.awards_years) {
+            const newAwardData = {
+                awards_name: newAward.awards_name,
+                country_name: newAward.country_name,
+                awards_years: newAward.awards_years,
+            };
+
+            try {
+                const response = await fetch('http://localhost:8001/awards', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newAwardData),
+                });
+
+                const data = await response.json();
+                setAwards((prevAwards) => [...prevAwards, data]);
+            } catch (error) {
+                console.error("Error adding award:", error);
+            }
+            setNewAward({ country_name: '', awards_years: '', awards_name: '' });
+            handleCloseModal();
+        } else {
+            alert("All fields must be filled!");
+        }
+    };
+
+    const handleEditAward = async (e) => {
+        e.preventDefault();
+
+        if (parseInt(editAward.awards_years) < 1950) {
+            alert("Year must be greater than or equal to 1950");
+            return;
+        }
+
+        if (editAward.awards_name && editAward.country_name && editAward.awards_years) {
+            const updatedAwardData = {
+                awards_name: editAward.awards_name,
+                country_name: editAward.country_name,
+                awards_years: editAward.awards_years,
+            };
+
+            // Check if the edited country exists in the backend
+            const countryExists = await checkCountryExists(editAward.country_name);
+            if (!countryExists) {
+                alert("Country does not exist. Please add the country first.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8001/awards/${editing}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedAwardData),
+                });
+
+                const data = await response.json();
+                setAwards((prevAwards) =>
+                    prevAwards.map((award) => (award.id === editing ? data : award))
+                );
+                setIsEditing(false);
+                setEditing(null);
+                handleCloseModal();
+            } catch (error) {
+                console.error("Error updating award:", error);
+            }
+        } else {
+            alert("All fields must be filled!");
+        }
+    };
+
+
+    const handleDeleteAward = async () => {
+        if (awardToDelete) {
+            try {
+                await fetch(`http://localhost:8001/awards/${awardToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setAwards((prevAwards) => prevAwards.filter((award) => award.id !== awardToDelete.id));
+                setShowDeleteModal(false);
+                setAwardToDelete(null);
+            } catch (error) {
+                console.error("Error deleting award:", error);
+            }
+        }
+    };
+
+    // Function untuk filter award berdasarkan search term (sebelum pagination)
+    const filteredAwards = awards.filter((award) =>
+        (award.awards_name && award.awards_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (award.country_name && award.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (award.awards_years && award.awards_years.toString().includes(searchTerm))
+    );
+
+    const indexOfLastAward = currentPage * showCount;
+    const indexOfFirstAward = indexOfLastAward - showCount;
+    const currentAwards = filteredAwards.slice(indexOfFirstAward, indexOfLastAward); // Paginate hasil pencarian
+    const totalPages = Math.ceil(filteredAwards.length / showCount);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
+    // Logic to show only 3 pages (current, previous, next)
+    const renderPagination = () => {
+        let items = [];
+        const startPage = Math.max(1, currentPage - 1);
+        const endPage = Math.min(totalPages, currentPage + 1);
+
+        for (let number = startPage; number <= endPage; number++) {
+            items.push(
+                <Pagination.Item key={number} active={number === currentPage} onClick={() => handlePageChange(number)}>
+                    {number}
+                </Pagination.Item>
+            );
+        }
+        return (
+            <div className="d-flex justify-content-end">
+                <Pagination>
+                    <Pagination.First onClick={() => setCurrentPage(1)} />
+                    <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
+                    {items}
+                    <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
+                    <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
+                </Pagination>
+            </div>
+        );
+    };
+
+    return (
+        <Container>
+            <Container className="App">
+                <h1 className="title">Awards Manager</h1>
+            </Container>
+            {/* Form Section */}
+            <Container className="list-drama-header d-flex justify-content-between mb-3">
+                <Container className="d-flex">
+                    <Col xs="auto" className="d-flex me-3">
+                        <Dropdown onSelect={setShowCount}>
+                            <Dropdown.Toggle variant="light" id="dropdown-show">
+                                Shows: {showCount}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {[10, 20, 50].map((count) => (
+                                    <Dropdown.Item key={count} eventKey={count}>
+                                        {count}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </Col>
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Search"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </Container>
+
+                {/* Button to Add New Award */}
+                <Button
+                    variant="success"
+                    className="d-flex align-items-center w-auto px-4 py-2"
+                    style={{ whiteSpace: 'nowrap' }} // Ini mencegah teks tombol pecah ke baris lain
+                    onClick={handleShowModal}>
+                    <FaPlus className="me-2" />
+                    Add New Award
+                </Button>
+            </Container>
+
+            <Modal show={showModal} onHide={handleCloseModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>{isEditing ? 'Edit Award' : 'Add New Award'}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Award</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="awards_name"
+                                    value={isEditing ? editAward.awards_name : newAward.awards_name}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter award"
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Country</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="country_name"
+                                    value={isEditing ? editAward.country_name : newAward.country_name}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter country"
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Year</Form.Label>
+                                <Form.Control
+                                    type="number"
+                                    name="awards_years"
+                                    value={isEditing ? editAward.awards_years : newAward.awards_years}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter year"
+                                />
+                            </Form.Group>
+                        </Form>
+
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={handleCloseModal}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-2"
+                        style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
+                        onClick={isEditing ? handleEditAward : handleAddAward}>
+                        {isEditing ? 'Save Changes' : 'Submit'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the genre "{awardToDelete?.awards_name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteAward}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
+
+            {loading ? (
+                <p>Loading data...</p>
+            ) : (
+                <>
+                    {/* Table Section */}
+                    <Container className='award-table-wrapper'>
+                        <Table className="award-table" striped bordered hover>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Country</th>
+                                    <th>Year</th>
+                                    <th>Award</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentAwards.map((award) => (
+                                    <tr key={award.id}>
+                                        <td>{award.id}</td>
+                                        <td>{award.country_name}</td>
+                                        <td>{award.awards_years}</td>
+                                        <td>{award.awards_name}</td>
+                                        <td>
+                                            <Container className="action-button">
+                                                <Button
+                                                    className="btn btn-sm btn-primary me-2"
+                                                    onClick={() => {
+                                                        setIsEditing(true);
+                                                        setShowModal(true);
+                                                        setEditAward(award);
+                                                        setEditing(award.id);
+                                                    }}
+                                                >
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setAwardToDelete(award);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </Container>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Container>
+                    {renderPagination()}
+                </>
+            )}
+        </Container >
+    );
 };
 
-export default AwardManager;
+export default AwardsManager;

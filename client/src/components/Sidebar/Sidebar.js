@@ -57,7 +57,7 @@ function Sidebar({ openSidebarToggle, OpenSidebar }) {
       </div>
       <ul className="sidebar-list">
         <li className="sidebar-list-item">
-          <NavLink to="/" className="sidebar-link" activeClassName="active">
+          <NavLink to="/dashboard" className="sidebar-link" activeClassName="active">
             <BsGrid1X2Fill className="icon" /> <span>Dashboard</span>
           </NavLink>
         </li>
