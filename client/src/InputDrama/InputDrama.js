@@ -9,12 +9,15 @@ import {
   Badge,
   FormLabel,
 } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../InputDrama/InputDrama.css";
 import Select from "react-select"; // Import react-select
 import Rating from "react-rating-stars-component"; // Import star rating component
 
 const DramaInput = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [formData, setFormData] = useState({
     posterUrl: "",
     status: "",
@@ -34,6 +37,37 @@ const DramaInput = () => {
     imdbScore: 0,
   });
 
+  
+  
+
+  useEffect(() => {
+    if (location.state && location.state.movieData) {
+      const movieData = location.state.movieData;
+  
+      setFormData({
+        posterUrl: movieData.poster || "",
+        status: movieData.status || "",
+        view: movieData.view || "",
+        title: movieData.title || "",
+        alternativeTitle: movieData.alt_title || "",
+        director: movieData.director || "",
+        year: movieData.release_year || "",
+        country: movieData.country || "",
+        synopsis: movieData.synopsis || "",
+        availability: movieData.availability || "",
+        genres: movieData.Genres ? movieData.Genres.split(", ") : [], // Memecah string Genres menjadi array
+        actors: movieData.Actors
+          ? movieData.Actors.split(", ").map((name) => ({ name, role: "" }))
+          : [], // Memecah string Actors menjadi array objek
+        trailer: movieData.trailer || "",
+        awards: movieData.awards || [],
+        backgroundUrl: movieData.background || "",
+        imdbScore: movieData.imdb_score || 0,
+      });
+    }
+  }, [location.state]);  
+  
+
   const [genresList, setGenresList] = useState([]); // State untuk genres dari backend
   const [actorsList, setActorsList] = useState([]); // State untuk daftar aktor
   const [filteredActors, setFilteredActors] = useState([]); // State untuk hasil pencarian aktor
@@ -43,7 +77,6 @@ const DramaInput = () => {
   const [platformList, setPlatformList] = useState([]); // State untuk platform dari backend
   const [statusList, setStatusList] = useState([]); // State untuk status dari backend
 
-  const navigate = useNavigate();
 
   // Fetch genres dari backend menggunakan useEffect
   useEffect(() => {
