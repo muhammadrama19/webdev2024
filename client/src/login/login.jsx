@@ -6,7 +6,6 @@ import { Button } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
-
 import Swal from 'sweetalert2';
 import GoogleLogin from "../components/googleButton/googleButton";
 
