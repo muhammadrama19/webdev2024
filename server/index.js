@@ -1626,6 +1626,98 @@ app.get(
   }
 );
 
+app.post("/register", (req, res) => {
+  const { username, email, password } = req.body;
+
+  const checkSql = "SELECT * FROM users WHERE username = ? OR email = ?";
+  const sql =
+    "INSERT INTO users (`username`, `email`, `password`, `isEmailConfirmed`) VALUES (?)";
+  const saltRounds = 10;
+
+  // Check if the username or email already exists
+  db.query(checkSql, [username, email], (checkErr, checkData) => {
+    if (checkErr) {
+      console.error("Database check error:", checkErr); // Log the error
+      return res.json({ message: "Database error occurred", success: false });
+    }
+    if (checkData.length > 0) {
+      return res.json({
+        message: "Username or Email already exists",
+        success: false,
+      });
+    }
+
+    // Proceed with password hashing and user creation if no duplicate found
+    bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
+      if (err) {
+        return res.json({ message: "Error hashing password", success: false });
+      }
+
+      const values = [username, email, hashedPassword, false]; // Default isConfirmed as false
+
+      db.query(sql, [values], (insertErr, insertData) => {
+        if (insertErr) {
+          return res.json({
+            message: "Error during registration",
+            success: false,
+          });
+        }
+
+        // Generate Email Confirmation Token (JWT)
+        const emailToken = jwt.sign({ email }, "EMAIL_SECRET", {
+          expiresIn: "1d",
+        });
+
+        // Send confirmation email
+        const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
+        const templatePath = path.join(
+          __dirname,
+          "template",
+          "emailTemplate.html"
+        );
+        fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+          if (err) {
+            console.error("Error reading email template:", err);
+            return res.json({
+              message: "Error reading email template",
+              success: false,
+            });
+          }
+
+          // Replace placeholders with actual data
+          const emailHtml = htmlTemplate
+            .replace(/{{username}}/g, username)
+            .replace(/{{confirmationUrl}}/g, confirmationUrl);
+
+          // Mail options
+          const mailOptions = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: "Please confirm your email",
+            html: emailHtml,
+          };
+
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              return res.json({
+                message: "Error sending confirmation email",
+                success: false,
+              });
+            }
+            res.json({
+              message:
+                "Registration successful. Please check your email for confirmation.",
+              success: true,
+            });
+            //redirect into login
+            res.redirect("http://localhost:3001/login");
+          });
+        });
+      });
+    });
+  });
+});
+
 app.post("/forgot-password", (req, res) => {
   const { email } = req.body;
 
@@ -1786,97 +1878,7 @@ app.get("/confirm-email/:token", (req, res) => {
   });
 });
 
-app.post("/register", (req, res) => {
-  const { username, email, password } = req.body;
 
-  const checkSql = "SELECT * FROM users WHERE username = ? OR email = ?";
-  const sql =
-    "INSERT INTO users (`username`, `email`, `password`, `isEmailConfirmed`) VALUES (?)";
-  const saltRounds = 10;
-
-  // Check if the username or email already exists
-  db.query(checkSql, [username, email], (checkErr, checkData) => {
-    if (checkErr) {
-      console.error("Database check error:", checkErr); // Log the error
-      return res.json({ message: "Database error occurred", success: false });
-    }
-    if (checkData.length > 0) {
-      return res.json({
-        message: "Username or Email already exists",
-        success: false,
-      });
-    }
-
-    // Proceed with password hashing and user creation if no duplicate found
-    bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
-      if (err) {
-        return res.json({ message: "Error hashing password", success: false });
-      }
-
-      const values = [username, email, hashedPassword, false]; // Default isConfirmed as false
-
-      db.query(sql, [values], (insertErr, insertData) => {
-        if (insertErr) {
-          return res.json({
-            message: "Error during registration",
-            success: false,
-          });
-        }
-
-        // Generate Email Confirmation Token (JWT)
-        const emailToken = jwt.sign({ email }, "EMAIL_SECRET", {
-          expiresIn: "1d",
-        });
-
-        // Send confirmation email
-        const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
-        const templatePath = path.join(
-          __dirname,
-          "template",
-          "emailTemplate.html"
-        );
-        fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
-          if (err) {
-            console.error("Error reading email template:", err);
-            return res.json({
-              message: "Error reading email template",
-              success: false,
-            });
-          }
-
-          // Replace placeholders with actual data
-          const emailHtml = htmlTemplate
-            .replace(/{{username}}/g, username)
-            .replace(/{{confirmationUrl}}/g, confirmationUrl);
-
-          // Mail options
-          const mailOptions = {
-            from: process.env.EMAIL,
-            to: email,
-            subject: "Please confirm your email",
-            html: emailHtml,
-          };
-
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              return res.json({
-                message: "Error sending confirmation email",
-                success: false,
-              });
-            }
-            res.json({
-              message:
-                "Registration successful. Please check your email for confirmation.",
-              success: true,
-            });
-            //redirect into login
-            res.redirect("http://localhost:3001/login");
-          });
-        });
-      });
-    });
-  });
-});
 
 // Forgot Password
 // OAuth2 client setup
