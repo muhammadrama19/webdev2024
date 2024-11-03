@@ -1508,7 +1508,7 @@ app.put("/movie-restore/:id", (req, res) => {
 
 //LOGIN
 app.post("/login", (req, res) => {
-  const query = "SELECT * FROM users WHERE email = ?";
+  const query = "SELECT * FROM users WHERE Status_Account IN (1, 2) AND email = ?";
 
   db.query(query, [req.body.email], (err, data) => {
     if (err) {
