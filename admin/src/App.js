@@ -7,20 +7,18 @@ import Home from '../src/Dashboard/Home';
 import DramaInput from '../src/InputDrama/InputDrama';
 import ListDrama from '../src/ListDrama/ListDrama';
 import ValidateDrama from './ValidateDrama/ValidateDrama';
-import ValidateHistory from './ValidateHistory/validateHistory'; // Import ValidateHistory component
+import ValidateHistory from './ValidateHistory/ValidateHistory'; // Import ValidateHistory component
 import ReviewManager from './ReviewManager/ReviewManager';
 import ActorManager from './InputActor/InputActors';
 import GenreManager from './InputGenres/InputGenres';
 import CountryManager from './InputCountry/InputCountry';
 import AwardsManager from './InputAward/InputAward';
 import UserSetting from './UserSettings/UserSetting';
-import MovieTrash from './MovieTrash/movieTrash'; // Import MovieTrash component
+import MovieTrash from './MovieTrash/MovieTrash'; // Import MovieTrash component
 
 function App() {
   const [openSidebarToggle, setOpenSidebarToggle] = useState(false); // Default tutup di mobile
-  // const [dramas, setDramas] = useState([]); // State untuk menyimpan movie yang diinput
-  // const [trashDramas, setTrashDramas] = useState([]); // State untuk menyimpan movie yang dihapus
-  // const [validatedDramas, setValidatedDramas] = useState([]); // State untuk menyimpan drama yang sudah divalidasi
+  const [validatedDramas, setValidatedDramas] = useState([]);
 
   const OpenSidebar = () => {
     setOpenSidebarToggle(!openSidebarToggle);
@@ -36,8 +34,19 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/movie-input" element={<DramaInput />} />
             <Route path="/movie-list" element={<ListDrama />} />
-            <Route path="/movie-validation" element={<ValidateDrama />} />
-            <Route path="/validate-history" element={<ValidateHistory />} />
+            <Route
+              path="/validate-drama"
+              element={
+                <ValidateDrama
+                  validatedDramas={validatedDramas}
+                  setValidatedDramas={setValidatedDramas}
+                />
+              }
+            />
+            <Route
+              path="/validate-history"
+              element={<ValidateHistory validatedDramas={validatedDramas} />}
+            />
             <Route path="/review-list" element={<ReviewManager />} />
             <Route path="/attribute-actor" element={<ActorManager />} />
             <Route path="/attribute-genre" element={<GenreManager />} />

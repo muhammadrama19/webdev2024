@@ -1382,7 +1382,7 @@ app.post("/add-drama", async (req, res) => {
     // Insert into movies table
     const movieQuery = `
       INSERT INTO movies (title, alt_title, release_year, imdb_score, synopsis, view, poster, background, trailer, director, status, status_id, availability_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3, ?, ?)
     `;
     const movieValues = [
       title,
@@ -1466,6 +1466,22 @@ app.put("/movie-delete/:id", (req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 0 WHERE id = ?`;
+
+  db.query(query, [movieId], (err, result) => {
+    if (err) {
+      console.error("Error executing query:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    res.status(200).json({ message: "Movie moved to trash successfully" });
+  });
+});
+
+//REJECTED MOVIES
+app.put("/movie-rejected/:id", (req, res) => {
+  const movieId = req.params.id;
+
+  const query = `UPDATE movies SET status = 2 WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
