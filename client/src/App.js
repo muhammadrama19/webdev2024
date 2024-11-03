@@ -13,7 +13,7 @@ import SearchResult from "./search/searchResult";
 import ForgotPassword from "./login/forgotPassowrd";
 import ResetPassword from "./login/Reset";
 import Dashboard from "./dashboard/Home";
-// import DramaInput from './InputDrama/InputDrama';
+import DramaInput from './InputDrama/InputDrama';
 import ListDrama from "./ListDrama/ListDrama";
 import ValidateDrama from "./ValidateDrama/ValidateDrama";
 import ValidateHistory from "./ValidateHistory/validateHistory"; // Import ValidateHistory component
@@ -28,12 +28,6 @@ import ActorManager from './InputActor/InputActors'
 import "./app.scss";
 
 function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prevState) => !prevState);
-  };
-
   return (
     <Router>
       <Routes>
@@ -51,8 +45,6 @@ function App() {
         <Route
           element={
             <AdminLayout
-              openSidebarToggle={isSidebarOpen}
-              OpenSidebar={toggleSidebar}
             />
           }
         >

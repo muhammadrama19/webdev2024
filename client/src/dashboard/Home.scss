@@ -1,36 +1,47 @@
-/* Dashboard.module.scss */
+.icon {
+  vertical-align: middle;
+  line-height: 1px;
+  font-size: 20px;
+  margin-right: 5px;
+}
 
-.dashboard {
-  padding: 20px;
+/* Medium <= 992px */
+@media screen and (max-width: 992px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.2fr 3fr;
+    grid-template-areas:
+      'header'
+      'main';
+  }
 
-  .dashboard-card {
-    background-color: var(--main-color);
-    color: var(--primary-color);
-    text-align: center;
-    border: none;
-    box-shadow: var(--elevation-2);
-    transition: transform 0.3s ease-in-out;
+  .sidebar-title > span {
+    display: inline;
+  }
+  
+}
 
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: var(--elevation-3);
-    }
+/* Small <= 768px */
+@media screen and (max-width: 768px) {
+  .main-cards {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 0;
+  }
 
-    .card-title {
-      font-size: 1.25rem;
-      font-weight: 500;
-      color: var(--secondary-color);
-    }
-
-    .card-text {
-      font-size: 2rem;
-      font-weight: bold;
-    }
+  .charts {
+    grid-template-columns: 1fr;
+    margin-top: 30px;
   }
 }
 
-@media (max-width: 768px) {
-  .dashboard-card {
-    margin-bottom: 1rem;
+/* Extra Small <= 576px */
+@media screen and (max-width: 576px) {
+  .header-left {
+    position: relative;
+  }
+
+  .header-right {
+    position:relative;
   }
 }

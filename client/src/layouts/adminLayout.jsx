@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import NavbarSidebar from '../components/navbarsidebar/navbarsidebar'; // Import NavbarSidebar
+import Header from '../components/navbarsidebar/navbarsidebar';
+import Sidebar from '../components/Sidebar/Sidebar';
+import './adminLayout.scss'; // Import styles if you want additional layout styling
 // import styles from './AdminLayout.scss'; // Import styles if you want additional layout styling
 
 const AdminLayout = () => {
@@ -37,8 +40,10 @@ const AdminLayout = () => {
   }, []);
 
   return (
-    <div>
-      <NavbarSidebar openSidebarToggle={openSidebarToggle} toggleSidebar={OpenSidebar} /> {/* Add NavbarSidebar */}
+    <div className={`grid-container ${openSidebarToggle ? 'sidebar-open' : 'sidebar-closed'}`}>
+      <Header OpenSidebar={OpenSidebar} openSidebarToggle={openSidebarToggle} /> {/* Add NavbarSidebar */}
+      <Sidebar openSidebarToggle={openSidebarToggle} OpenSidebar={OpenSidebar} /> {/* Pass OpenSidebar */}
+      <div className="main-container">
       
       <div>
         {isLoggedIn ? (
@@ -57,6 +62,7 @@ const AdminLayout = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

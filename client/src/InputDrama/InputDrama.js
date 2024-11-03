@@ -7,15 +7,21 @@ import {
   Container,
   Image,
   Badge,
+  FormLabel,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "../InputDrama/InputDrama.css";
-import Select from 'react-select';  // Import react-select  
+import Select from "react-select"; // Import react-select
+import Rating from "react-rating-stars-component"; // Import star rating component
 
 const DramaInput = () => {
   const [formData, setFormData] = useState({
+    posterUrl: "",
+    status: "",
+    view: "",
     title: "",
     alternativeTitle: "",
+    director: "",
     year: "",
     country: "",
     synopsis: "",
@@ -23,8 +29,9 @@ const DramaInput = () => {
     genres: [],
     actors: [],
     trailer: "",
-    award: [],
-    image: null,
+    awards: [],
+    backgroundUrl: "",
+    imdbScore: 0,
   });
 
   const [genresList, setGenresList] = useState([]); // State untuk genres dari backend
@@ -34,6 +41,7 @@ const DramaInput = () => {
   const [awardsList, setAwardsList] = useState([]); // State untuk awards dari backend
   const [countriesList, setCountriesList] = useState([]); // State untuk countries dari backend
   const [platformList, setPlatformList] = useState([]); // State untuk platform dari backend
+  const [statusList, setStatusList] = useState([]); // State untuk status dari backend
 
   const navigate = useNavigate();
 
@@ -41,6 +49,10 @@ const DramaInput = () => {
   useEffect(() => {
     const fetchGenresActorsAwards = async () => {
       try {
+        const statusResponse = await fetch("http://localhost:8001/status");
+        const statusData = await statusResponse.json();
+        setStatusList(statusData);
+
         const genresResponse = await fetch("http://localhost:8001/genres");
         const genresData = await genresResponse.json();
         setGenresList(genresData);
@@ -73,14 +85,14 @@ const DramaInput = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-  // Validasi khusus untuk "Year" field
-  if (name === "year") {
-    const yearRegex = /^\d{0,4}$/; // Memungkinkan 0 hingga 4 digit angka
-    if (!yearRegex.test(value)) {
-      alert("Year must be a 4-digit number and only digits are allowed");
-      return;
+    // Validasi khusus untuk "Year" field
+    if (name === "year") {
+      const yearRegex = /^\d{0,4}$/; // Memungkinkan 0 hingga 4 digit angka
+      if (!yearRegex.test(value)) {
+        alert("Year must be a 4-digit number and only digits are allowed");
+        return;
+      }
     }
-  }
 
     setFormData({
       ...formData,
@@ -99,22 +111,53 @@ const DramaInput = () => {
 
   const handleActorChange = (actorName) => {
     // Pastikan tidak lebih dari 10 aktor yang dipilih dan aktor belum dipilih
-    if (formData.actors.length < 10 && !formData.actors.includes(actorName)) {
+    if (
+      formData.actors.length < 10 &&
+      !formData.actors.some((actor) => actor.name === actorName)
+    ) {
       setFormData((prevState) => ({
         ...prevState,
-        actors: [...prevState.actors, actorName],
+        actors: [...prevState.actors, { name: actorName, role: "" }],
       }));
     }
     setSearchTerm(""); // Reset pencarian setelah aktor dipilih
     setFilteredActors([]); // Kosongkan hasil pencarian setelah aktor dipilih
   };
 
+  const handleRoleChange = (actorName, role) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      actors: prevState.actors.map((actor) =>
+        actor.name === actorName ? { ...actor, role } : actor
+      ),
+    }));
+  };
+
   const removeActor = (actorName) => {
     setFormData((prevState) => ({
       ...prevState,
-      actors: prevState.actors.filter((actor) => actor !== actorName),
+      actors: prevState.actors.filter((actor) => actor.name !== actorName),
     }));
   };
+
+  // const handleActorChange = (actorName) => {
+  //   // Pastikan tidak lebih dari 10 aktor yang dipilih dan aktor belum dipilih
+  //   if (formData.actors.length < 10 && !formData.actors.includes(actorName)) {
+  //     setFormData((prevState) => ({
+  //       ...prevState,
+  //       actors: [...prevState.actors, actorName],
+  //     }));
+  //   }
+  //   setSearchTerm(""); // Reset pencarian setelah aktor dipilih
+  //   setFilteredActors([]); // Kosongkan hasil pencarian setelah aktor dipilih
+  // };
+
+  // const removeActor = (actorName) => {
+  //   setFormData((prevState) => ({
+  //     ...prevState,
+  //     actors: prevState.actors.filter((actor) => actor !== actorName),
+  //   }));
+  // };
 
   const handleSearchActor = (e) => {
     const searchValue = e.target.value;
@@ -131,116 +174,132 @@ const DramaInput = () => {
     }
   };
 
-  const handleAwardChange = (selectedOptions) => {
+  const handleAwardsChange = (selectedOptions) => {
     setFormData((prevState) => ({
       ...prevState,
-      award: selectedOptions ? selectedOptions.map((option) => option.value) : [],
+      awards: selectedOptions
+        ? selectedOptions.map((option) => option.value)
+        : [],
     }));
   };
 
-  const awardOptions = awardsList.map(award => ({
-    value: award.awards_name,
-    label: award.awards_name,
+  const awardsOptions = awardsList.map((awards) => ({
+    value: awards.awards_name,
+    label: awards.awards_name,
   }));
 
-
-  const removeAward = (awardName) => {
+  const removeAwards = (awardsName) => {
     setFormData((prevState) => ({
       ...prevState,
-      awards: prevState.award.filter((award) => award !== awardName),
+      awards: prevState.awards.filter((awards) => awards !== awardsName),
     }));
   };
 
   // Ref untuk kontainer besar
-  const imgRefLarge = useRef(null);
-  const iconRefLarge = useRef(null);
-  const textRefLarge = useRef(null);
-  const containerRefLarge = useRef(null);
+  // const imgRefLarge = useRef(null);
+  // const iconRefLarge = useRef(null);
+  // const textRefLarge = useRef(null);
+  // const containerRefLarge = useRef(null);
 
-  // Ref untuk kontainer kecil
-  const imgRefSmall = useRef(null);
-  const iconRefSmall = useRef(null);
-  const textRefSmall = useRef(null);
-  const containerRefSmall = useRef(null);
+  // // Ref untuk kontainer kecil
+  // const imgRefSmall = useRef(null);
+  // const iconRefSmall = useRef(null);
+  // const textRefSmall = useRef(null);
+  // const containerRefSmall = useRef(null);
 
-  const handleImageChange = (event, isSmall) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        if (isSmall) {
-          if (imgRefSmall.current) {
-            imgRefSmall.current.src = e.target.result;
-            imgRefSmall.current.style.display = "block";
-            imgRefSmall.current.style.width = "100%";
-            imgRefSmall.current.style.height = "auto";
-          }
-          if (iconRefSmall.current) {
-            iconRefSmall.current.style.display = "none";
-          }
-          if (textRefSmall.current) {
-            textRefSmall.current.style.display = "none"; // Sembunyikan teks
-          }
-          if (containerRefSmall.current) {
-            containerRefSmall.current.style.border = "none";
-          }
-        } else {
-          if (imgRefLarge.current) {
-            imgRefLarge.current.src = e.target.result;
-            imgRefLarge.current.style.display = "block";
-            imgRefLarge.current.style.width = "100%";
-            imgRefLarge.current.style.height = "auto";
-          }
-          if (iconRefLarge.current) {
-            iconRefLarge.current.style.display = "none";
-          }
-          if (textRefLarge.current) {
-            textRefLarge.current.style.display = "none"; // Sembunyikan teks
-          }
-          if (containerRefLarge.current) {
-            containerRefLarge.current.style.border = "none";
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    } else {
-      console.error("No file selected");
-    }
+  // const handleImageChange = (event, isSmall) => {
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     setFormData((prevState) => ({
+  //       ...prevState,
+  //       image: isSmall ? file : prevState.image,
+  //       backgroundImage: !isSmall ? file : prevState.backgroundImage,
+  //     }));
+  //     const reader = new FileReader();
+  //     reader.onload = function (e) {
+  //       if (isSmall) {
+  //         if (imgRefSmall.current) {
+  //           imgRefSmall.current.src = e.target.result;
+  //           imgRefSmall.current.style.display = "block";
+  //           imgRefSmall.current.style.width = "100%";
+  //           imgRefSmall.current.style.height = "auto";
+  //         }
+  //         if (iconRefSmall.current) {
+  //           iconRefSmall.current.style.display = "none";
+  //         }
+  //         if (textRefSmall.current) {
+  //           textRefSmall.current.style.display = "none"; // Sembunyikan teks
+  //         }
+  //         if (containerRefSmall.current) {
+  //           containerRefSmall.current.style.border = "none";
+  //         }
+  //       } else {
+  //         if (imgRefLarge.current) {
+  //           imgRefLarge.current.src = e.target.result;
+  //           imgRefLarge.current.style.display = "block";
+  //           imgRefLarge.current.style.width = "100%";
+  //           imgRefLarge.current.style.height = "auto";
+  //         }
+  //         if (iconRefLarge.current) {
+  //           iconRefLarge.current.style.display = "none";
+  //         }
+  //         if (textRefLarge.current) {
+  //           textRefLarge.current.style.display = "none"; // Sembunyikan teks
+  //         }
+  //         if (containerRefLarge.current) {
+  //           containerRefLarge.current.style.border = "none";
+  //         }
+  //       }
+  //     };
+  //     reader.readAsDataURL(file);
+  //   } else {
+  //     console.error("No file selected");
+  //   }
+  // };
+
+  const handleRatingChange = (newRating) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      imdbScore: newRating, // This can now be a float (e.g., 3.5)
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Create a FormData object to handle file uploads
-    const formDataObj = new FormData();
-    formDataObj.append('title', formData.title);
-    formDataObj.append('alt_title', formData.alternativeTitle);
-    formDataObj.append('release_year', formData.year);
-    formDataObj.append('country', formData.country);
-    formDataObj.append('synopsis', formData.synopsis);
-    formDataObj.append('availability', formData.availability);
-    formDataObj.append('genres', formData.genres); // Array
-    formDataObj.append('actors', formData.actors); // Array
-    formDataObj.append('trailer', formData.trailer);
-    formDataObj.append('award', formData.award); // Array
-    if (formData.image) {
-      formDataObj.append('poster', formData.image); // Poster image file
-    }
-    if (formData.backgroundImage) {
-      formDataObj.append('background', formData.backgroundImage); // Background image file
-    }
+    // Prepare the data as a plain JSON object
+    const dataToSubmit = {
+      view: formData.view,
+      status: formData.status,
+      title: formData.title,
+      alt_title: formData.alternativeTitle,
+      director: formData.director,
+      release_year: formData.year,
+      country: formData.country,
+      synopsis: formData.synopsis,
+      availability: formData.availability,
+      genres: formData.genres, // Array
+      actors: formData.actors, // Array
+      trailer: formData.trailer,
+      awards: formData.awards, // Array
+      imdb_score: formData.imdbScore,
+      posterUrl: formData.posterUrl, // Using poster URL instead of file
+      backgroundUrl: formData.backgroundUrl, // Using background URL instead of file
+    };
 
     try {
       const response = await fetch("http://localhost:8001/add-drama", {
         method: "POST",
-        body: formDataObj, // Send FormData object
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataToSubmit), // Send JSON data
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log(result.message); // Tampilkan pesan sukses
-        // Redirect ke halaman movie list jika berhasil
-        navigate("/movie-list");
+        navigate("/movie-list"); // Redirect ke halaman movie list jika berhasil
       } else {
         console.error("Error submitting form data:", response.statusText);
       }
@@ -248,7 +307,6 @@ const DramaInput = () => {
       console.error("Error:", error);
     }
   };
-
 
   const handleBack = () => {
     navigate("/movie-list"); // Redirect to movie-list on Back button click
@@ -261,7 +319,39 @@ const DramaInput = () => {
         <Row className="gy-4 justify-content-center">
           {/* Kontainer kecil */}
           <Col md={2}>
-            <div className="small-image-upload-container">
+            <Form.Group className="mb-3">
+              <Form.Label>Poster URL</Form.Label>
+              <Form.Control
+                type="text"
+                name="posterUrl"
+                placeholder="Enter Poster Image URL"
+                value={formData.posterUrl}
+                onChange={handleChange}
+              />
+              {formData.posterUrl && (
+                <Image
+                  src={formData.posterUrl}
+                  alt="Poster Preview"
+                  style={{ width: "100%", marginTop: "10px" }}
+                  onError={() => setFormData({ ...formData, posterUrl: "" })} // Hide preview if URL is invalid
+                />
+              )}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+              >
+                <option value="">Status Movie</option>
+                {statusList.map((status) => (
+                  <option key={status.id} value={status.name}>
+                    {status.name}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+            {/* <div className="small-image-upload-container">
               <link
                 rel="stylesheet"
                 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -287,7 +377,29 @@ const DramaInput = () => {
                   onChange={(e) => handleImageChange(e, true)}
                 />
               </Form.Group>
-            </div>
+            </div> */}
+            <Form.Group className="mb-3 imdb-score-label">
+              <FormLabel className="imdb-score-label">IMDB SCORE</FormLabel>
+              <Rating
+                count={5}
+                value={formData.imdbScore}
+                onChange={handleRatingChange}
+                size={32}
+                isHalf={true} // Allow half-star ratings
+                fractions={2}
+                activeColor="#ffd700"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="view"
+                placeholder="Total Views"
+                value={formData.view}
+                onChange={handleChange}
+                className="view-input"
+              />
+            </Form.Group>
           </Col>
 
           {/* Form input */}
@@ -307,6 +419,15 @@ const DramaInput = () => {
                 name="alternativeTitle"
                 placeholder="Alternative Title"
                 value={formData.alternativeTitle}
+                onChange={handleChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="director"
+                placeholder="Director Name"
+                value={formData.director}
                 onChange={handleChange}
               />
             </Form.Group>
@@ -399,14 +520,38 @@ const DramaInput = () => {
               )}
               <div className="selected-actors">
                 {formData.actors.map((actor, index) => (
-                  <Badge
+                  <div
                     key={index}
-                    bg="info"
-                    className="actor-badge"
-                    onClick={() => removeActor(actor)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "10px",
+                    }}
                   >
-                    {actor} <span className="remove-actor">x</span>
-                  </Badge>
+                    <Badge
+                      bg="info"
+                      className="actor-badge"
+                      style={{ marginRight: "10px" }}
+                    >
+                      {actor.name}{" "}
+                      <span
+                        className="remove-actor"
+                        onClick={() => removeActor(actor.name)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        x
+                      </span>
+                    </Badge>
+                    <Form.Control
+                      type="text"
+                      placeholder="Role"
+                      value={actor.role}
+                      onChange={(e) =>
+                        handleRoleChange(actor.name, e.target.value)
+                      }
+                      style={{ height: "70%", width: "40%", marginLeft: "10px", marginRight: "10px" }}
+                    />
+                  </div>
                 ))}
               </div>
             </Form.Group>
@@ -421,21 +566,51 @@ const DramaInput = () => {
             </Form.Group>
             {/* React-Select for multiple awards */}
             <div className="select">
+              <Form.Group className="mb-3">
+                <Select
+                  isMulti
+                  name="awards"
+                  options={awardsOptions}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  placeholder="Select Awards"
+                  value={awardsOptions.filter((option) =>
+                    formData.awards.includes(option.value)
+                  )}
+                  onChange={handleAwardsChange}
+                />
+              </Form.Group>
+            </div>
             <Form.Group className="mb-3">
-              <Select
-                isMulti
-                name="awards"
-                options={awardOptions}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                placeholder="Select Awards" 
-                value={awardOptions.filter(option => formData.award.includes(option.value))}
-                onChange={handleAwardChange}
+              <Form.Label>Background URL</Form.Label>
+              <Form.Control
+                type="text"
+                name="backgroundUrl"
+                placeholder="Enter Background Image URL"
+                value={formData.backgroundUrl}
+                onChange={handleChange}
               />
+              {formData.backgroundUrl && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: "10px",
+                  }}
+                >
+                  <Image
+                    src={formData.backgroundUrl}
+                    alt="Background Preview"
+                    style={{ width: "50%" }}
+                    onError={() =>
+                      setFormData({ ...formData, backgroundUrl: "" })
+                    }
+                  />
+                </div>
+              )}
             </Form.Group>
-            </div> 
 
-            <div className="image-upload-container">
+            {/* <div className="image-upload-container">
               <link
                 rel="stylesheet"
                 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -458,7 +633,7 @@ const DramaInput = () => {
                   onChange={(e) => handleImageChange(e, false)}
                 />
               </Form.Group>
-            </div>
+            </div> */}
             <div className="d-flex justify-content-end form-group-submit">
               <Button
                 variant="secondary"
