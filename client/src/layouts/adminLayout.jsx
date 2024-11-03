@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
-import Cookies from 'js-cookie';
-import NavbarSidebar from '../components/navbarsidebar/navbarsidebar'; // Import NavbarSidebar
-// import styles from './AdminLayout.scss'; // Import styles if you want additional layout styling
+import React, { useState, useEffect } from "react";
+import { Outlet } from "react-router-dom";
+import Cookies from "js-cookie";
+import NavbarSidebar from "../components/navbarsidebar/navbarsidebar";
 
 const AdminLayout = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -21,37 +20,63 @@ const AdminLayout = () => {
 
     if (token && user_id) {
       try {
-        const decoded = JSON.parse(atob(token.split('.')[1])); 
+        const decoded = JSON.parse(atob(token.split(".")[1]));
         setIsLoggedIn(true);
         setUserId(user_id);
 
-        if (role === 'Admin') {
+        if (role === "Admin") {
           setIsAdmin(true);
         }
       } catch (error) {
-        console.error('Error decoding token:', error); 
+        console.error("Error decoding token:", error);
       }
     } else {
-      console.log("Token or user_id not found"); 
+      console.log("Token or user_id not found");
     }
   }, []);
 
   return (
     <div>
-      <NavbarSidebar openSidebarToggle={openSidebarToggle} toggleSidebar={OpenSidebar} /> {/* Add NavbarSidebar */}
-      
+      {/* Only show NavbarSidebar if the user is an admin */}
+      {isAdmin && (
+        <NavbarSidebar
+          openSidebarToggle={openSidebarToggle}
+          toggleSidebar={OpenSidebar}
+        />
+      )}
+
       <div>
         {isLoggedIn ? (
           isAdmin ? (
-            <Outlet />  // Render main content for admin
+            <Outlet /> // Render main content for admin
           ) : (
-            <div >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh", // Full viewport height
+                textAlign: "center",
+              }}
+            >
               <h2>Access Denied</h2>
-              <p>You do not have the necessary permissions to view this page.</p>
+              <p>
+                You do not have the necessary permissions to view this page.
+              </p>
             </div>
           )
         ) : (
-          <div >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100vh",
+              textAlign: "center",
+            }}
+          >
             <h2>Unauthorized Access</h2>
             <p>Please log in to access this page.</p>
           </div>
