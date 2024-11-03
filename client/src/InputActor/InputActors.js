@@ -67,9 +67,11 @@ const ActorList = () => {
     }
   };
 
+
+
   const handleDeleteActor = async () => {
     try {
-      await axios.delete(`http://localhost:8001/actors/${selectedActor.id}`);
+      await axios.put(`http://localhost:8001/actors/delete/${selectedActor.id}`);
       setActors(actors.filter(actor => actor.id !== selectedActor.id));
       setShowDeleteModal(false);
       setSelectedActor(null);
@@ -77,6 +79,8 @@ const ActorList = () => {
       console.error("Error deleting actor:", error);
     }
   };
+  
+  
 
   const filteredActors = actors.filter(actor =>
     actor.name.toLowerCase().includes(searchTerm.toLowerCase())
