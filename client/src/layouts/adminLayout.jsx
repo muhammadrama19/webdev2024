@@ -1,17 +1,17 @@
+// AdminLayout.js
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Cookies from 'js-cookie';
-import NavbarSidebar from '../components/navbarsidebar/navbarsidebar'; // Import NavbarSidebar
 import Header from '../components/navbarsidebar/navbarsidebar';
 import Sidebar from '../components/Sidebar/Sidebar';
-import './adminLayout.scss'; // Import styles if you want additional layout styling
-// import styles from './AdminLayout.scss'; // Import styles if you want additional layout styling
+import './adminLayout.scss';
 
 const AdminLayout = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [openSidebarToggle, setOpenSidebarToggle] = useState(false);
   const [userId, setUserId] = useState(null);
+  const location = useLocation();
 
   const OpenSidebar = () => {
     setOpenSidebarToggle(!openSidebarToggle);
@@ -24,7 +24,6 @@ const AdminLayout = () => {
 
     if (token && user_id) {
       try {
-        const decoded = JSON.parse(atob(token.split('.')[1])); 
         setIsLoggedIn(true);
         setUserId(user_id);
 
@@ -39,30 +38,37 @@ const AdminLayout = () => {
     }
   }, []);
 
+  // Check if current route is /movie-input
+  const isMovieInputRoute = location.pathname === "/movie-input";
+
   return (
     <div className={`grid-container ${openSidebarToggle ? 'sidebar-open' : 'sidebar-closed'}`}>
-      <Header OpenSidebar={OpenSidebar} openSidebarToggle={openSidebarToggle} /> {/* Add NavbarSidebar */}
-      <Sidebar openSidebarToggle={openSidebarToggle} OpenSidebar={OpenSidebar} /> {/* Pass OpenSidebar */}
+
+      {/* Display Header and Sidebar only if the user is an admin */}
+      {isAdmin && (
+        <>
+          <Header OpenSidebar={OpenSidebar} openSidebarToggle={openSidebarToggle} />
+          <Sidebar openSidebarToggle={openSidebarToggle} OpenSidebar={OpenSidebar} />
+        </>
+      )}
+
       <div className="main-container">
-      
-      <div>
         {isLoggedIn ? (
-          isAdmin ? (
-            <Outlet />  // Render main content for admin
+          isAdmin || isMovieInputRoute ? ( // Allow access if admin or accessing /movie-input
+            <Outlet />
           ) : (
-            <div >
+            <div>
               <h2>Access Denied</h2>
               <p>You do not have the necessary permissions to view this page.</p>
             </div>
           )
         ) : (
-          <div >
+          <div>
             <h2>Unauthorized Access</h2>
             <p>Please log in to access this page.</p>
           </div>
         )}
       </div>
-    </div>
     </div>
   );
 };
