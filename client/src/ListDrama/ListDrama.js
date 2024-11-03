@@ -36,8 +36,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   }, [viewTrash]); // Menjalankan ulang useEffect jika viewTrash berubah
 
   const handleEdit = (drama) => {
-    setEditingDrama(drama);
-    setShowModal(true);
+    navigate("/movie-input", { state: { movieData: drama } }); // Redirect with existing movie data
   };
 
   const handleShowDetail = (movie) => {
@@ -210,7 +209,10 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
                     <td>{drama.Actors}</td>
                     <td className="action-column">
                       <Container className="action-button">
-                        <Button className="btn btn-sm btn-primary me-3" onClick={() => handleEdit(drama)}>
+                      <Button
+                        className="btn btn-sm btn-primary me-3"
+                        onClick={() => handleEdit(drama)}
+                      >
                           Edit
                         </Button>
                         {!viewTrash && (
@@ -245,6 +247,15 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
                   onChange={handleChange}
                 />
               </Form.Group>
+              {/* <Form.Group controlId="formDramaAlt_Title">
+                <Form.Label>Alternative Title</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="alt_title"
+                  value={editingDrama.alt_title}
+                  onChange={handleChange}
+                />
+              </Form.Group> */}
               <Form.Group controlId="formDramaActors">
                 <Form.Label>Actors</Form.Label>
                 <Form.Control
