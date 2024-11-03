@@ -1508,7 +1508,7 @@ app.put("/movie-restore/:id", (req, res) => {
 
 //LOGIN
 app.post("/login", (req, res) => {
-  const query = "SELECT * FROM users WHERE Status_Account = 1 AND email = ?";
+  const query = "SELECT * FROM users WHERE email = ?";
 
   db.query(query, [req.body.email], (err, data) => {
     if (err) {
@@ -1517,6 +1517,10 @@ app.post("/login", (req, res) => {
 
     if (data.length > 0) {
       const user = data[0];
+
+      if (user.Status_Account === 2) {
+        return res.json({ Status: "Account Suspended", Message: "Your email has been suspended" });
+      }
 
       if (!user.isEmailConfirmed) {
         return res.json({ Message: "Please confirm your email first." });
