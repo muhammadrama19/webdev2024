@@ -24,7 +24,6 @@ passport.use(new GoogleStrategy({
 
     if (existingUserByEmail.length > 0) {
       if (!existingUserByEmail[0].googleId) {
-     
         console.log('User exists with email but no Google ID:', existingUserByEmail[0]);
         return done(null, false, { message: 'Please log in using your email and password.' });
       }
@@ -37,9 +36,18 @@ passport.use(new GoogleStrategy({
     );
 
     if (newUser.affectedRows > 0) {
-      const user = { id: newUser.insertId, googleId: profile.id, email: profile.emails[0].value, username: profile.displayName };
-      console.log('New user created:', user);
-      return done(null, user);
+      // Fetch the complete user data to ensure the role is available
+      const [createdUser] = await db.promise().query(
+        'SELECT * FROM users WHERE id = ?', [newUser.insertId]
+      );
+
+      if (createdUser.length > 0) {
+        console.log('New user created and fetched:', createdUser[0]);
+        return done(null, createdUser[0]);
+      } else {
+        console.error('Failed to retrieve the newly created user');
+        return done(new Error('Failed to retrieve user'), null);
+      }
     } else {
       console.error('Failed to create new user');
       return done(new Error('Failed to create user'), null);
