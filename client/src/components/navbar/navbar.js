@@ -105,6 +105,8 @@ const Navbar = ({ loggedInUsername }) => {
     setRole(null);
   
     navigate("/login");
+    // Membuka atau merefresh tab yang sudah ada
+    window.location.reload();
   };
   
 
