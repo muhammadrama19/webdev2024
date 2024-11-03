@@ -698,7 +698,8 @@ app.get("/movie-list", (req, res) => {
   });
 });
 
-app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
+// app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
+app.get("/users", (req, res) => {
   const query = `
     SELECT id, username, role, email, Status_Account FROM users WHERE Status_Account != 3
   `;

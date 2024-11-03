@@ -5,115 +5,177 @@ import "./UserSetting.css";
 
 const UserSetting = () => {
   const [users, setUsers] = useState([]);
-  const [newUser, setNewUser] = useState({ username: "", email: "", role: "User" }); // Tambahkan default role
+  const [newUser, setNewUser] = useState({ username: "", email: "", password: "", role: "User" });
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(true); // To handle loading state
-  const [currentPage, setCurrentPage] = useState(1); // State for current page
-  const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
-  const [showCount, setShowCount] = useState(10); // Items per page
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showCount, setShowCount] = useState(10);
+  const [errorMessage, setErrorMessage] = useState(""); 
+  const [isEditMode, setIsEditMode] = useState(false); // Tambahkan state untuk mode edit
 
-  // Mengambil data dari backend saat komponen dirender
+
   useEffect(() => {
-    fetch('http://localhost:8001/users') // Ubah URL sesuai dengan API backend
+    fetch('http://localhost:8001/users')
       .then((response) => response.json())
       .then((data) => setUsers(data))
       .catch((error) => console.error('Error fetching users:', error));
     setLoading(false);
   }, []);
 
-  // Fungsi untuk menutup modal dan reset form new user
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setNewUser({ username: "", email: "", role: "User" }); // Reset form
+  // Fungsi validasi
+  const validateForm = () => {
+    const { username, email, password } = newUser;
+
+    // 1. Validasi username: cek apakah sudah ada
+    if (users.some(user => user.username.toLowerCase() === username.toLowerCase() && !isEditMode)) {
+      setErrorMessage("Username already exists!");
+      return false;
+    }
+
+    // 2. Validasi email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Format email dengan '@'
+    if (!emailRegex.test(email)) {
+      setErrorMessage("Invalid email format!");
+      return false;
+    }
+    if (users.some(user => user.email.toLowerCase() === email.toLowerCase() && !isEditMode)) {
+      setErrorMessage("Email already exists!");
+      return false;
+    }
+
+    // 3. Validasi password (Hanya saat tambah, tidak saat edit)
+    if (!isEditMode) {
+      const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/; // Harus ada 1 uppercase, 1 simbol, min 8 karakter
+      if (!passwordRegex.test(password)) {
+        setErrorMessage("Password must be at least 8 characters long, with one uppercase and one symbol.");
+        return false;
+      }
+    }
+
+    setErrorMessage(""); // Reset error message if validation passes
+    return true;
   };
 
-  // Fungsi untuk menambah user baru
   const handleAddUser = () => {
-    const { username, email, role } = newUser;
-    if (username.trim() && email.trim() && role.trim()) {
-      if (users.some(user => user.email.toLowerCase() === email.toLowerCase())) {
-        alert("Email already exists!");
-      } else {
-        // Mengirim data ke backend
-        fetch('http://localhost:8001/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username, email, role }),
+    if (!validateForm()) {
+      return;
+    }
+
+    const { username, email, password, role } = newUser;
+    if (username.trim() && email.trim() && password.trim() && role.trim()) {
+      fetch('http://localhost:8001/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password, role }),
+      })
+        .then((response) => response.json())
+        .then((newUserFromBackend) => {
+          setUsers([...users, newUserFromBackend]);
+          handleCloseModal(); // Tutup modal
+          window.location.reload();
         })
-          .then((response) => response.json())
-          .then((newUserFromBackend) => {
-            // Tambahkan user baru ke state
-            setUsers([...users, newUserFromBackend]);
-            handleCloseModal(); // Tutup modal
-          })
-          .catch((error) => console.error('Error adding user:', error));
-      }
+        .catch((error) => console.error('Error adding user:', error));
     } else {
       alert("All fields are required!");
     }
   };
 
-  // Fungsi untuk edit user
-  const handleEditUser = (id) => {
-    const userToEdit = users.find(user => user.id === id);
-    setEditing(userToEdit);
-  };
+  const handleEditUserSubmit = () => {
+    if (!validateForm()) {
+      return;
+    }
 
-  // Fungsi untuk menyimpan perubahan user yang di-edit
-  const handleSaveEdit = () => {
-    const updatedUser = { ...editing };
-
-    // Mengirim perubahan ke backend
     fetch(`http://localhost:8001/users/${editing.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updatedUser),
+      body: JSON.stringify(newUser),
     })
       .then((response) => response.json())
       .then(() => {
-        // Update state dengan user yang di-edit
         const updatedUsers = users.map(user =>
-          user.id === editing.id ? editing : user
+          user.id === editing.id ? newUser : user
         );
         setUsers(updatedUsers);
-        setEditing(null); // Keluar dari mode edit
+        handleCloseModal();
       })
       .catch((error) => console.error('Error updating user:', error));
   };
 
-  // Fungsi untuk menghapus user
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setNewUser({ username: "", email: "", password: "", role: "User" });
+    setErrorMessage(""); // Reset error message
+    setIsEditMode(false); // Reset ke mode tambah setelah modal ditutup
+  };
+
+  const handleEditUser = (user) => {
+    setIsEditMode(true); // Set ke mode edit
+    setNewUser({ username: user.username, email: user.email, password: "", role: user.role });
+    setEditing(user);
+    setShowModal(true);
+  };
+
   const handleDeleteUser = (id) => {
-    // Mengirim permintaan delete ke backend
     fetch(`http://localhost:8001/users/${id}`, {
       method: 'DELETE',
     })
       .then(() => {
-        // Hapus user dari state
-        setUsers(users.filter(user => user.id !== id));
+        const updatedUsers = users.map(user =>
+          user.id === id ? { ...user, Status_Account: 3 } : user
+        );
+        setUsers(updatedUsers);
+        window.location.reload();
       })
-      .catch((error) => console.error('Error deleting user:', error));
+      .catch((error) => console.error('Error suspending user:', error));
   };
 
-  // Function untuk filter drama berdasarkan search term (sebelum pagination)
+  const handleSuspend = (id) => {
+    fetch(`http://localhost:8001/users/suspend/${id}`, {
+      method: 'PUT',
+    })
+      .then((response) => response.json())
+      .then(() => {
+        const updatedUsers = users.map(user =>
+          user.id === id ? { ...user, Status_Account: 2 } : user
+        );
+        setUsers(updatedUsers);
+      })
+      .catch((error) => console.error('Error suspending user:', error));
+  };
+
+  const handleUnlockUser = (id) => {
+    fetch(`http://localhost:8001/users/unlock/${id}`, {
+      method: 'PUT',
+    })
+      .then((response) => response.json())
+      .then(() => {
+        const updatedUsers = users.map(user =>
+          user.id === id ? { ...user, Status_Account: 1 } : user
+        );
+        setUsers(updatedUsers);
+      })
+      .catch((error) => console.error('Error unlocking user:', error));
+  };
+
   const filteredUsers = users.filter((user) =>
     user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastUser = currentPage * showCount;
   const indexOfFirstUser = indexOfLastUser - showCount;
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser); // Paginate hasil pencarian
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / showCount);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  // Logic to show only 3 pages (current, previous, next)
   const renderPagination = () => {
     let items = [];
     const startPage = Math.max(1, currentPage - 1);
@@ -145,7 +207,6 @@ const UserSetting = () => {
         <h1 className="title">User Setting</h1>
       </Container>
 
-      {/* Button untuk menampilkan modal */}
       <Container className="list-drama-header d-flex justify-content-between mb-3">
         <Container className="d-flex">
           <Col xs="auto" className="d-flex me-3">
@@ -175,20 +236,23 @@ const UserSetting = () => {
         <Button
           variant="success"
           className="d-flex align-items-center w-auto px-4 py-2"
-          style={{ whiteSpace: 'nowrap' }} // Ini mencegah teks tombol pecah ke baris lain
-          onClick={setShowModal}>
+          style={{ whiteSpace: 'nowrap' }}
+          onClick={() => {
+            setShowModal(true);
+            setIsEditMode(false); // Set ke mode tambah saat klik Add New User
+          }}>
           <FaPlus className="me-2" />
           Add New User
         </Button>
       </Container>
 
-      {/* Modal untuk menambah user baru */}
+      {/* Modal untuk menambah atau edit user */}
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Add New User</Modal.Title>
+          <Modal.Title>{isEditMode ? "Edit User" : "Add New User"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onSubmit={(e) => { e.preventDefault(); handleAddUser(); }}>
+          <Form onSubmit={(e) => { e.preventDefault(); isEditMode ? handleEditUserSubmit() : handleAddUser(); }}>
             <Form.Group className="mb-3">
               <Form.Label>Username</Form.Label>
               <Form.Control
@@ -207,6 +271,17 @@ const UserSetting = () => {
                 onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
               />
             </Form.Group>
+            {!isEditMode && (
+              <Form.Group className="mb-3">
+                <Form.Label>Password</Form.Label>
+                <Form.Control
+                  type="password"
+                  placeholder="Enter password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                />
+              </Form.Group>
+            )}
             <Form.Group className="mb-3">
               <Form.Label>Role</Form.Label>
               <Form.Control
@@ -220,10 +295,11 @@ const UserSetting = () => {
               </Form.Control>
             </Form.Group>
           </Form>
+          {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" variant="primary" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }} onClick={handleAddUser}>
-            Submit
+          <Button type="submit" variant="primary" style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }} onClick={isEditMode ? handleEditUserSubmit : handleAddUser}>
+            {isEditMode ? "Save Changes" : "Submit"}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -232,83 +308,50 @@ const UserSetting = () => {
         <p>Loading data...</p>
       ) : (
         <>
-          {/* Tabel user */}
           <Table striped bordered hover className="user-table">
             <thead>
               <tr>
-                <th>#</th>
+                <th>No</th>
                 <th>Username</th>
                 <th>Role</th>
                 <th>Email</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {currentUsers.map((user, index) => (
                 <tr key={user.id}>
-                  <td>{user.id}</td>
-                  <td>
-                    {editing && editing.id === user.id ? (
-                      <Form.Control
-                        type="text"
-                        value={editing.username}
-                        onChange={(e) => setEditing({ ...editing, username: e.target.value })}
-                      />
-                    ) : (
-                      user.username
-                    )}
-                  </td>
-                  <td>
-                    {editing && editing.id === user.id ? (
-                      <Form.Control
-                        as="select"
-                        value={editing.role}
-                        onChange={(e) => setEditing({ ...editing, role: e.target.value })}
-                      >
-                        <option>User</option>
-                        <option>Admin</option>
-                        <option>Editor</option>
-                      </Form.Control>
-                    ) : (
-                      user.role
-                    )}
-                  </td>
-                  <td>
-                    {editing && editing.id === user.id ? (
-                      <Form.Control
-                        type="email"
-                        value={editing.email}
-                        onChange={(e) => setEditing({ ...editing, email: e.target.value })}
-                      />
-                    ) : (
-                      user.email
-                    )}
-                  </td>
-                  <td>
-                    {editing && editing.id === user.id ? (
-                      <>
-                        <Button variant="success" size="sm" onClick={handleSaveEdit} className="me-2">
-                          Save
-                        </Button>
-                        <Button variant="secondary" size="sm" onClick={() => setEditing(null)}>
-                          Cancel
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button variant="primary" size="sm" className="me-2" onClick={() => handleEditUser(user.id)}>
-                          Edit
-                        </Button>
-                        <Button variant="danger" size="sm" className="me-2" onClick={() => handleDeleteUser(user.id)}>
-                          Delete
-                        </Button>
-                        <Button variant="link" className="action-button" disabled>
-                          <FaEnvelope /> Send Email
-                        </Button>
-                      </>
-                    )}
-                  </td>
-                </tr>
+                <td>{(currentPage - 1) * showCount + index + 1}</td> {/* Hitung nomor urut berdasarkan halaman */}
+                <td>{user.username}</td>
+                <td>{user.role}</td>
+                <td>{user.email}</td>
+                <td>{user.Status_Account === 1 ? "Active" : user.Status_Account === 2 ? "Suspended" : "Deleted"}</td>
+                <td>
+                  {user.Status_Account === 2 ? (
+                    <>
+                      <Button variant="success" size="sm" className="me-2" onClick={() => handleUnlockUser(user.id)}>
+                        Unlock
+                      </Button>
+                      <Button variant="danger" size="sm" className="me-2" onClick={() => handleDeleteUser(user.id)}>
+                        Delete
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="primary" size="sm" className="me-2" onClick={() => handleEditUser(user)}>
+                        Edit
+                      </Button>
+                      <Button variant="warning" size="sm" className="me-2" onClick={() => handleSuspend(user.id)}>
+                        Suspend
+                      </Button>
+                      <Button variant="danger" size="sm" className="me-2" onClick={() => handleDeleteUser(user.id)}>
+                        Delete
+                      </Button>
+                    </>
+                  )}
+                </td>
+              </tr>
               ))}
             </tbody>
           </Table>

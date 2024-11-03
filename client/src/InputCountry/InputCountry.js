@@ -1,188 +1,322 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Container, Button, Modal, Spinner, Form } from 'react-bootstrap';
-import PaginationCustom from "../components/pagination/pagination"; // Import your custom pagination component
-// import './Countries.scss'; // Create a new SCSS file for styles if needed
+import React, { useState, useEffect } from "react";
+import { Container, Table, Form, Button, Modal, Pagination, Dropdown, Col } from 'react-bootstrap';
+import { FaPlus } from "react-icons/fa";
+import "./InputCountry.css";
 
-const Countries = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [countries, setCountries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [countryName, setCountryName] = useState("");
-  const [showCount] = useState(10); // Number of items per page
-  const [totalPages, setTotalPages] = useState(0);
-  const [searchTerm, setSearchTerm] = useState(""); // State for search term
+const CountryManager = () => {
+    const [countries, setCountries] = useState([]);
+    const [newCountry, setNewCountry] = useState("");
+    const [editing, setEditing] = useState(null);
+    const [editName, setEditName] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(true); // To handle loading state
+    const [currentPage, setCurrentPage] = useState(1); // State for current page
+    const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
+    const [showCount, setShowCount] = useState(10); // Items per page
 
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const response = await fetch("http://localhost:8001/countries");
-        const data = await response.json();
-        console.log("Fetched countries:", data); // Debugging log
-        setCountries(data);
-        setLoading(false); // Stop loading once data is fetched
-        setTotalPages(Math.ceil(data.length / showCount)); // Set total pages based on fetched data
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setLoading(false);
-      }
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [CountryToDelete, setCountryToDelete] = useState(null);
+
+    const handleShowModal = () => setShowModal(true);
+
+    useEffect(() => {
+        const fetchCountries = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/countries');
+                const data = await response.json();
+                setCountries(data);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching countries:", error);
+                setLoading(false);
+            }
+        };
+        fetchCountries();
+    }, []);
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setNewCountry("");
     };
 
-    fetchCountries(); // Call the function to fetch data
-  }, [showCount]);
-
-  const handleShowUpdate = (country) => {
-    setSelectedCountry(country);
-    setCountryName(country.country_name || ""); // Ensure countryName is initialized properly
-    setShowUpdateModal(true);
-  };
-
-  const handleUpdateCountry = async () => {
-    if (!countryName) {
-      alert("Country name is required"); // Validate input
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:8001/countries/${selectedCountry.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ country_name: countryName }),
-      });
-      if (response.ok) {
-        const updatedCountry = await response.json();
-        setCountries((prevCountries) =>
-          prevCountries.map((country) =>
-            country.id === selectedCountry.id ? { ...country, country_name: countryName } : country
-          )
-        );
-        setShowUpdateModal(false);
-        alert(updatedCountry.message); // Show success message
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error); // Show error message
-      }
-    } catch (error) {
-      console.error("Error updating country:", error);
-    }
-  };
-
-  const handleDeleteCountry = async (id) => {
-    if (window.confirm("Are you sure you want to delete this country?")) {
-      try {
-        const response = await fetch(`http://localhost:8001/countries/${id}`, {
-          method: 'DELETE',
-        });
-        if (response.ok) {
-          setCountries((prevCountries) => prevCountries.filter((country) => country.id !== id));
-          alert("Country deleted successfully!");
+    const handleInputChange = (e) => {
+        if (isEditing) {
+            setEditName(e.target.value);
         } else {
-          const errorData = await response.json();
-          alert(errorData.error); // Show error message
+            setNewCountry(e.target.value);
         }
-      } catch (error) {
-        console.error("Error deleting country:", error);
-      }
-    }
-  };
+    };
 
-  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+    const handleAddCountry = async () => {
+        const trimmedCountry = newCountry.trim();
 
-  // Calculate which countries to display based on the current page
-  const indexOfLastCountry = currentPage * showCount;
-  const indexOfFirstCountry = indexOfLastCountry - showCount;
+        if (trimmedCountry) {
+            if (countries.some(country => country.country_name.toLowerCase() === trimmedCountry.toLowerCase())) {
+                alert("Country already exists!");
+            } else {
+                try {
+                    const response = await fetch('http://localhost:8001/countries', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ country_name: trimmedCountry }),
+                    });
 
-  // Filter countries based on search term
-  const filteredCountries = countries.filter((country) =>
-    country.country_name && country.country_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+                    const data = await response.json();
+                    setCountries([...countries, data]);
+                    setNewCountry("");
+                    handleCloseModal();
+                } catch (error) {
+                    console.error("Error adding country:", error);
+                }
+            }
+        } else {
+            alert("Country name cannot be empty or just spaces!");
+        }
+    };
 
-  // Update total pages based on filtered data
-  useEffect(() => {
-    setTotalPages(Math.ceil(filteredCountries.length / showCount));
-  }, [filteredCountries, showCount]);
 
-  const currentCountries = filteredCountries.slice(indexOfFirstCountry, indexOfLastCountry);
+    const handleDeleteCountry = async () => {
+        if (CountryToDelete) {
+            try {
+                await fetch(`http://localhost:8001/countries/${CountryToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setCountries(countries.filter((country) => country.id !== CountryToDelete.id));
+                setShowDeleteModal(false);
+                setCountryToDelete(null);
+            } catch (error) {
+                console.error("Error deleting country:", error);
+            }
+        }
+    };
 
-  return (
-    <Container className="country-list" style={{ padding: '20px' }}>
-      <h2 className="my-4" style={{ textAlign: 'center' }}>Country List</h2>
+    const handleEditCounry = (id) => {
+        setEditing(id);
+        const country = countries.find((country) => country.id === id);
+        setEditName(country);
+        setIsEditing(true);
+        setShowModal(true);
+    };
 
-      <Form.Control
-        type="text"
-        placeholder="Search countries..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-4"
-        style={{ marginBottom: '20px' }}
-      />
+    const handleRenameCountry = async (e) => {
+        e.preventDefault();
 
-      {loading ? (
-        <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
-      ) : (
-        <Table striped bordered hover responsive className="text-center" style={{ marginTop: '20px' }}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Country Name</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentCountries.map((country) => (
-              <tr key={country.id}>
-                <td>{country.id}</td>
-                <td>{country.country_name}</td>
-                <td>
-                  <Button variant="info" onClick={() => handleShowUpdate(country)} style={{ marginRight: '10px' }}>
-                    Update
-                  </Button>
-                  <Button variant="danger" onClick={() => handleDeleteCountry(country.id)}>
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+        if (editName.trim()) {
+            if (countries.some(country => country.country_name.toLowerCase() === editName.toLowerCase())) {
+                alert("Country already exists!");
+            } else {
+                try {
+                    await fetch(`http://localhost:8001/countries/${editing}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ country_name: editName }),
+                    });
+                    setCountries(
+                        countries.map((country) =>
+                            country.id === editing ? { ...country, country_name: editName } : country
+                        )
+                    );
+                    setEditing(null);
+                    setShowModal(false);
+                    setEditName("");
+                } catch (error) {
+                    console.error("Error updating country:", error);
+                }
+            }
+        }
+    };
 
-      <PaginationCustom
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+    // Function untuk filter drama berdasarkan search term (sebelum pagination)
+    const filteredCountries = countries.filter((country) =>
+        country.country_name && country.country_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-      {/* Update Modal */}
-      <Modal
-        show={showUpdateModal}
-        onHide={() => setShowUpdateModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Update Country</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group controlId="countryName">
-            <Form.Label>Country Name</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Enter country name"
-              value={countryName}
-              onChange={(e) => setCountryName(e.target.value)}
-            />
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowUpdateModal(false)}>Close</Button>
-          <Button variant="primary" onClick={handleUpdateCountry}>Update</Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
-  );
+    const indexOfLastCountry = currentPage * showCount;
+    const indexOfFirstCountry = indexOfLastCountry - showCount;
+    const currentCountries = filteredCountries.slice(indexOfFirstCountry, indexOfLastCountry); // Paginate hasil pencarian
+    const totalPages = Math.ceil(filteredCountries.length / showCount);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
+    // Logic to show only 3 pages (current, previous, next)
+    const renderPagination = () => {
+        let items = [];
+        const startPage = Math.max(1, currentPage - 1);
+        const endPage = Math.min(totalPages, currentPage + 1);
+
+        for (let number = startPage; number <= endPage; number++) {
+            items.push(
+                <Pagination.Item key={number} active={number === currentPage} onClick={() => handlePageChange(number)}>
+                    {number}
+                </Pagination.Item>
+            );
+        }
+        return (
+            <div className="d-flex justify-content-end">
+                <Pagination>
+                    <Pagination.First onClick={() => setCurrentPage(1)} />
+                    <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
+                    {items}
+                    <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
+                    <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
+                </Pagination>
+            </div>
+        );
+    };
+
+
+    return (
+        <Container>
+            <Container className="App">
+                <h1 className="title">Country Manager</h1>
+            </Container>
+            {/* Form Section */}
+            <Container className="list-drama-header d-flex justify-content-between mb-3">
+                <Container className="d-flex">
+                    <Col xs="auto" className="d-flex me-3">
+                        <Dropdown onSelect={setShowCount}>
+                            <Dropdown.Toggle variant="light" id="dropdown-show">
+                                Shows: {showCount}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {[10, 20, 50].map((count) => (
+                                    <Dropdown.Item key={count} eventKey={count}>
+                                        {count}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </Col>
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Search"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </Container>
+
+                {/* Button to Add New Country */}
+                <Button
+                    variant="success"
+                    className="d-flex align-items-center w-auto px-4 py-2"
+                    style={{ whiteSpace: 'nowrap' }} // Ini mencegah teks tombol pecah ke baris lain
+                    onClick={handleShowModal}>
+                    <FaPlus className="me-2" />
+                    Add New Country
+                </Button>
+            </Container>
+            <Modal show={showModal} onHide={handleCloseModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>{isEditing ? "Edit Country" : "Add New Country"}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Country</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={isEditing ? editName.country_name : newCountry.name}
+                                onChange={handleInputChange}
+                                placeholder="Enter country name"
+                            />
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={handleCloseModal}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-2"
+                        onClick={isEditing ? handleRenameCountry : handleAddCountry}
+                        style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
+                    >
+                        {isEditing ? "Save Changes" : "Add Country"}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the country "{CountryToDelete?.country_name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteCountry}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
+
+
+            {loading ? (
+                <p>Loading data...</p>
+            ) : (
+                <>
+                    {/* Table Section */}
+                    <Container className="country-table-wrapper">
+                        <Table className="country-table" striped bordered hover>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Country</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentCountries.map((country) => (
+                                    <tr key={country.id}>
+                                        <td>{country.id}</td>
+                                        <td>{country.country_name}</td>
+                                        <td>
+                                            <Container className="action-button">
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    className="me-2"
+                                                    onClick={() => handleEditCounry(country.id)}
+                                                >
+                                                    Rename
+                                                </Button>
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    className="me-2"
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setCountryToDelete(country);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </Container>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Container>
+                    {renderPagination()}
+                </>
+            )}
+        </Container >
+    );
 };
 
-export default Countries;
+export default CountryManager;
