@@ -148,7 +148,7 @@ const AwardManager = () => {
                   setCountryName(award.country_name);
                   setAwardsYears(award.awards_years);
                   setShowUpdateModal(true);
-                }}>Update</Button>
+                }} style={{ marginRight: '10px' }}>Update</Button>
                 <Button variant="danger" onClick={() => handleDeleteAward(award.id)}>Delete</Button>
               </td>
             </tr>

@@ -843,6 +843,8 @@ app.get("/actors", (req, res) => {
       countries c
     ON 
       a.country_birth_id = c.id
+    WHERE 
+      a.deleted_at IS NULL
     ORDER BY 
       a.id ASC;
   `;
@@ -960,12 +962,11 @@ app.put("/actors/:id", (req, res) => {
 });
 
 // Route to delete an actor
-app.delete("/actors/:id", (req, res) => {
+app.put("/actors/delete/:id", (req, res) => {
   const { id } = req.params;
 
   const query = `
-    DELETE FROM actors 
-    WHERE id = ?;
+    UPDATE actors SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
   `;
   db.query(query, [id], (err, result) => {
     if (err) {
@@ -981,9 +982,10 @@ app.delete("/actors/:id", (req, res) => {
   });
 });
 
+
 // Get all genres
 app.get("/genres", (req, res) => {
-  const query = "SELECT id, name FROM genres ORDER BY id ASC ";
+  const query = "SELECT id, name FROM genres WHERE deleted_at IS NULL ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
@@ -1001,12 +1003,34 @@ app.post("/genres", isAuthenticated, hasAdminRole, (req, res) => {
     return res.status(400).json({ error: "Genre name is required" });
   }
 
-  const query = "INSERT INTO genres (name) VALUES (?)";
-  db.query(query, [name], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to add genre" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ id: result.insertId, name });
+
+    const query = "INSERT INTO genres (name) VALUES (?)";
+    db.query(query, [name], (err, result) => {
+      if (err) {
+        console.error("Error adding genre:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to add genre" });
+        });
+      }
+
+      // Commit the transaction if the query succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ id: result.insertId, name });
+      });
+    });
   });
 });
 
@@ -1019,30 +1043,77 @@ app.put("/genres/:id", (req, res) => {
     return res.status(400).json({ error: "Genre name is required" });
   }
 
-  const query = "UPDATE genres SET name = ? WHERE id = ?";
-  db.query(query, [name, id], (err) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to update genre" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Genre updated successfully" });
+
+    const query = "UPDATE genres SET name = ? WHERE id = ?";
+    db.query(query, [name, id], (err) => {
+      if (err) {
+        console.error("Error updating genre:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to update genre" });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Genre updated successfully" });
+      });
+    });
   });
 });
 
 // Delete a genre
-app.delete("/genres/:id", (req, res) => {
+app.put("/genres/delete/:id", (req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM genres WHERE id = ?";
-  db.query(query, [id], (err) => {
+
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to delete genre" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Genre deleted successfully" });
+
+    const query = `
+      UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+    `;
+    db.query(query, [id], (err) => {
+      if (err) {
+        console.error("Error deleting genre:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to delete genre" });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Genre deleted successfully" });
+      });
+    });
   });
 });
 
 // Get all countries
 app.get("/countries", (req, res) => {
-  const query = "SELECT id, country_name FROM countries ORDER BY id ASC ";
+  const query = "SELECT id, country_name FROM countries WHERE deleted_at IS NULL ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
@@ -1085,12 +1156,34 @@ app.post("/countries", isAuthenticated, hasAdminRole, (req, res) => {
     return res.status(400).json({ error: "Country name is required" });
   }
 
-  const query = "INSERT INTO countries (country_name) VALUES (?)";
-  db.query(query, [country_name], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to add country" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ id: result.insertId, country_name });
+
+    const query = "INSERT INTO countries (country_name) VALUES (?)";
+    db.query(query, [country_name], (err, result) => {
+      if (err) {
+        console.error("Error adding country:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to add country" });
+        });
+      }
+
+      // Commit the transaction if the query succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ id: result.insertId, country_name });
+      });
+    });
   });
 });
 
@@ -1103,24 +1196,79 @@ app.put("/countries/:id", (req, res) => {
     return res.status(400).json({ error: "Country name is required" });
   }
 
-  const query = "UPDATE countries SET country_name = ? WHERE id = ?";
-  db.query(query, [country_name, id], (err) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to update country" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Country updated successfully" });
+
+    const query = "UPDATE countries SET country_name = ? WHERE id = ?";
+    db.query(query, [country_name, id], (err) => {
+      if (err) {
+        console.error("Error updating country:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to update country" });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Country updated successfully" });
+      });
+    });
   });
 });
 
 // Delete a country
-app.delete("/countries/:id", (req, res) => {
+app.put("/countries/delete/:id", (req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM countries WHERE id = ?";
-  db.query(query, [id], (err) => {
+
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to delete country" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Country deleted successfully" });
+
+    const query = `
+      UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
+      WHERE id = ?;
+    `;
+
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        console.error("Error deleting country:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to delete country" });
+        });
+      }
+
+      if (result.affectedRows === 0) {
+        return db.rollback(() => {
+          res.status(404).json({ error: "Country not found" });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Country deleted successfully" });
+      });
+    });
   });
 });
 
@@ -1138,6 +1286,8 @@ app.get("/awards", (req, res) => {
       countries c 
     ON 
       a.country_id = c.id 
+    WHERE
+      a.deleted_at IS NULL
     ORDER BY 
       a.id ASC;
   `;

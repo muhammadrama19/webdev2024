@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Container, Button, Modal, Spinner, Form } from 'react-bootstrap';
 import PaginationCustom from "../components/pagination/pagination"; // Import your custom pagination component
-// import './Countries.scss'; // Create a new SCSS file for styles if needed
 
 const Countries = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -73,8 +72,10 @@ const Countries = () => {
   const handleDeleteCountry = async (id) => {
     if (window.confirm("Are you sure you want to delete this country?")) {
       try {
-        const response = await fetch(`http://localhost:8001/countries/${id}`, {
-          method: 'DELETE',
+        const response = await fetch(`http://localhost:8001/countries/delete/${id}`, {
+          method: 'PUT', // Use PUT method for soft delete
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include', // Include credentials (cookies)
         });
         if (response.ok) {
           setCountries((prevCountries) => prevCountries.filter((country) => country.id !== id));
