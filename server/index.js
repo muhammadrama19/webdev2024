@@ -859,9 +859,8 @@ app.get("/actors", (req, res) => {
 });
 
 // Route to add a new actor
-app.post("/actors",  isAuthenticated, hasAdminRole, upload.single("actor_picture"), (req, res) => {
-  const { name, birthdate, country_name } = req.body;
-  const actor_picture = req.file ? req.file.filename : null;
+app.post("/actors",  isAuthenticated, hasAdminRole, (req, res) => {
+  const { name, birthdate, country_name, actor_picture } = req.body;
 
   if (!name || !birthdate || !country_name) {
     return res.status(400).json({ error: "Missing required fields." });
@@ -1049,23 +1048,27 @@ app.get("/countries", (req, res) => {
 });
 
 // Get a single country berdasarkan country_name
-app.get("/countries/:country_name", isAuthenticated, hasAdminRole, (req, res) => {
-  const { country_name } = req.params;
-  const query = "SELECT id, country_name FROM countries WHERE country_name = ?";
-  db.query(query, [country_name], (err, results) => {
-    if (err) {
-      console.error("Error executing query:", err.message);
-      res.status(500).json({ error: "Internal Server Error" });
-      return;
-    }
+app.get(
+  "/countries/:country_name", isAuthenticated, hasAdminRole,
+  (req, res) => {
+    const { country_name } = req.params;
+    const query =
+      "SELECT id, country_name FROM countries WHERE country_name = ?";
+    db.query(query, [country_name], (err, results) => {
+      if (err) {
+        console.error("Error executing query:", err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Country not found" });
+      }
 
-    if (results.length === 0) {
-      return res.status(404).json({ error: "Country not found" });
-    }
-
-    res.json(results[0]);
-  });
-});
+      res.json(results[0]);
+    });
+  }
+);
 
 // Add a new country
 app.post("/countries",  isAuthenticated, hasAdminRole,(req, res) => {

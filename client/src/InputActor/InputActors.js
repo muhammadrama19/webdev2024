@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Container, Table, Form, Button, Modal, Col, Dropdown, Pagination } from 'react-bootstrap';
-import { FaPlus } from "react-icons/fa";
+import { Container, Table, Form, Button, Modal, Col, Row, InputGroup, FormControl, Pagination, Spinner, Image } from 'react-bootstrap';
+import { FaPlus, FaSearch } from "react-icons/fa";
 import "./InputActor.scss";
 import Icon from 'client/public/assets/Oval.svg';
-import DatePicker from "client/node_modules/react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import axios from 'axios';
 
 const ActorManager = () => {
+    const [actorData, setActorData] = useState({
+        name: '',
+        birthdate: '',
+        country_name: '',
+        actor_picture: ''
+    });
     const [newActor, setNewActor] = useState({ country_name: "", name: "", birthdate: "", actor_picture: "" });
     const [editing, setEditing] = useState(null);
-    const [editActor, setEditActor] = useState({ country_name: "", name: "", birthdate: "", actor_picture: "" });
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [actors, setActors] = useState([]);
-    const [loading, setLoading] = useState(true); // To handle loading state
-    const [currentPage, setCurrentPage] = useState(1); // State for current page
-    const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
-    const [showCount, setShowCount] = useState(10); // Items per page
-    const [file, setFile] = useState();
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showCount, setShowCount] = useState(10);
 
     // New state for delete confirmation modal
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -26,9 +29,8 @@ const ActorManager = () => {
     useEffect(() => {
         const fetchActors = async () => {
             try {
-                const response = await fetch('http://localhost:8001/actors');
-                const data = await response.json();
-                setActors(data);
+                const response = await axios.get('http://localhost:8001/actors');
+                setActors(response.data);
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching actors:", error);
@@ -39,52 +41,36 @@ const ActorManager = () => {
     }, []);
 
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        if (isEditing) {
-            setEditActor((prev) => ({ ...prev, [name]: value }));
-        } else {
-            setNewActor((prev) => ({ ...prev, [name]: value }));
-        }
-    };
-
     const checkCountryExists = async (countryName) => {
         try {
-            const response = await fetch(`http://localhost:8001/countries/${countryName}`);
-            if (!response.ok) {
-                return false; // Return false if country is not found (404)
-            }
-            const data = await response.json();
-            return !!data; // Return true if data is found, false otherwise
+            const response = await axios.get(`http://localhost:8001/countries/${countryName}`, {
+                withCredentials: true
+            });
+            console.log("Response from backend:", response.data); // Debugging
+            return !!response.data;
         } catch (error) {
             console.error("Error checking country existence:", error);
             return false;
         }
     };
 
+
     const handleAddActor = async (e) => {
         e.preventDefault();
 
         // Check if country exists in the backend
-        const countryExists = await checkCountryExists(newActor.country_name);
+        const countryExists = await checkCountryExists(actorData.country_name);
+        console.log(actorData.country_name);
         console.log(countryExists);
         if (!countryExists) {
             alert("Country does not exist. Please add the country first.");
             return;
         }
 
-        if (newActor.name.trim() && newActor.country_name.trim()) {
-            // Create FormData to send file and other actor data
-            const formData = new FormData();
-            formData.append('name', newActor.name);
-            formData.append('country_name', newActor.country_name);
-            formData.append('birthdate', newActor.birthdate);
-            formData.append('actor_picture', file);
-
+        if (actorData.name.trim() && actorData.country_name.trim()) {
             try {
-                const response = await fetch('http://localhost:8001/actors', {
-                    method: 'POST',
-                    body: formData,  // Sending FormData directly
+                const response = await axios.post('http://localhost:8001/actors', actorData, {
+                    withCredentials: true
                 });
 
                 const data = await response.json();
@@ -119,7 +105,7 @@ const ActorManager = () => {
     const handleEditActor = (id) => {
         setEditing(id);
         const actorToEdit = actors.find((actor) => actor.id === id);
-        setEditActor(actorToEdit);
+        setActorData(actorToEdit);
         setIsEditing(true);
         setShowModal(true);
     };
@@ -127,16 +113,16 @@ const ActorManager = () => {
     const handleSaveEdit = async (e) => {
         e.preventDefault();
 
-        if (editActor.name && editActor.country_name && editActor.birthdate && editActor.actor_picture) {
+        if (actorData.name && actorData.country_name && actorData.birthdate && actorData.actor_picture) {
             const updatedActor = {
-                name: editActor.name,
-                country_name: editActor.country_name,
-                birthdate: editActor.birthdate,
-                actor_picture: editActor.actor_picture
+                name: actorData.name,
+                country_name: actorData.country_name,
+                birthdate: actorData.birthdate,
+                actor_picture: actorData.actor_picture
             }
 
             // Check if the edited country exists in the backend
-            const countryExists = await checkCountryExists(editActor.country_name);
+            const countryExists = await checkCountryExists(actorData.country_name);
             if (!countryExists) {
                 alert("Country does not exist. Please add the country first.");
                 return;
@@ -144,7 +130,7 @@ const ActorManager = () => {
 
             console.log(updatedActor);
             console.log(editing);
-            console.log(editActor);
+            console.log(actorData);
 
             try {
                 const response = await fetch(`http://localhost:8001/actors/${editing}`, {
@@ -160,7 +146,7 @@ const ActorManager = () => {
                     prevActors.map((actor) => (actor.id === editing ? data : actor))
                 );
                 setEditing(null);
-                setEditActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
+                setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
                 setShowModal(false);
             } catch (error) {
                 console.error("Error saving edit:", error);
@@ -178,28 +164,7 @@ const ActorManager = () => {
 
     const handleCloseModal = () => {
         setShowModal(false);
-        if (isEditing) {
-            // Reset the editing state and clear editActor data
-            setEditActor({ country_name: "", name: "", birthdate: null, actor_picture: "" });
-            setEditing(null);
-        } else {
-            // Reset the newActor state
-            setNewActor({ country_name: "", name: "", birthdate: null, actor_picture: "" });
-        }
-        window.location.reload();
-    };
-
-    const handlePhotoChange = (e) => {
-        setFile(e.target.files[0]);
-    };
-
-    const handleDateChange = (date) => {
-        const formattedDate = date.toISOString().split("T")[0];
-        if (isEditing) {
-            setEditActor((prev) => ({ ...prev, birthdate: formattedDate }));
-        } else {
-            setNewActor((prev) => ({ ...prev, birthdate: formattedDate }));
-        }
+        setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
     };
 
     // Function untuk filter actor berdasarkan search term (sebelum pagination)
@@ -244,46 +209,56 @@ const ActorManager = () => {
         );
     };
 
+    const formatDate = (date) => {
+        const d = new Date(date);
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${year}-${month}-${day}`;
+    };
+
     return (
         <Container>
             <Container className="App">
                 <h1 className="title">Actors Manager</h1>
             </Container>
 
-            <Container className="list-drama-header d-flex justify-content-between mb-3">
-                <Container className="d-flex">
-                    <Col xs="auto" className="d-flex me-3">
-                        <Dropdown onSelect={setShowCount}>
-                            <Dropdown.Toggle variant="light" id="dropdown-show">
-                                Shows: {showCount}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                {[10, 20, 50].map((count) => (
-                                    <Dropdown.Item key={count} eventKey={count}>
-                                        {count}
-                                    </Dropdown.Item>
-                                ))}
-                            </Dropdown.Menu>
-                        </Dropdown>
+            <Container className="d-flex justify-content-end">
+                <Row className="justify-content-end">
+                    <Col xs="auto" className="d-flex mb-4">
+                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                            <InputGroup.Text>
+                                <FaSearch />
+                            </InputGroup.Text>
+                            <FormControl
+                                type="text"
+                                placeholder="Search Actor, Country, or Birth Date..."
+                                aria-label="Search"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </InputGroup>
                     </Col>
-                    <input
-                        type="text"
-                        className="search-input"
-                        placeholder="Search"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </Container>
+                    <Col xs="auto" className="d-flex mb-4">
+                        <Form.Select className="mb-4" value={showCount} onChange={(e) => setShowCount(e.target.value)} style={{ width: '80px', display: 'inline-block' }}>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </Form.Select>
+                    </Col>
 
-                {/* Button to Add New Actor */}
-                <Button
-                    variant="success"
-                    className="d-flex align-items-center w-auto px-4 py-2"
-                    style={{ whiteSpace: 'nowrap' }} // Ini mencegah teks tombol pecah ke baris lain
-                    onClick={handleShowModal}>
-                    <FaPlus className="me-2" />
-                    Add New Actor
-                </Button>
+                    {/* Button to Add New Actor */}
+                    <Col xs="auto" className="d-flex mb-4">
+                        <Button
+                            variant="success"
+                            className="d-flex align-items-center w-auto px-4 py-2 mb-4"
+                            style={{ whiteSpace: 'nowrap' }} 
+                            onClick={handleShowModal}>
+                            <FaPlus className="me-2" />
+                            Add New Actor
+                        </Button>
+                    </Col>
+                </Row>
             </Container>
 
             {/* Modal for Adding/Editing Actor */}
@@ -298,10 +273,21 @@ const ActorManager = () => {
                             <Form.Control
                                 type="text"
                                 name="name"
-                                value={isEditing ? editActor.name : newActor.name}
-                                onChange={handleInputChange}
+                                value={actorData.name}
+                                onChange={(e) => setActorData({ ...actorData, name: e.target.value })}
                                 placeholder="Enter actor name"
                                 required
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Birth Date</Form.Label>
+                            <Form.Control
+                                type="date"
+                                name="birthdate"
+                                value={formatDate(actorData.birthdate)}
+                                onChange={(e) => setActorData({ ...actorData, birthdate: e.target.value })}
+                                placeholderText="Select Birth Date"
                             />
                         </Form.Group>
 
@@ -310,47 +296,29 @@ const ActorManager = () => {
                             <Form.Control
                                 type="text"
                                 name="country_name"
-                                value={isEditing ? editActor.country_name : newActor.country_name}
-                                onChange={handleInputChange}
+                                value={actorData.country_name}
+                                onChange={(e) => setActorData({ ...actorData, country_name: e.target.value })}
                                 placeholder="Enter country"
                                 required
                             />
                         </Form.Group>
 
                         <Form.Group className="mb-3">
-                            <Form.Label>Birth Date</Form.Label>
-                            <DatePicker
-                                selected={isEditing ? (editActor.birthdate ? new Date(editActor.birthdate) : null) : (newActor.birthdate ? new Date(newActor.birthdate) : null)}
-                                onChange={handleDateChange}
-                                dateFormat="dd-MM-yyyy"
-                                className="form-control ms-2"
-                                placeholderText="Select Birth Date"
-                            />
-
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
                             <Form.Label>Upload Picture</Form.Label>
                             <Form.Control
-                                type="file"
+                                type="text"
                                 name="actor_picture"
-                                accept="image/*"
-                                onChange={handlePhotoChange}
+                                value={actorData.actor_picture}
+                                placeholder="Enter Picture URL"
+                                onChange={(e) => setActorData({ ...actorData, actor_picture: e.target.value })}
                             />
-                            {/* Preview Image */}
-                            {isEditing && editActor.actor_picture && (
-                                <div className="mt-2">
-                                    <img src={editActor.actor_picture.startsWith("http") || editActor.actor_picture.startsWith("https")
-                                        ? editActor.actor_picture
-                                        : 'http://localhost:8001/images/' + editActor.actor_picture} alt="Preview" width={100} />
-                                </div>
-                            )}
-                            {!isEditing && newActor.actor_picture && (
-                                <div className="mt-2">
-                                    <img src={newActor.actor_picture.startsWith("http") || newActor.actor_picture.startsWith("https")
-                                        ? newActor.actor_picture
-                                        : 'http://localhost:8001/images/' + newActor.actor_picture} alt="Preview" width={100} />
-                                </div>
+                            {actorData.actor_picture && (
+                                <Image
+                                    src={actorData.actor_picture}
+                                    alt="Poster Preview"
+                                    style={{ width: '150px', height: '225px' }}
+                                    onError={() => setActorData({ ...actorData, actorData: "" })} // Hide preview if URL is invalid
+                                />
                             )}
                         </Form.Group>
                     </Form>
@@ -387,69 +355,70 @@ const ActorManager = () => {
                     <Button variant="danger" onClick={handleDeleteActor}>Delete</Button>
                 </Modal.Footer>
             </Modal>
-            {loading ? (
-                <p>Loading data...</p>
-            ) : (
-                <>
-                    {/* Table Section */}
-                    < Container className="actor-table-wrapper" >
-                        <Table striped bordered hover className="actor-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Countries</th>
-                                    <th>Actor Name</th>
-                                    <th>Birth Date</th>
-                                    <th>Photos</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentActors.map((actor) => (
-                                    <tr key={actor.id}>
-                                        <td>{actor.id}</td>
-                                        <td>{actor.country_name}</td>
-                                        <td>{actor.name}</td>
-                                        <td>
-                                            {new Date(actor.birthdate).toLocaleDateString('id-ID', {
-                                                day: '2-digit',
-                                                month: 'long',
-                                                year: 'numeric'
-                                            })}
-                                        </td>
-                                        <td>
-                                            {actor.actor_picture && actor.actor_picture !== "N/A" ? (
-                                                <img src={actor.actor_picture.startsWith("http") || actor.actor_picture.startsWith("https")
-                                                    ? actor.actor_picture
-                                                    : 'http://localhost:8001/images/' + actor.actor_picture} alt={actor.name} width={50} />
-                                            ) : (
-                                                <img src={Icon} alt={actor.name} width={50} />
-                                            )}
-                                        </td>
-                                        <td>
-                                            <Container className="action-button">
-                                                <Button className="btn btn-sm btn-primary me-2" onClick={() => handleEditActor(actor.id)}>
-                                                    Edit
-                                                </Button>
-                                                <Button
-                                                    className="btn btn-sm btn-danger"
-                                                    onClick={() => {
-                                                        setShowDeleteModal(true);
-                                                        setActorToDelete(actor);
-                                                    }}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </Container>
-                                        </td>
+            {
+                loading ? (
+                    <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
+                ) : (
+                    <>
+                        {/* Table Section */}
+                        < Container className="actor-table-wrapper" >
+                            <Table striped bordered hover className="actor-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Birth Date</th>
+                                        <th>Country</th>
+                                        <th>Picture</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Container >
-                    {renderPagination()}
-                </>
-            )
+                                </thead>
+                                <tbody>
+                                    {currentActors.map((actor) => (
+                                        <tr key={actor.id}>
+                                            <td>{actor.id}</td>
+                                            <td>{actor.name}</td>
+                                            <td>
+                                                {new Date(actor.birthdate).toLocaleDateString('id-ID', {
+                                                    day: '2-digit',
+                                                    month: 'long',
+                                                    year: 'numeric'
+                                                })}
+                                            </td>
+                                            <td>{actor.country_name}</td>
+                                            <td>
+                                                {actor.actor_picture && actor.actor_picture !== "N/A" ? (
+                                                    <img src={actor.actor_picture.startsWith("http") || actor.actor_picture.startsWith("https")
+                                                        ? actor.actor_picture
+                                                        : 'http://localhost:8001/images/' + actor.actor_picture} alt={actor.name} width={50} />
+                                                ) : (
+                                                    <img src={Icon} alt={actor.name} width={50} />
+                                                )}
+                                            </td>
+                                            <td>
+                                                <Container className="action-button">
+                                                    <Button className="btn btn-sm btn-primary me-2" onClick={() => handleEditActor(actor.id)}>
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        className="btn btn-sm btn-danger"
+                                                        onClick={() => {
+                                                            setShowDeleteModal(true);
+                                                            setActorToDelete(actor);
+                                                        }}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                </Container>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </Table>
+                        </Container >
+                        {renderPagination()}
+                    </>
+                )
             }
         </Container >
 
