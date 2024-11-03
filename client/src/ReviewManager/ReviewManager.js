@@ -123,8 +123,10 @@ const Reviews = () => {
             <FaSearch />
           </InputGroup.Text>
           <FormControl
+            type="text"
             placeholder="Search reviews, movie titles, or usernames..."
             aria-label="Search"
+            value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </InputGroup>
