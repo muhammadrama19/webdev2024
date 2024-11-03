@@ -49,6 +49,7 @@ const Countries = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include credentials (cookies)
         body: JSON.stringify({ country_name: countryName }),
       });
       if (response.ok) {

@@ -71,6 +71,7 @@ const Genres = () => {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newGenreName }),
+        credentials: 'include', // Ensure cookies are sent with the request
       });
 
       if (!response.ok) throw new Error('Failed to add/update genre');
@@ -86,15 +87,16 @@ const Genres = () => {
 
   const softDeleteGenre = async (genreId) => {
     const url = `http://localhost:8001/genres/delete/${genreId}`;
-
+  
     try {
       const response = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Ensure cookies are sent with the request
       });
-
+  
       if (!response.ok) throw new Error("Failed to soft delete genre");
-
+  
       fetchGenres(); // Refresh genres list after deletion
       setShowDeleteModal(false); // Close delete modal
       setSelectedGenre(null); // Reset selected genre
@@ -102,7 +104,7 @@ const Genres = () => {
       console.error("Error soft deleting genre:", error);
     }
   };
-
+  
   return (
     <Container className="genre-list pt-3" style={{ padding: '20px' }}>
       <h2 className="my-4" style={{ textAlign: 'center' }}>Genre List</h2>

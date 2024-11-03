@@ -58,7 +58,9 @@ const ActorList = () => {
 
   const handleUpdateActor = async () => {
     try {
-      const response = await axios.put(`http://localhost:8001/actors/${selectedActor.id}`, actorData);
+      const response = await axios.put(`http://localhost:8001/actors/${selectedActor.id}`, actorData, {
+        withCredentials: true
+      });
       setActors(actors.map(actor => actor.id === selectedActor.id ? { ...actor, ...actorData } : actor));
       setShowEditModal(false);
       setSelectedActor(null);
@@ -71,7 +73,9 @@ const ActorList = () => {
 
   const handleDeleteActor = async () => {
     try {
-      await axios.put(`http://localhost:8001/actors/delete/${selectedActor.id}`);
+      await axios.put(`http://localhost:8001/actors/delete/${selectedActor.id}`, {}, {
+        withCredentials: true
+      });
       setActors(actors.filter(actor => actor.id !== selectedActor.id));
       setShowDeleteModal(false);
       setSelectedActor(null);

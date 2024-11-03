@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const cors = require("cors");
 const mysql = require("mysql2");
@@ -17,6 +18,7 @@ const fs = require("fs");
 const { isAuthenticated, hasAdminRole } = require("./middleware/auth");
 const multer = require("multer");
 const app = express();
+app.use(cookieParser());
 const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 
 app.use(
@@ -61,6 +63,11 @@ app.use(
     secret: process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: "Strict", // or "Lax" or "None" based on your requirements
+      secure: process.env.NODE_ENV === "production", // Set to true if using HTTPS
+    },
   })
 );
 app.use(passport.initialize());
@@ -914,7 +921,7 @@ app.post(
 );
 
 // Route to update an existing actor with country existence check
-app.put("/actors/:id", (req, res) => {
+app.put("/actors/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
   const { name, birthdate, country_name, actor_picture } = req.body;
 
@@ -962,7 +969,7 @@ app.put("/actors/:id", (req, res) => {
 });
 
 // Route to delete an actor
-app.put("/actors/delete/:id", (req, res) => {
+app.put("/actors/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -1035,7 +1042,7 @@ app.post("/genres", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Update an existing genre
-app.put("/genres/:id", (req, res) => {
+app.put("/genres/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -1075,7 +1082,7 @@ app.put("/genres/:id", (req, res) => {
 });
 
 // Delete a genre
-app.put("/genres/delete/:id", (req, res) => {
+app.put("/genres/delete/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
 
   // Start a transaction
@@ -1188,7 +1195,7 @@ app.post("/countries", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Update an existing country
-app.put("/countries/:id", (req, res) => {
+app.put("/countries/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
   const { country_name } = req.body;
 
@@ -1228,7 +1235,7 @@ app.put("/countries/:id", (req, res) => {
 });
 
 // Delete a country
-app.put("/countries/delete/:id", (req, res) => {
+app.put("/countries/delete/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
 
   // Start a transaction
@@ -1302,7 +1309,7 @@ app.get("/awards", (req, res) => {
 });
 
 // Route to add a new Award
-app.post("/awards", (req, res) => {
+app.post("/awards", isAuthenticated, hasAdminRole, (req, res) => {
   const { awards_name, country_name, awards_years } = req.body;
 
   if (!awards_name || !country_name || !awards_years) {
@@ -1367,7 +1374,7 @@ app.post("/awards", (req, res) => {
 });
 
 // Route to update an existing award with country existence check
-app.put("/awards/:id", (req, res) => {
+app.put("/awards/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
   const { awards_name, country_name, awards_years } = req.body;
 
@@ -1438,7 +1445,7 @@ app.put("/awards/:id", (req, res) => {
   });
 });
 // Route to delete an award
-app.delete("/awards/:id", (req, res) => {
+app.delete("/awards/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
 
   // Start a transaction
@@ -1785,14 +1792,16 @@ app.post("/login", (req, res) => {
             );
 
             // Send token and user_id in cookies
-            res.cookie("token", token, { httpOnly: false, sameSite: "strict" });
+            res.cookie("token", token, { httpOnly: true, sameSite: "strict", secure: false });
             res.cookie("user_id", user.id, {
-              httpOnly: false,
+              httpOnly: true,
               sameSite: "strict",
+              secure: false,
             });
             res.cookie("role", user.role, {
-              httpOnly: false,
+              httpOnly: true,
               sameSite: "strict",
+              secure: false,
             }); // Tambahkan role ke cookie
 
             return res.json({

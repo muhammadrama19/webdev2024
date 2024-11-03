@@ -69,6 +69,7 @@ const AwardManager = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ awards_name: awardsName, country_name: countryName, awards_years: awardsYears }),
       });
       if (response.ok) {
@@ -90,6 +91,8 @@ const AwardManager = () => {
       try {
         const response = await fetch(`http://localhost:8001/awards/${id}`, {
           method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
         });
         if (response.ok) {
           await fetchAwards();
