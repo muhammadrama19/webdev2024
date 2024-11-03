@@ -6,7 +6,7 @@ import { Button } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { Container } from "react-bootstrap";
+
 import Swal from 'sweetalert2';
 import GoogleLogin from "../components/googleButton/googleButton";
 
@@ -21,8 +21,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
 
   axios.defaults.withCredentials = true;
-
-
+  
 
   const handleSubmit = (e) => {
     e.preventDefault(); 
