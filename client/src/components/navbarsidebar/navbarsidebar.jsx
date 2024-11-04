@@ -1,76 +1,112 @@
-import React, { useState } from 'react';
-import { Navbar, Nav, Container, Button, Accordion } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import './NavbarSidebar.scss'; // Add custom styling as needed
+import React, { useState, useEffect } from "react";
+import {
+  BsFillBellFill,
+  BsFillEnvelopeFill,
+  BsPersonCircle,
+  BsJustify,
+} from "react-icons/bs";
+import './NavbarSidebar.scss';
+import Cookies from 'js-cookie';
+import { useNavigate } from "react-router-dom";
 
-const NavbarSidebarLayout = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+function Header({ OpenSidebar }) {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [username, setUsername] = useState(null); // Mulai dengan null
+  const [email, setEmail] = useState(null); // Mulai dengan null
+  const [role, setRole] = useState(null); // Mulai dengan null
+  const navigate = useNavigate();
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  // Fungsi untuk menangkap query parameter dari URL
+  const getQueryParams = (param) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  };
+
+  useEffect(() => {
+    const usernameFromCookies = Cookies.get("username");
+    const emailFromCookies = Cookies.get("email");
+    const roleFromCookies = Cookies.get("role");
+
+    // Hanya set jika role adalah "admin"
+    if (roleFromCookies === "Admin") {
+      setUsername(usernameFromCookies);
+      setEmail(emailFromCookies);
+      setRole(roleFromCookies);
+    }
+
+    // Cek dari URL params jika login via Google
+    const usernameFromGoogle = getQueryParams("username");
+    const emailFromGoogle = getQueryParams("email");
+  
+    if (usernameFromGoogle && emailFromGoogle && roleFromCookies === "admin") {
+      // Simpan data ke cookie jika role adalah admin
+      Cookies.set("username", usernameFromGoogle, { expires: 1 });
+      Cookies.set("email", emailFromGoogle, { expires: 1 });
+  
+      setUsername(usernameFromGoogle);
+      setEmail(emailFromGoogle);
+      setRole(roleFromCookies);
+
+      // Clear query params after saving to cookies
+      window.history.replaceState(null, null, window.location.pathname); 
+    }
+  }, []);
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleLogout = () => {
+    // Hapus data dari cookie
+    Cookies.remove("username");
+    Cookies.remove("email");
+    Cookies.remove("role");
+    Cookies.remove("token");
+    Cookies.remove("user_id");
+    Cookies.remove("profilePicture");
+  
+    setUsername(null);
+    setEmail(null);
+    setRole(null);
+  
+    navigate("/login");
+  };
 
   return (
-    <div className="navbar-sidebar-layout">
-      {/* Top Navbar */}
-      <Navbar >
-        <Container fluid>
-          <Button variant="outline-light" onClick={toggleSidebar} className="me-2">
-            ☰
-          </Button>
-          <Navbar.Brand as={Link} to="/">Admin Dashboard</Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="ms-auto">
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
-
-      {/* Sidebar */}
-      <div className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
-        <Accordion defaultActiveKey="0">
-          <Accordion.Item eventKey="0">
-            <Accordion.Header>Dashboard</Accordion.Header>
-            <Accordion.Body>
-              <Nav.Link as={Link} to="/dashboard">Dashboard Home</Nav.Link>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="1">
-            <Accordion.Header>Movies</Accordion.Header>
-            <Accordion.Body>
-              <Nav.Link as={Link} to="/movie-list">Movie List</Nav.Link>
-              <Nav.Link as={Link} to="/validate-drama">Movie Validation</Nav.Link>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="2">
-            <Accordion.Header>Attributes</Accordion.Header>
-            <Accordion.Body>
-              <Nav.Link as={Link} to="/manage-actor">Actor</Nav.Link>
-              <Nav.Link as={Link} to="/manage-genre">Genre</Nav.Link>
-              <Nav.Link as={Link} to="/manage-awards">Award</Nav.Link>
-              <Nav.Link as={Link} to="/manage-country">Country</Nav.Link>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="3">
-            <Accordion.Header>Review</Accordion.Header>
-            <Accordion.Body>
-              <Nav.Link as={Link} to="/manage-review">Review</Nav.Link>
-
-            </Accordion.Body>
-          </Accordion.Item>
-        </Accordion>
+    <header className="header">
+      <div className="menu-icon">
+        <BsJustify className="icon" onClick={OpenSidebar} />
       </div>
-
-      {/* Main Content Area */}
-      <div className={`content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-        <Container fluid className="mt-5 pt-3">
-          {/* Content here, depending on routing or direct components */}
-        </Container>
+      <div className="header-left">
+        <BsJustify className="icon" onClick={OpenSidebar} />
       </div>
-    </div>
+      <div className="header-right">
+        {/* Tambahkan onClick pada span user-name */}
+        <BsPersonCircle className="icon" onClick={toggleDropdown} />
+        <span className="user-name" onClick={toggleDropdown}>
+          {username || "Guest"}
+        </span>
+        {showDropdown && (
+          <div className="profile-dropdown">
+            <div className="profile-header">
+              <img
+                src="https://via.placeholder.com/100" // Ganti dengan URL gambar profil
+                alt="profile"
+                className="profile-image"
+              />
+              <h4>{username}</h4> {/* Menampilkan nama user */}
+              <span className="profile-email">{email || "Unknown Email"}</span>
+              <span className="profile-role">{role || "Guest Role"}</span>
+            </div>
+            <div className="profile-actions">
+              <button className="btn-profile">Profile</button>
+              <button className="btn-signout" onClick={handleLogout}>Sign out</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
   );
-};
+}
 
-export default NavbarSidebarLayout;
+export default Header;
