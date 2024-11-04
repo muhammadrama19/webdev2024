@@ -11,7 +11,6 @@ const ReviewManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedReview, setSelectedReview] = useState(null);
-
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
   const [modalType, setModalType] = useState("");

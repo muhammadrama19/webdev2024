@@ -1053,19 +1053,19 @@ app.post("/genres", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Update an existing genre
-app.put("/genres/:id", isAuthenticated, hasAdminRole, (req, res) => {
+app.put("/genres/update/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
-
-  if (!name) {
-    return res.status(400).json({ error: "Genre name is required" });
-  }
 
   // Start a transaction
   db.beginTransaction((err) => {
     if (err) {
       console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    if (!name) {
+      return res.status(400).json({ error: "Genre name is required" });
     }
 
     const query = "UPDATE genres SET name = ? WHERE id = ?";
@@ -2327,90 +2327,6 @@ app.get("/confirm-email/:token", (req, res) => {
     });
   });
 });
-
-
-
-// Forgot Password
-// OAuth2 client setup
-// const OAuth2 = google.auth.OAuth2;
-
-// // Buat OAuth2 client dengan Client ID, Client Secret, dan Redirect URL
-// const oauth2Client = new OAuth2(
-//   process.env.CLIENT_ID, // Client ID dari Google Cloud
-//   process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
-//   "https://developers.google.com/oauthplayground" // Redirect URL, bisa disesuaikan
-// );
-
-// // Set refresh token yang didapat dari Google Cloud Console
-// oauth2Client.setCredentials({
-//   refresh_token: process.env.REFRESH_TOKEN,
-// });
-
-// // Fungsi untuk mengirim email
-// function sendEmail({ recipient_email, OTP }) {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       // Dapatkan access token
-//       const accessToken = await oauth2Client.getAccessToken();
-
-//       // Konfigurasikan nodemailer transport dengan OAuth2
-//       var transporter = nodemailer.createTransport({
-//         service: "gmail",
-//         auth: {
-//           type: "OAuth2",
-//           user: process.env.MY_EMAIL, // Email Anda
-//           clientId: process.env.CLIENT_ID, // Client ID dari Google Cloud
-//           clientSecret: process.env.CLIENT_SECRET, // Client Secret dari Google Cloud
-//           refreshToken: process.env.REFRESH_TOKEN, // Refresh Token dari Google Cloud
-//           accessToken: accessToken.token, // Access Token yang baru saja di-generate
-//         },
-//       });
-
-//       // Konfigurasi email
-//       const mail_configs = {
-//         from: process.env.MY_EMAIL, // Email pengirim
-//         to: recipient_email, // Email penerima
-//         subject: "LALAJOEUY PASSWORD RECOVERY",
-//         html: `<!DOCTYPE html>
-//               <html lang="en">
-//               <head>
-//                 <meta charset="UTF-8">
-//                 <title>Recovery Password</title>
-//               </head>
-//               <body>
-//                 <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
-//                   <div style="margin:50px auto;width:70%;padding:20px 0">
-//                     <p>Hi,</p>
-//                     <p>Thank you for choosing Lalajo Euy! Use the following OTP to complete your Password Recovery Procedure. OTP is valid for 5 minutes</p>
-//                     <h2>${OTP}</h2>
-//                   </div>
-//                 </div>
-//               </body>
-//               </html>`,
-//       };
-
-//       // Kirim email
-//       transporter.sendMail(mail_configs, function (error, info) {
-//         if (error) {
-//           console.error("Error sending email:", error);
-//           return reject({ message: `An error has occurred: ${error.message}` });
-//         }
-//         console.log("Email sent:", info.response);
-//         return resolve({ message: "Email sent successfully" });
-//       });
-//     } catch (error) {
-//       console.error("Error in OAuth2 or sending email:", error);
-//       return reject({ message: `An error has occurred: ${error.message}` });
-//     }
-//   });
-// }
-
-// // Endpoint untuk mengirim email pemulihan
-// app.post("/send_recovery_email", (req, res) => {
-//   sendEmail(req.body)
-//     .then((response) => res.send(response.message))
-//     .catch((error) => res.status(500).send(error.message));
-// });
 
 module.exports = router;
 
