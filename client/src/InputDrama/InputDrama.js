@@ -19,6 +19,7 @@ const DramaInput = () => {
   const location = useLocation();
 
   const [formData, setFormData] = useState({
+    id: null,
     posterUrl: "",
     status: "",
     view: "",
@@ -38,43 +39,107 @@ const DramaInput = () => {
   });
 
   const [isEdit, setIsEdit] = useState(false);
+  const [platformList, setPlatformList] = useState([]);
+  const [countriesList, setCountriesList] = useState([]); // State untuk countries dari backend
+  const [awardsList, setAwardsList] = useState([]); // State untuk awards dari backend
+  const [statusList, setStatusList] = useState([]); // State untuk status dari backend
 
   useEffect(() => {
+    const fetchPlatformsAndCountries = async () => {
+      try {
+        const platformResponse = await fetch("http://localhost:8001/platforms");
+        const platformData = await platformResponse.json();
+        setPlatformList(platformData);
+
+        const countriesResponse = await fetch(
+          "http://localhost:8001/countries"
+        );
+        const countriesData = await countriesResponse.json();
+        setCountriesList(countriesData);
+
+        const awardsResponse = await fetch("http://localhost:8001/awards");
+        const awardsData = await awardsResponse.json();
+        setAwardsList(awardsData);
+
+        const statusResponse = await fetch("http://localhost:8001/status");
+        const statusData = await statusResponse.json();
+        setStatusList(statusData); // Set statusList dengan data dari backend
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchPlatformsAndCountries();
+
     if (location.state && location.state.movieData) {
       const movieData = location.state.movieData;
 
+      const availabilityPlatform = platformList.find(
+        (platform) => platform.id === movieData.availability_id
+      );
+
+      const selectedCountries = movieData.Countries
+        ? movieData.Countries.split(", ").map((countryName) => ({
+            label: countryName,
+            value: countryName,
+          }))
+        : [];
+
+      const selectedAwards = movieData.Awards
+        ? movieData.Awards.split(", ").map((awardName) => ({
+            label: awardName,
+            value: awardName,
+          }))
+        : [];
+
+      const selectedGenres = movieData.Genres
+        ? movieData.Genres.split(", ")
+        : [];
+
+      const parsedActors = movieData.Actors
+        ? movieData.Actors.split(", ").map((actorWithRole) => {
+            const [name, role] = actorWithRole
+              .match(/(.*?) \((.*?)\)/)
+              .slice(1);
+            return { name, role };
+          })
+        : [];
+
+      const selectedStatus = statusList.find(
+        (status) => status.id === movieData.status_id
+      );
+
       setFormData({
+        id: movieData.id || null,
         posterUrl: movieData.poster || "",
-        status: movieData.status || "",
+        status: selectedStatus ? selectedStatus.name : "",
+        status_id: movieData.status_id || "",
         view: movieData.view || "",
         title: movieData.title || "",
         alternativeTitle: movieData.alt_title || "",
         director: movieData.director || "",
         year: movieData.release_year || "",
-        country: movieData.country || "",
+        country: selectedCountries,
         synopsis: movieData.synopsis || "",
-        availability: movieData.availability || "",
-        genres: movieData.Genres ? movieData.Genres.split(", ") : [], // Memecah string Genres menjadi array
-        actors: movieData.Actors
-          ? movieData.Actors.split(", ").map((name) => ({ name, role: "" }))
-          : [], // Memecah string Actors menjadi array objek
+        availability: availabilityPlatform
+          ? availabilityPlatform.platform_name
+          : "",
+        genres: selectedGenres,
+        actors: parsedActors,
         trailer: movieData.trailer || "",
-        awards: movieData.awards || [],
+        awards: selectedAwards,
         backgroundUrl: movieData.background || "",
-        imdbScore: movieData.imdb_score || 0,
+        imdbScore: parseFloat(movieData.imdb_score) || 0,
       });
       setIsEdit(true);
     }
-  }, [location.state]);
+  }, [location.state, platformList, countriesList, awardsList, statusList]);
 
   const [genresList, setGenresList] = useState([]); // State untuk genres dari backend
   const [actorsList, setActorsList] = useState([]); // State untuk daftar aktor
   const [filteredActors, setFilteredActors] = useState([]); // State untuk hasil pencarian aktor
   const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian aktor
-  const [awardsList, setAwardsList] = useState([]); // State untuk awards dari backend
-  const [countriesList, setCountriesList] = useState([]); // State untuk countries dari backend
-  const [platformList, setPlatformList] = useState([]); // State untuk platform dari backend
-  const [statusList, setStatusList] = useState([]); // State untuk status dari backend
+  // const [countriesList, setCountriesList] = useState([]); // State untuk countries dari backend
+  // const [platformList, setPlatformList] = useState([]); // State untuk platform dari backend
 
   // Fetch genres dari backend menggunakan useEffect
   useEffect(() => {
@@ -219,6 +284,11 @@ const DramaInput = () => {
     label: awards.awards_name,
   }));
 
+  const countryOptions = countriesList.map((country) => ({
+    value: country.country_name,
+    label: country.country_name,
+  }));
+
   const removeAwards = (awardsName) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -295,6 +365,15 @@ const DramaInput = () => {
     }));
   };
 
+  const handleCountryChange = (selectedOptions) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      country: selectedOptions
+        ? selectedOptions.map((option) => option.value)
+        : [],
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -341,9 +420,8 @@ const DramaInput = () => {
 
   const handleEdit = async (e) => {
     e.preventDefault();
-  
-    // Siapkan data untuk diperbarui
     const dataToSubmit = {
+      id: formData.id,
       view: formData.view,
       status: formData.status,
       title: formData.title,
@@ -361,20 +439,20 @@ const DramaInput = () => {
       posterUrl: formData.posterUrl,
       backgroundUrl: formData.backgroundUrl,
     };
-  
+
     try {
       const response = await fetch("http://localhost:8001/update-drama", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(dataToSubmit), // Kirim data JSON
+        body: JSON.stringify(dataToSubmit),
       });
-  
+
       if (response.ok) {
         const result = await response.json();
-        console.log(result.message); // Tampilkan pesan sukses
-        navigate("/movie-list"); // Redirect ke halaman movie list jika berhasil
+        console.log(result.message);
+        navigate("/movie-list");
       } else {
         console.error("Error updating form data:", response.statusText);
       }
@@ -382,7 +460,6 @@ const DramaInput = () => {
       console.error("Error:", error);
     }
   };
-  
 
   const handleBack = () => {
     navigate("/movie-list"); // Redirect to movie-list on Back button click
@@ -416,7 +493,7 @@ const DramaInput = () => {
             <Form.Group className="mb-3">
               <Form.Select
                 name="status"
-                value={formData.status}
+                value={formData.status} // Set nilai berdasarkan formData.status
                 onChange={handleChange}
               >
                 <option value="">Status Movie</option>
@@ -458,7 +535,7 @@ const DramaInput = () => {
               <FormLabel className="imdb-score-label">IMDB SCORE</FormLabel>
               <Rating
                 count={5}
-                value={formData.imdbScore}
+                value={formData.imdbScore} // Set nilai berdasarkan formData.imdbScore
                 onChange={handleRatingChange}
                 size={32}
                 isHalf={true} // Allow half-star ratings
@@ -516,20 +593,20 @@ const DramaInput = () => {
                 onChange={handleChange}
               />
             </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Select
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-              >
-                <option value="">Select Country</option>
-                {countriesList.map((country) => (
-                  <option key={country.id} value={country.country_name}>
-                    {country.country_name}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+            <div className="select">
+              <Form.Group className="mb-3">
+                <Select
+                  isMulti
+                  name="country"
+                  options={countryOptions}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  value={formData.country}
+                  onChange={handleCountryChange}
+                  placeholder="Select Country"
+                />
+              </Form.Group>
+            </div>
             <Form.Group className="mb-3">
               <Form.Control
                 as="textarea"
@@ -557,12 +634,12 @@ const DramaInput = () => {
             <Form.Group className="mb-3">
               <Form.Label>Add Genres</Form.Label>
               <div className="genres">
-                {/* Looping genres dari state genresList */}
                 {genresList.map((genre) => (
                   <Form.Check
                     key={genre.id}
                     type="checkbox"
                     label={genre.name}
+                    checked={formData.genres.includes(genre.name)}
                     onChange={() => handleGenreChange(genre.name)}
                   />
                 ))}
@@ -655,9 +732,7 @@ const DramaInput = () => {
                   className="basic-multi-select"
                   classNamePrefix="select"
                   placeholder="Select Awards"
-                  value={awardsOptions.filter((option) =>
-                    formData.awards.includes(option.value)
-                  )}
+                  value={formData.awards}
                   onChange={handleAwardsChange}
                 />
               </Form.Group>
