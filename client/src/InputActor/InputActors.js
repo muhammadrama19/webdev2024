@@ -88,19 +88,17 @@ const ActorManager = () => {
     };
 
     const handleDeleteActor = async () => {
-        if (actorToDelete) {
-            try {
-                await fetch(`http://localhost:8001/actors/${actorToDelete.id}`, {
-                    method: 'DELETE',
-                });
-                setActors((prevActors) => prevActors.filter((actor) => actor.id !== actorToDelete.id));
-                setShowDeleteModal(false);
-                setActorToDelete(null);
-            } catch (error) {
-                console.error("Error deleting actor:", error);
-            }
-        }
-    };
+    try {
+      await axios.put(`http://localhost:8001/actors/delete/${selectedActor.id}`, {}, {
+        withCredentials: true
+      });
+      setActors(actors.filter(actor => actor.id !== selectedActor.id));
+      setShowDeleteModal(false);
+      setSelectedActor(null);
+    } catch (error) {
+      console.error("Error deleting actor:", error);
+    }
+  };
 
     const handleEditActor = (id) => {
         setEditing(id);
@@ -388,9 +386,8 @@ const ActorManager = () => {
                                             <td>{actor.country_name}</td>
                                             <td>
                                                 {actor.actor_picture && actor.actor_picture !== "N/A" ? (
-                                                    <img src={actor.actor_picture.startsWith("http") || actor.actor_picture.startsWith("https")
-                                                        ? actor.actor_picture
-                                                        : 'http://localhost:8001/images/' + actor.actor_picture} alt={actor.name} width={50} />
+                                                    <td>
+                  <img src={actor.actor_picture} alt={actor.name} className="actor-img" style={{ width: '50px', height: '75px' }} />
                                                 ) : (
                                                     <img src={Icon} alt={actor.name} width={50} />
                                                 )}

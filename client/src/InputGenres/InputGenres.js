@@ -90,6 +90,26 @@ const GenreManager = () => {
             }
         }
     };
+  
+    const softDeleteGenre = async (genreId) => {
+    const url = `http://localhost:8001/genres/delete/${genreId}`;
+  
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Ensure cookies are sent with the request
+      });
+  
+      if (!response.ok) throw new Error("Failed to soft delete genre");
+  
+      fetchGenres(); // Refresh genres list after deletion
+      setShowDeleteModal(false); // Close delete modal
+      setSelectedGenre(null); // Reset selected genre
+    } catch (error) {
+      console.error("Error soft deleting genre:", error);
+    }
+  };
 
     const handleEditGenre = (id) => {
         setEditing(id);

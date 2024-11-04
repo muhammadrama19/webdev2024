@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const cors = require("cors");
 const mysql = require("mysql2");
@@ -17,6 +18,7 @@ const fs = require("fs");
 const { isAuthenticated, hasAdminRole } = require("./middleware/auth");
 const multer = require("multer");
 const app = express();
+app.use(cookieParser());
 const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 
 app.use(
@@ -61,6 +63,11 @@ app.use(
     secret: process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: "Strict", // or "Lax" or "None" based on your requirements
+      secure: process.env.NODE_ENV === "production", // Set to true if using HTTPS
+    },
   })
 );
 app.use(passport.initialize());
@@ -711,8 +718,9 @@ app.get("/movie-list", (req, res) => {
   });
 });
 
+
 // app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
-app.get("/users", (req, res) => {
+app.get("/users", isAuthenticated, hasAdminRole, (req, res) => {
   const query = `
     SELECT id, username, role, email, Status_Account FROM users WHERE Status_Account != 3
   `;
@@ -857,6 +865,8 @@ app.get("/actors", (req, res) => {
       countries c
     ON 
       a.country_birth_id = c.id
+    WHERE 
+      a.deleted_at IS NULL
     ORDER BY 
       a.id ASC;
   `;
@@ -872,54 +882,57 @@ app.get("/actors", (req, res) => {
 });
 
 // Route to add a new actor
+
 app.post("/actors",  isAuthenticated, hasAdminRole, (req, res) => {
   const { name, birthdate, country_name, actor_picture } = req.body;
 
-  if (!name || !birthdate || !country_name) {
-    return res.status(400).json({ error: "Missing required fields." });
-  }
 
-  // Check if the country exists in the database
-  const checkCountryQuery = `
+    if (!name || !birthdate || !country_name) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    // Check if the country exists in the database
+    const checkCountryQuery = `
     SELECT id FROM countries WHERE country_name = ?;
   `;
 
-  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
-    if (err) {
-      console.error("Error checking country:", err.message);
-      return res.status(500).json({ error: "Failed to check country." });
-    }
+    db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+      if (err) {
+        console.error("Error checking country:", err.message);
+        return res.status(500).json({ error: "Failed to check country." });
+      }
 
-    if (countryResult.length === 0) {
-      // If country doesn't exist, return an error
-      return res
-        .status(400)
-        .json({ error: "Country not found. Please add the country first." });
-    }
+      if (countryResult.length === 0) {
+        // If country doesn't exist, return an error
+        return res
+          .status(400)
+          .json({ error: "Country not found. Please add the country first." });
+      }
 
-    // If country exists, proceed with adding the actor
-    const country_birth_id = countryResult[0].id;
+      // If country exists, proceed with adding the actor
+      const country_birth_id = countryResult[0].id;
 
-    const addActorQuery = `
+      const addActorQuery = `
       INSERT INTO actors (name, birthdate, country_birth_id, actor_picture) 
       VALUES (?, ?, ?, ?);
     `;
-    const values = [name, birthdate, country_birth_id, actor_picture];
+      const values = [name, birthdate, country_birth_id, actor_picture];
 
-    db.query(addActorQuery, values, (err, result) => {
-      if (err) {
-        console.error("Error inserting actor:", err.message);
-        return res.status(500).json({ error: "Failed to add actor." });
-      }
-      res
-        .status(201)
-        .json({ message: "Actor added successfully.", id: result.insertId });
+      db.query(addActorQuery, values, (err, result) => {
+        if (err) {
+          console.error("Error inserting actor:", err.message);
+          return res.status(500).json({ error: "Failed to add actor." });
+        }
+        res
+          .status(201)
+          .json({ message: "Actor added successfully.", id: result.insertId });
+      });
     });
-  });
-});
+  }
+);
 
 // Route to update an existing actor with country existence check
-app.put("/actors/:id", (req, res) => {
+app.put("/actors/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
   const { name, birthdate, country_name, actor_picture } = req.body;
 
@@ -967,12 +980,11 @@ app.put("/actors/:id", (req, res) => {
 });
 
 // Route to delete an actor
-app.delete("/actors/:id", (req, res) => {
+app.put("/actors/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
   const query = `
-    DELETE FROM actors 
-    WHERE id = ?;
+    UPDATE actors SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
   `;
   db.query(query, [id], (err, result) => {
     if (err) {
@@ -988,9 +1000,10 @@ app.delete("/actors/:id", (req, res) => {
   });
 });
 
+
 // Get all genres
 app.get("/genres", (req, res) => {
-  const query = "SELECT id, name FROM genres ORDER BY id ASC ";
+  const query = "SELECT id, name FROM genres WHERE deleted_at IS NULL ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
@@ -1002,23 +1015,45 @@ app.get("/genres", (req, res) => {
 });
 
 // Add a new genre
-app.post("/genres",  isAuthenticated, hasAdminRole, (req, res) => {
+app.post("/genres", isAuthenticated, hasAdminRole, (req, res) => {
   const { name } = req.body;
   if (!name) {
     return res.status(400).json({ error: "Genre name is required" });
   }
 
-  const query = "INSERT INTO genres (name) VALUES (?)";
-  db.query(query, [name], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to add genre" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ id: result.insertId, name });
+
+    const query = "INSERT INTO genres (name) VALUES (?)";
+    db.query(query, [name], (err, result) => {
+      if (err) {
+        console.error("Error adding genre:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to add genre" });
+        });
+      }
+
+      // Commit the transaction if the query succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ id: result.insertId, name });
+      });
+    });
   });
 });
 
 // Update an existing genre
-app.put("/genres/:id", (req, res) => {
+app.put("/genres/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -1026,30 +1061,77 @@ app.put("/genres/:id", (req, res) => {
     return res.status(400).json({ error: "Genre name is required" });
   }
 
-  const query = "UPDATE genres SET name = ? WHERE id = ?";
-  db.query(query, [name, id], (err) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to update genre" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Genre updated successfully" });
+
+    const query = "UPDATE genres SET name = ? WHERE id = ?";
+    db.query(query, [name, id], (err) => {
+      if (err) {
+        console.error("Error updating genre:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to update genre" });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Genre updated successfully" });
+      });
+    });
   });
 });
 
 // Delete a genre
-app.delete("/genres/:id", (req, res) => {
+app.put("/genres/delete/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM genres WHERE id = ?";
-  db.query(query, [id], (err) => {
+
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to delete genre" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Genre deleted successfully" });
+
+    const query = `
+      UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+    `;
+    db.query(query, [id], (err) => {
+      if (err) {
+        console.error("Error deleting genre:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to delete genre" });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Genre deleted successfully" });
+      });
+    });
   });
 });
 
 // Get all countries
 app.get("/countries", (req, res) => {
-  const query = "SELECT id, country_name FROM countries ORDER BY id ASC ";
+  const query = "SELECT id, country_name FROM countries WHERE deleted_at IS NULL ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
@@ -1062,7 +1144,11 @@ app.get("/countries", (req, res) => {
 
 // Get a single country berdasarkan country_name
 app.get(
-  "/countries/:country_name", isAuthenticated, hasAdminRole,
+
+  "/countries/:country_name",
+  isAuthenticated,
+  hasAdminRole,
+
   (req, res) => {
     const { country_name } = req.params;
     const query =
@@ -1073,7 +1159,7 @@ app.get(
         res.status(500).json({ error: "Internal Server Error" });
         return;
       }
-      
+
       if (results.length === 0) {
         return res.status(404).json({ error: "Country not found" });
       }
@@ -1084,23 +1170,45 @@ app.get(
 );
 
 // Add a new country
-app.post("/countries",  isAuthenticated, hasAdminRole,(req, res) => {
+app.post("/countries", isAuthenticated, hasAdminRole, (req, res) => {
   const { country_name } = req.body;
   if (!country_name) {
     return res.status(400).json({ error: "Country name is required" });
   }
 
-  const query = "INSERT INTO countries (country_name) VALUES (?)";
-  db.query(query, [country_name], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to add country" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ id: result.insertId, country_name });
+
+    const query = "INSERT INTO countries (country_name) VALUES (?)";
+    db.query(query, [country_name], (err, result) => {
+      if (err) {
+        console.error("Error adding country:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to add country" });
+        });
+      }
+
+      // Commit the transaction if the query succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ id: result.insertId, country_name });
+      });
+    });
   });
 });
 
 // Update an existing country
-app.put("/countries/:id", (req, res) => {
+app.put("/countries/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
   const { country_name } = req.body;
 
@@ -1108,24 +1216,79 @@ app.put("/countries/:id", (req, res) => {
     return res.status(400).json({ error: "Country name is required" });
   }
 
-  const query = "UPDATE countries SET country_name = ? WHERE id = ?";
-  db.query(query, [country_name, id], (err) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to update country" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Country updated successfully" });
+
+    const query = "UPDATE countries SET country_name = ? WHERE id = ?";
+    db.query(query, [country_name, id], (err) => {
+      if (err) {
+        console.error("Error updating country:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to update country" });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Country updated successfully" });
+      });
+    });
   });
 });
 
 // Delete a country
-app.delete("/countries/:id", (req, res) => {
+app.put("/countries/delete/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM countries WHERE id = ?";
-  db.query(query, [id], (err) => {
+
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to delete country" });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Country deleted successfully" });
+
+    const query = `
+      UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
+      WHERE id = ?;
+    `;
+
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        console.error("Error deleting country:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to delete country" });
+        });
+      }
+
+      if (result.affectedRows === 0) {
+        return db.rollback(() => {
+          res.status(404).json({ error: "Country not found" });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Country deleted successfully" });
+      });
+    });
   });
 });
 
@@ -1143,6 +1306,8 @@ app.get("/awards", (req, res) => {
       countries c 
     ON 
       a.country_id = c.id 
+    WHERE
+      a.deleted_at IS NULL
     ORDER BY 
       a.id ASC;
   `;
@@ -1157,53 +1322,72 @@ app.get("/awards", (req, res) => {
 });
 
 // Route to add a new Award
-app.post("/awards", (req, res) => {
+app.post("/awards", isAuthenticated, hasAdminRole, (req, res) => {
   const { awards_name, country_name, awards_years } = req.body;
 
   if (!awards_name || !country_name || !awards_years) {
     return res.status(400).json({ error: "Missing required fields." });
   }
-  // Check if the country exists in the database
-  const checkCountryQuery = `
-   SELECT id FROM countries WHERE country_name = ?;
- `;
 
-  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error checking country:", err.message);
-      return res.status(500).json({ error: "Failed to check country." });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    if (countryResult.length === 0) {
-      // If country doesn't exist, return an error
-      return res
-        .status(400)
-        .json({ error: "Country not found. Please add the country first." });
-    }
+    // Check if the country exists in the database
+    const checkCountryQuery = `SELECT id FROM countries WHERE country_name = ?`;
 
-    // If country exists, proceed with adding the award
-    const country_id = countryResult[0].id;
-
-    const addAwardQuery = `
-      INSERT INTO awards (awards_name, country_id, awards_years) 
-      VALUES (?, ?, ?);
-    `;
-    const values = [awards_name, country_id, awards_years];
-
-    db.query(addAwardQuery, values, (err, result) => {
+    db.query(checkCountryQuery, [country_name], (err, countryResult) => {
       if (err) {
-        console.error("Error inserting award:", err.message);
-        return res.status(500).json({ error: "Failed to add award." });
+        console.error("Error checking country:", err);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Internal Server Error" });
+        });
       }
-      res
-        .status(201)
-        .json({ message: "Award added successfully.", id: result.insertId });
+
+      if (countryResult.length === 0) {
+        return db.rollback(() => {
+          res.status(404).json({ error: "Country not found." });
+        });
+      }
+
+      // If country exists, proceed with adding the award
+      const country_id = countryResult[0].id;
+
+      const addAwardQuery = `
+        INSERT INTO awards (awards_name, country_id, awards_years) 
+        VALUES (?, ?, ?);
+      `;
+      const values = [awards_name, country_id, awards_years];
+
+      db.query(addAwardQuery, values, (err, result) => {
+        if (err) {
+          console.error("Error adding award:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        // Commit the transaction if all queries succeed
+        db.commit((err) => {
+          if (err) {
+            console.error("Error committing transaction:", err);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Internal Server Error" });
+            });
+          }
+
+          res.status(201).json({ message: "Award added successfully!" });
+        });
+      });
     });
   });
 });
 
 // Route to update an existing award with country existence check
-app.put("/awards/:id", (req, res) => {
+app.put("/awards/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
   const { awards_name, country_name, awards_years } = req.body;
 
@@ -1211,64 +1395,110 @@ app.put("/awards/:id", (req, res) => {
     return res.status(400).json({ error: "Missing required fields." });
   }
 
-  // Check if country exists before updating award
-  const checkCountryQuery = "SELECT id FROM countries WHERE country_name = ?";
-  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error checking country existence:", err.message);
-      return res
-        .status(500)
-        .json({ error: "Failed to check country existence." });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    if (countryResult.length === 0) {
-      return res.status(400).json({ error: "Country does not exist." });
-    }
-
-    // If country exists, proceed with update the award
-    const country_id = countryResult[0].id;
-
-    const updateQuery = `
-      UPDATE awards 
-      SET awards_name = ?, country_id = ?, awards_years = ?
-      WHERE id = ?;
-    `;
-    const values = [awards_name, country_id, awards_years, id];
-
-    db.query(updateQuery, values, (err, result) => {
+    // Check if country exists before updating award
+    const checkCountryQuery = "SELECT id FROM countries WHERE country_name = ?";
+    db.query(checkCountryQuery, [country_name], (err, countryResult) => {
       if (err) {
-        console.error("Error updating award:", err.message);
-        return res.status(500).json({ error: "Failed to update award." });
+        console.error("Error checking country existence:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to check country existence." });
+        });
       }
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: "Award not found." });
+      if (countryResult.length === 0) {
+        return db.rollback(() => {
+          res.status(400).json({ error: "Country does not exist." });
+        });
       }
 
-      res.json({ message: "Award updated successfully." });
+      // If country exists, proceed with updating the award
+      const country_id = countryResult[0].id;
+
+      const updateQuery = `
+        UPDATE awards 
+        SET awards_name = ?, country_id = ?, awards_years = ?
+        WHERE id = ?;
+      `;
+      const values = [awards_name, country_id, awards_years, id];
+
+      db.query(updateQuery, values, (err, result) => {
+        if (err) {
+          console.error("Error updating award:", err.message);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Failed to update award." });
+          });
+        }
+
+        if (result.affectedRows === 0) {
+          return db.rollback(() => {
+            res.status(404).json({ error: "Award not found." });
+          });
+        }
+
+        // Commit the transaction if all queries succeed
+        db.commit((err) => {
+          if (err) {
+            console.error("Error committing transaction:", err);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Internal Server Error" });
+            });
+          }
+
+          res.json({ message: "Award updated successfully." });
+        });
+      });
     });
   });
 });
-
 // Route to delete an award
-app.delete("/awards/:id", (req, res) => {
+app.delete("/awards/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const { id } = req.params;
 
-  const query = `
-    DELETE FROM awards
-    WHERE id = ?;
-  `;
-  db.query(query, [id], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error deleting award:", err.message);
-      return res.status(500).json({ error: "Failed to delete award." });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Award not found." });
-    }
+    const query = `
+      UPDATE awards SET deleted_at = CURRENT_TIMESTAMP
+      WHERE id = ?;
+    `;
 
-    res.json({ message: "Award deleted successfully." });
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        console.error("Error deleting award:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to delete award." });
+        });
+      }
+
+      if (result.affectedRows === 0) {
+        return db.rollback(() => {
+          res.status(404).json({ error: "Award not found." });
+        });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Award deleted successfully." });
+      });
+    });
   });
 });
 
@@ -1323,21 +1553,21 @@ app.put("/reviews/:id", (req, res) => {
 });
 
 // route to delete a review
-app.delete('/reviews/:id', (req, res) => {
+app.delete("/reviews/:id", (req, res) => {
   const { id } = req.params;
 
-  const query = 'DELETE FROM reviews WHERE id = ?';
+  const query = "DELETE FROM reviews WHERE id = ?";
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error('Error deleting review:', err.message);
-      return res.status(500).json({ error: 'Failed to delete review.' });
+      console.error("Error deleting review:", err.message);
+      return res.status(500).json({ error: "Failed to delete review." });
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Review not found.' });
+      return res.status(404).json({ error: "Review not found." });
     }
 
-    res.json({ message: 'Review deleted successfully.' });
+    res.json({ message: "Review deleted successfully." });
   });
 });
 
@@ -1384,8 +1614,11 @@ app.post("/add-drama", async (req, res) => {
   try {
     // Query to get `availability_id`
     const availabilityQuery = `SELECT id FROM availability WHERE platform_name = ?`;
-    const [availabilityResult] = await db.promise().query(availabilityQuery, [availability]);
-    const availabilityId = availabilityResult.length > 0 ? availabilityResult[0].id : null;
+    const [availabilityResult] = await db
+      .promise()
+      .query(availabilityQuery, [availability]);
+    const availabilityId =
+      availabilityResult.length > 0 ? availabilityResult[0].id : null;
 
     // Query to get `status_id`
     const statusQuery = `SELECT id FROM status WHERE name = ?`;
@@ -1416,9 +1649,18 @@ app.post("/add-drama", async (req, res) => {
     const movieId = movieResult.insertId;
 
     // Parse fields that might be arrays from strings (if needed)
-    const genres = typeof req.body.genres === "string" ? req.body.genres.split(",") : req.body.genres;
-    const actors = typeof req.body.actors === "string" ? req.body.actors.split(",") : req.body.actors;
-    const awards = typeof req.body.awards === "string" ? req.body.awards.split(",") : req.body.awards;
+    const genres =
+      typeof req.body.genres === "string"
+        ? req.body.genres.split(",")
+        : req.body.genres;
+    const actors =
+      typeof req.body.actors === "string"
+        ? req.body.actors.split(",")
+        : req.body.actors;
+    const awards =
+      typeof req.body.awards === "string"
+        ? req.body.awards.split(",")
+        : req.body.awards;
 
     // Insert into movie_genres
     for (const genre of genres) {
@@ -1440,7 +1682,9 @@ app.post("/add-drama", async (req, res) => {
 
       if (actorId) {
         const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id, role) VALUES (?, ?, ?)`;
-        await db.promise().query(movieActorQuery, [movieId, actorId, actor.role]);
+        await db
+          .promise()
+          .query(movieActorQuery, [movieId, actorId, actor.role]);
       }
     }
 
@@ -1582,14 +1826,16 @@ app.post("/login", (req, res) => {
             );
 
             // Send token and user_id in cookies
-            res.cookie("token", token, { httpOnly: false, sameSite: "strict" });
+            res.cookie("token", token, { httpOnly: true, sameSite: "strict", secure: false });
             res.cookie("user_id", user.id, {
-              httpOnly: false,
+              httpOnly: true,
               sameSite: "strict",
+              secure: false,
             });
             res.cookie("role", user.role, {
-              httpOnly: false,
+              httpOnly: true,
               sameSite: "strict",
+              secure: false,
             }); // Tambahkan role ke cookie
 
             return res.json({
@@ -1631,35 +1877,34 @@ app.get(
     failureMessage: true,
   }),
   (req, res) => {
-    // Handle successful login
     const user = req.user;
 
-    // Buat token JWT dengan informasi user
+    // Generate JWT token with user info, including role
     const token = jwt.sign(
       {
         username: user.username,
         email: user.email,
-        role: user.role,
+        role: user.role, // Ensure role is included
         user_id: user.id,
       },
       "our-jsonwebtoken-secret-key",
       { expiresIn: "1d" }
     );
 
-    // Simpan token ke cookie
+    // Set token, user_id, and role cookies
     res.cookie("token", token, {
-      httpOnly: false, // Set ke false jika token perlu diakses client-side
+      httpOnly: false,
       sameSite: "Strict",
-      secure: false, // Set to true in production with HTTPS
-      maxAge: 24 * 60 * 60 * 1000, // Cookie expires in 1 day
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.cookie("user_id", user.id, { httpOnly: false, sameSite: "strict" });
-    res.cookie("role", user.role, { httpOnly: false, sameSite: "strict" }); // Tambahkan role ke cookie
+    res.cookie("role", user.role, { httpOnly: false, sameSite: "strict" }); // Ensure role is added to cookies
 
-    // Redirect to the frontend after successful login
+    // Redirect to frontend after successful login
     res.redirect(
-      `http://localhost:3001/?username=${user.username}&email=${user.email}`
+      `http://localhost:3001/?username=${user.username}&email=${user.email}&role=${user.role}`
     );
   }
 );
@@ -1763,19 +2008,17 @@ app.post("/forgot-password", (req, res) => {
   const checkUserSql = "SELECT * FROM users WHERE email = ?";
   db.query(checkUserSql, [email], (err, userData) => {
     if (err || userData.length === 0) {
-      return res
-        .status(404)
-        .json({
-          message: "User with this email doesn't exist",
-          success: false,
-        });
+      return res.status(404).json({
+        message: "User with this email doesn't exist",
+        success: false,
+      });
     }
 
     const user = userData[0];
     const resetToken = jwt.sign(
       {
         id: user.id,
-        passwordVersion: user.password, 
+        passwordVersion: user.password,
       },
       "RESET_PASSWORD_SECRET",
       { expiresIn: "1h" }
@@ -1842,7 +2085,9 @@ app.post("/reset-password/:token", (req, res) => {
     const getUserSql = "SELECT * FROM users WHERE id = ?";
     db.query(getUserSql, [id], (err, rows) => {
       if (err || rows.length === 0) {
-        return res.status(404).json({ message: "User not found", success: false });
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
       }
 
       const user = rows[0];
@@ -1850,24 +2095,33 @@ app.post("/reset-password/:token", (req, res) => {
 
       // Check if the password has changed since the token was issued
       if (passwordVersion !== currentPasswordVersion) {
-        return res.status(400).json({ message: "Invalid token due to password change", success: false });
+        return res
+          .status(400)
+          .json({
+            message: "Invalid token due to password change",
+            success: false,
+          });
       }
 
       // Proceed with password reset
       const saltRounds = 10;
       bcrypt.hash(newPassword, saltRounds, (hashErr, hashedPassword) => {
         if (hashErr) {
-          return res.status(500).json({ message: 'Error hashing password', success: false });
+          return res
+            .status(500)
+            .json({ message: "Error hashing password", success: false });
         }
 
         // Update password in the database
         const updatePasswordSql = "UPDATE users SET password = ? WHERE id = ?";
         db.query(updatePasswordSql, [hashedPassword, user.id], (updateErr) => {
           if (updateErr) {
-            return res.status(500).json({ message: 'Error updating password', success: false });
+            return res
+              .status(500)
+              .json({ message: "Error updating password", success: false });
           }
 
-          res.json({ message: 'Password updated successfully', success: true });
+          res.json({ message: "Password updated successfully", success: true });
         });
       });
     });

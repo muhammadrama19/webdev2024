@@ -73,21 +73,21 @@ const CountryManager = () => {
                     console.error("Error adding country:", error);
                 }
             }
-        } else {
+           } else {
             alert("Country name cannot be empty or just spaces!");
         }
     };
-
-
-    const handleDeleteCountry = async () => {
-        if (CountryToDelete) {
-            try {
-                await fetch(`http://localhost:8001/countries/${CountryToDelete.id}`, {
-                    method: 'DELETE',
-                });
-                setCountries(countries.filter((country) => country.id !== CountryToDelete.id));
-                setShowDeleteModal(false);
-                setCountryToDelete(null);
+  const handleDeleteCountry = async (id) => {
+    if (window.confirm("Are you sure you want to delete this country?")) {
+      try {
+        const response = await fetch(`http://localhost:8001/countries/delete/${id}`, {
+          method: 'PUT', // Use PUT method for soft delete
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include', // Include credentials (cookies)
+        });
+        if (response.ok) {
+          setCountries((prevCountries) => prevCountries.filter((country) => country.id !== id));
+          alert("Country deleted successfully!");
             } catch (error) {
                 console.error("Error deleting country:", error);
             }
@@ -323,3 +323,4 @@ const CountryManager = () => {
 };
 
 export default CountryManager;
+
