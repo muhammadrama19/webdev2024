@@ -11,7 +11,6 @@ const ReviewManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedReview, setSelectedReview] = useState(null);
-
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
   const [modalType, setModalType] = useState("");
@@ -34,15 +33,18 @@ const ReviewManager = () => {
 
   const approveReview = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8001/reviews/${id}`, {
-        method: "PUT",
+      const response = await fetch(`http://localhost:8001/reviews/${id}/approve`, {
+        method: "PUT", // or you could change it to PATCH if preferred
+        credentials: "include",
       });
       const data = await response.json();
       if (response.ok) {
         setReviews(reviews.map((review) =>
           review.id === id ? { ...review, status: 1 } : review
         ));
-        window.location.reload();
+        setSelectedReview(null);
+        setShowActionModal(false);
+        window.location.reload(); // Refresh the page or consider using a state update instead
       } else {
         console.error("Error approving review:", data.error);
       }
@@ -51,25 +53,27 @@ const ReviewManager = () => {
     }
   };
 
-  const deleteReview = async (id) => {
+  const softDeleteReview = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8001/reviews/${id}`, {
-        method: 'DELETE',
+      const response = await fetch(`http://localhost:8001/reviews/${id}/soft-delete`, {
+        method: 'PUT', // or change to PATCH
+        credentials: "include",
       });
       const result = await response.json();
 
       if (response.ok) {
-        setReviews(reviews.filter(review => review.review_id !== id)); 
+        // Update reviews list by removing the soft-deleted review
+        setReviews(reviews.filter(review => review.id !== id)); // Adjust to match your data structure
         setSelectedReview(null);
         setShowActionModal(false);
+        window.location.reload();
       } else {
-        alert(result.error);
+        alert(result.error);  // Display error message if request failed
       }
     } catch (error) {
-      console.error("Error deleting review:", error);
+      console.error("Error soft-deleting review:", error);
     }
   };
-
 
   const filteredReviews = reviews.filter((review) => {
     const content = review.content || "";
@@ -194,7 +198,7 @@ const ReviewManager = () => {
           <Button
             variant={modalType === "approve" ? "success" : "danger"}
             onClick={() => {
-              modalType === "approve" ? approveReview(selectedReview.review_id) : deleteReview(selectedReview.review_id);
+              modalType === "approve" ? approveReview(selectedReview.review_id) : softDeleteReview(selectedReview.review_id);
             }}
           >
             {modalType === "approve" ? "Approve" : "Delete"}
@@ -217,7 +221,7 @@ const ReviewManager = () => {
           <p><strong>Movie Title:</strong> {selectedReview?.movie_title}</p>
           <p><strong>Rating:</strong> {selectedReview?.rating}</p>
           <p><strong>Content:</strong> {selectedReview?.content}</p>
-          <p><strong>Status:</strong> {selectedReview?.status === 1 ? "Approved" : "Not Approved"}</p>
+          <p><strong>Status:</strong> {selectedReview?.status === 1 ? "Approved" : "Unapproved"}</p>
           <p><strong>Created At:</strong> {new Date(selectedReview?.created_at).toLocaleString()}</p>
           <p><strong>Updated At:</strong> {new Date(selectedReview?.updated_at).toLocaleString()}</p>
         </Modal.Body>
