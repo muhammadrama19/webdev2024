@@ -883,56 +883,56 @@ app.get("/actors", (req, res) => {
 
 // Route to add a new actor
 
-app.post("/actors",  isAuthenticated, hasAdminRole, (req, res) => {
+app.post("/actors", isAuthenticated, hasAdminRole, (req, res) => {
   const { name, birthdate, country_name, actor_picture } = req.body;
 
 
-    if (!name || !birthdate || !country_name) {
-      return res.status(400).json({ error: "Missing required fields." });
-    }
+  if (!name || !birthdate || !country_name) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
 
-    // Check if the country exists in the database
-    const checkCountryQuery = `
+  // Check if the country exists in the database
+  const checkCountryQuery = `
     SELECT id FROM countries WHERE country_name = ?;
   `;
 
-    db.query(checkCountryQuery, [country_name], (err, countryResult) => {
-      if (err) {
-        console.error("Error checking country:", err.message);
-        return res.status(500).json({ error: "Failed to check country." });
-      }
+  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+    if (err) {
+      console.error("Error checking country:", err.message);
+      return res.status(500).json({ error: "Failed to check country." });
+    }
 
-      if (countryResult.length === 0) {
-        // If country doesn't exist, return an error
-        return res
-          .status(400)
-          .json({ error: "Country not found. Please add the country first." });
-      }
+    if (countryResult.length === 0) {
+      // If country doesn't exist, return an error
+      return res
+        .status(400)
+        .json({ error: "Country not found. Please add the country first." });
+    }
 
-      // If country exists, proceed with adding the actor
-      const country_birth_id = countryResult[0].id;
+    // If country exists, proceed with adding the actor
+    const country_birth_id = countryResult[0].id;
 
-      const addActorQuery = `
+    const addActorQuery = `
       INSERT INTO actors (name, birthdate, country_birth_id, actor_picture) 
       VALUES (?, ?, ?, ?);
     `;
-      const values = [name, birthdate, country_birth_id, actor_picture];
+    const values = [name, birthdate, country_birth_id, actor_picture];
 
-      db.query(addActorQuery, values, (err, result) => {
-        if (err) {
-          console.error("Error inserting actor:", err.message);
-          return res.status(500).json({ error: "Failed to add actor." });
-        }
-        res
-          .status(201)
-          .json({ message: "Actor added successfully.", id: result.insertId });
-      });
+    db.query(addActorQuery, values, (err, result) => {
+      if (err) {
+        console.error("Error inserting actor:", err.message);
+        return res.status(500).json({ error: "Failed to add actor." });
+      }
+      res
+        .status(201)
+        .json({ message: "Actor added successfully.", id: result.insertId });
     });
-  }
+  });
+}
 );
 
 // Route to update an existing actor with country existence check
-app.put("/actors/:id", isAuthenticated, hasAdminRole,(req, res) => {
+app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
   const { name, birthdate, country_name, actor_picture } = req.body;
 
@@ -1093,7 +1093,7 @@ app.put("/genres/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Delete a genre
-app.put("/genres/delete/:id", isAuthenticated, hasAdminRole,(req, res) => {
+app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
   // Start a transaction
@@ -1208,7 +1208,7 @@ app.post("/countries", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Update an existing country
-app.put("/countries/:id", isAuthenticated, hasAdminRole,(req, res) => {
+app.put("/countries/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
   const { country_name } = req.body;
 
@@ -1248,7 +1248,7 @@ app.put("/countries/:id", isAuthenticated, hasAdminRole,(req, res) => {
 });
 
 // Delete a country
-app.put("/countries/delete/:id", isAuthenticated, hasAdminRole,(req, res) => {
+app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
   // Start a transaction
@@ -1458,7 +1458,7 @@ app.put("/awards/:id", isAuthenticated, hasAdminRole, (req, res) => {
   });
 });
 // Route to delete an award
-app.delete("/awards/:id", isAuthenticated, hasAdminRole,(req, res) => {
+app.delete("/awards/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
   // Start a transaction
@@ -1520,6 +1520,8 @@ app.get("/reviews", (req, res) => {
       movies ON reviews.movie_id = movies.id
     JOIN 
       users ON reviews.user_id = users.id
+    WHERE 
+      reviews.deleted_at IS NULL
     ORDER BY reviews.id ASC
   `;
 
@@ -1533,43 +1535,80 @@ app.get("/reviews", (req, res) => {
   });
 });
 
-// route to approve a review
-app.put("/reviews/:id", (req, res) => {
+// Route to approve a review
+app.put("/reviews/:id/approve", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
-  const query = "UPDATE reviews SET status = 1 WHERE id = ?";
-  db.query(query, [id], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error approving review:", err.message);
-      return res.status(500).json({ error: "Failed to approve review." });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Review not found." });
-    }
+    const query = "UPDATE reviews SET status = 1 WHERE id = ?";
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        console.error("Error approving review:", err.message);
+        return res.status(500).json({ error: "Failed to approve review." });
+      }
 
-    res.json({ message: "Review approved successfully." });
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Review not found." });
+      }
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+
+        res.json({ message: "Review approved successfully." });
+      });
+    });
   });
 });
 
-// route to delete a review
-app.delete("/reviews/:id", (req, res) => {
+// Route to soft-delete a review by updating the deleted_at column
+app.put("/reviews/:id/soft-delete", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
-  const query = "DELETE FROM reviews WHERE id = ?";
-  db.query(query, [id], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error deleting review:", err.message);
-      return res.status(500).json({ error: "Failed to delete review." });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Review not found." });
-    }
+    const query = "UPDATE reviews SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?";
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        console.error("Error updating deleted_at for review:", err.message);
+        return res.status(500).json({ error: "Failed to soft-delete review." });
+      }
 
-    res.json({ message: "Review deleted successfully." });
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Review not found." });
+      }
+
+      // Commit the transaction if the update succeeds
+      db.commit((err) => {
+        if (err) {
+          console.error("Error committing transaction:", err);
+          return db.rollback(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+          });
+        }
+
+        res.json({ message: "Review soft-deleted successfully." });
+      });
+    });
   });
 });
+
 
 app.get("/status", (req, res) => {
   const query = `
