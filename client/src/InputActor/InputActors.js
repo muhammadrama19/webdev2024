@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Container, Table, Form, Button, Modal, Col, Row, InputGroup, FormControl, Pagination, Spinner, Image } from 'react-bootstrap';
+import {
+    Container,
+    Table,
+    Form,
+    Button,
+    Modal,
+    Col,
+    Row,
+    InputGroup,
+    FormControl,
+    Pagination,
+    Spinner,
+    Image
+} from 'react-bootstrap';
 import { FaPlus, FaSearch } from "react-icons/fa";
 import "./InputActor.scss";
 import Icon from 'client/public/assets/Oval.svg';
@@ -22,7 +35,6 @@ const ActorManager = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [showCount, setShowCount] = useState(10);
 
-    // New state for delete confirmation modal
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [actorToDelete, setActorToDelete] = useState(null);
 
@@ -40,13 +52,11 @@ const ActorManager = () => {
         fetchActors();
     }, []);
 
-
     const checkCountryExists = async (countryName) => {
         try {
             const response = await axios.get(`http://localhost:8001/countries/${countryName}`, {
                 withCredentials: true
             });
-            console.log("Response from backend:", response.data); // Debugging
             return !!response.data;
         } catch (error) {
             console.error("Error checking country existence:", error);
@@ -54,14 +64,10 @@ const ActorManager = () => {
         }
     };
 
-
     const handleAddActor = async (e) => {
         e.preventDefault();
 
-        // Check if country exists in the backend
         const countryExists = await checkCountryExists(actorData.country_name);
-        console.log(actorData.country_name);
-        console.log(countryExists);
         if (!countryExists) {
             alert("Country does not exist. Please add the country first.");
             return;
@@ -79,7 +85,6 @@ const ActorManager = () => {
                 console.error("Error adding actor:", error);
             }
 
-            // Clear the form and reset state
             setNewActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
             setShowModal(false);
         } else {
@@ -88,17 +93,17 @@ const ActorManager = () => {
     };
 
     const handleDeleteActor = async () => {
-    try {
-      await axios.put(`http://localhost:8001/actors/delete/${selectedActor.id}`, {}, {
-        withCredentials: true
-      });
-      setActors(actors.filter(actor => actor.id !== selectedActor.id));
-      setShowDeleteModal(false);
-      setSelectedActor(null);
-    } catch (error) {
-      console.error("Error deleting actor:", error);
-    }
-  };
+        try {
+            await axios.put(`http://localhost:8001/actors/delete/${actorToDelete.id}`, {}, {
+                withCredentials: true
+            });
+            setActors(actors.filter(actor => actor.id !== actorToDelete.id));
+            setShowDeleteModal(false);
+            setActorToDelete(null);
+        } catch (error) {
+            console.error("Error deleting actor:", error);
+        }
+    };
 
     const handleEditActor = (id) => {
         setEditing(id);
@@ -117,18 +122,13 @@ const ActorManager = () => {
                 country_name: actorData.country_name,
                 birthdate: actorData.birthdate,
                 actor_picture: actorData.actor_picture
-            }
+            };
 
-            // Check if the edited country exists in the backend
             const countryExists = await checkCountryExists(actorData.country_name);
             if (!countryExists) {
                 alert("Country does not exist. Please add the country first.");
                 return;
             }
-
-            console.log(updatedActor);
-            console.log(editing);
-            console.log(actorData);
 
             try {
                 const response = await fetch(`http://localhost:8001/actors/${editing}`, {
@@ -154,7 +154,6 @@ const ActorManager = () => {
         }
     };
 
-
     const handleShowModal = () => {
         setIsEditing(false);
         setShowModal(true);
@@ -165,7 +164,6 @@ const ActorManager = () => {
         setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
     };
 
-    // Function untuk filter actor berdasarkan search term (sebelum pagination)
     const filteredActors = actors.filter((actor) =>
         (actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -174,14 +172,13 @@ const ActorManager = () => {
 
     const indexOfLastActor = currentPage * showCount;
     const indexOfFirstActor = indexOfLastActor - showCount;
-    const currentActors = filteredActors.slice(indexOfFirstActor, indexOfLastActor); // Paginate hasil pencarian
+    const currentActors = filteredActors.slice(indexOfFirstActor, indexOfLastActor);
     const totalPages = Math.ceil(filteredActors.length / showCount);
 
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
 
-    // Logic to show only 3 pages (current, previous, next)
     const renderPagination = () => {
         let items = [];
         const startPage = Math.max(1, currentPage - 1);
@@ -245,12 +242,11 @@ const ActorManager = () => {
                         </Form.Select>
                     </Col>
 
-                    {/* Button to Add New Actor */}
                     <Col xs="auto" className="d-flex mb-4">
                         <Button
                             variant="success"
                             className="d-flex align-items-center w-auto px-4 py-2 mb-4"
-                            style={{ whiteSpace: 'nowrap' }} 
+                            style={{ whiteSpace: 'nowrap' }}
                             onClick={handleShowModal}>
                             <FaPlus className="me-2" />
                             Add New Actor
@@ -259,8 +255,7 @@ const ActorManager = () => {
                 </Row>
             </Container>
 
-            {/* Modal for Adding/Editing Actor */}
-            < Modal show={showModal} onHide={handleCloseModal} centered >
+            <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>{isEditing ? "Edit Actor" : "Add New Actor"}</Modal.Title>
                 </Modal.Header>
@@ -315,7 +310,7 @@ const ActorManager = () => {
                                     src={actorData.actor_picture}
                                     alt="Poster Preview"
                                     style={{ width: '150px', height: '225px' }}
-                                    onError={() => setActorData({ ...actorData, actorData: "" })} // Hide preview if URL is invalid
+                                    onError={() => setActorData({ ...actorData, actorData: "" })}
                                 />
                             )}
                         </Form.Group>
@@ -338,9 +333,8 @@ const ActorManager = () => {
                         {isEditing ? "Save Changes" : "Add Actor"}
                     </Button>
                 </Modal.Footer>
-            </Modal >
+            </Modal>
 
-            {/* Modal for Delete Confirmation */}
             <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Confirm Delete Actor</Modal.Title>
@@ -358,8 +352,7 @@ const ActorManager = () => {
                     <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
                 ) : (
                     <>
-                        {/* Table Section */}
-                        < Container className="actor-table-wrapper" >
+                        <Container className="actor-table-wrapper">
                             <Table striped bordered hover className="actor-table">
                                 <thead>
                                     <tr>
@@ -386,8 +379,7 @@ const ActorManager = () => {
                                             <td>{actor.country_name}</td>
                                             <td>
                                                 {actor.actor_picture && actor.actor_picture !== "N/A" ? (
-                                                    <td>
-                  <img src={actor.actor_picture} alt={actor.name} className="actor-img" style={{ width: '50px', height: '75px' }} />
+                                                    <img src={actor.actor_picture} alt={actor.name} className="actor-img" style={{ width: '50px', height: '75px' }} />
                                                 ) : (
                                                     <img src={Icon} alt={actor.name} width={50} />
                                                 )}
@@ -412,13 +404,12 @@ const ActorManager = () => {
                                     ))}
                                 </tbody>
                             </Table>
-                        </Container >
+                        </Container>
                         {renderPagination()}
                     </>
                 )
             }
-        </Container >
-
+        </Container>
     );
 };
 
