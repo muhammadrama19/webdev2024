@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal, Pagination, Col, Row, InputGroup, FormControl, Spinner } from 'react-bootstrap';
 import { FaPlus, FaSearch } from "react-icons/fa";
+import axios from "axios";
 import "./InputGenres.css";
 
 const GenreManager = () => {
@@ -57,16 +58,11 @@ const GenreManager = () => {
                 alert("Genre already exists!");
             } else {
                 try {
-                    const response = await fetch('http://localhost:8001/genres', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ name: trimmedGenre }),
+                    const response = await axios.post('http://localhost:8001/genres', 
+                        { name: trimmedGenre }, 
+                        { withCredentials: true, // Enable cookies to be sent
                     });
-
-                    const data = await response.json();
-                    setGenres([...genres, data]);
+                    setGenres([...genres, response.data]);
                     setNewGenre("");
                     handleCloseModal();
                 } catch (error) {
@@ -77,6 +73,7 @@ const GenreManager = () => {
             alert("Genre name cannot be empty or just spaces!");
         }
     };
+
 
 
     const handleDeleteGenre = async () => {
