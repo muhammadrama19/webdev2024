@@ -1473,6 +1473,125 @@ app.post("/add-drama", async (req, res) => {
   }
 });
 
+app.put("/update-drama", async (req, res) => {
+  const {
+    id,
+    imdb_score,
+    status,
+    view,
+    title,
+    alt_title,
+    director,
+    release_year,
+    country,
+    synopsis,
+    availability,
+    trailer,
+    posterUrl,
+    backgroundUrl,
+    genres,
+    actors,
+    awards,
+  } = req.body;
+
+  console.log(req.body);
+
+  try {
+    // Query to get `availability_id`
+    const availabilityQuery = `SELECT id FROM availability WHERE platform_name = ?`;
+    const [availabilityResult] = await db.promise().query(availabilityQuery, [availability]);
+    const availabilityId = availabilityResult.length > 0 ? availabilityResult[0].id : null;
+
+    // Query to get `status_id`
+    const statusQuery = `SELECT id FROM status WHERE name = ?`;
+    const [statusResult] = await db.promise().query(statusQuery, [status]);
+    const status_id = statusResult.length > 0 ? statusResult[0].id : null;
+
+    // Update movies table
+    const movieQuery = `
+      UPDATE movies
+      SET title = ?, alt_title = ?, release_year = ?, imdb_score = ?, synopsis = ?, view = ?, poster = ?, background = ?, trailer = ?, director = ?, status = ?, status_id = ?, availability_id = ?
+      WHERE id = ?
+    `;
+    const movieValues = [
+      title,
+      alt_title,
+      release_year,
+      imdb_score,
+      synopsis,
+      view,
+      posterUrl,
+      backgroundUrl,
+      trailer,
+      director,
+      3,
+      status_id,
+      availabilityId,
+      id, // ID film yang akan diperbarui
+    ];
+
+    await db.promise().query(movieQuery, movieValues);
+
+    // Hapus data genres, actors, countries, dan awards terkait sebelumnya
+    await db.promise().query(`DELETE FROM movie_genres WHERE movie_id = ?`, [id]);
+    await db.promise().query(`DELETE FROM movie_actors WHERE movie_id = ?`, [id]);
+    await db.promise().query(`DELETE FROM movie_countries WHERE movie_id = ?`, [id]);
+    await db.promise().query(`DELETE FROM movie_awards WHERE movie_id = ?`, [id]);
+
+    // Insert genres
+    for (const genre of genres) {
+      const genreQuery = `SELECT id FROM genres WHERE name = ?`;
+      const [genreResult] = await db.promise().query(genreQuery, [genre]);
+      const genreId = genreResult.length > 0 ? genreResult[0].id : null;
+
+      if (genreId) {
+        const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
+        await db.promise().query(movieGenreQuery, [id, genreId]);
+      }
+    }
+
+    // Insert actors with roles
+    for (const actor of actors) {
+      const actorQuery = `SELECT id FROM actors WHERE name = ?`;
+      const [actorResult] = await db.promise().query(actorQuery, [actor.name]);
+      const actorId = actorResult.length > 0 ? actorResult[0].id : null;
+
+      if (actorId) {
+        const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id, role) VALUES (?, ?, ?)`;
+        await db.promise().query(movieActorQuery, [id, actorId, actor.role]);
+      }
+    }
+
+    // Insert country
+    const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
+    const [countryResult] = await db.promise().query(countryQuery, [country]);
+    const countryId = countryResult.length > 0 ? countryResult[0].id : null;
+
+    if (countryId) {
+      const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
+      await db.promise().query(movieCountryQuery, [id, countryId]);
+    }
+
+    // Insert awards
+    for (const award of awards) {
+      const awardQuery = `SELECT id FROM awards WHERE awards_name = ?`;
+      const [awardResult] = await db.promise().query(awardQuery, [award]);
+      const awardId = awardResult.length > 0 ? awardResult[0].id : null;
+
+      if (awardId) {
+        const movieAwardQuery = `INSERT INTO movie_awards (movie_id, awards_id) VALUES (?, ?)`;
+        await db.promise().query(movieAwardQuery, [id, awardId]);
+      }
+    }
+
+    res.status(200).json({ message: "Drama updated successfully", movieId: id });
+  } catch (err) {
+    console.error("Error executing query:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
 
 //SET TRASH
 app.put("/movie-delete/:id", (req, res) => {
