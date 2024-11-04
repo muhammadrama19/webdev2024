@@ -20,8 +20,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
 
   axios.defaults.withCredentials = true;
-
-
+  
 
   const handleSubmit = (e) => {
     e.preventDefault(); 
@@ -40,6 +39,13 @@ const LoginForm = () => {
 
           navigate('/');
           window.location.reload();
+        } else if(res.data.Status === "Account Suspended") {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: res.data.Message,
+          });
+
         } else {
             Swal.fire({
             icon: 'error',

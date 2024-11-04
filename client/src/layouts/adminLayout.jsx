@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
-import Cookies from "js-cookie";
-import NavbarSidebar from "../components/navbarsidebar/navbarsidebar";
+
+import React, { useState, useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import Cookies from 'js-cookie';
+import Header from '../components/navbarsidebar/navbarsidebar';
+import Sidebar from '../components/Sidebar/Sidebar';
+import './adminLayout.scss';
 
 const AdminLayout = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [openSidebarToggle, setOpenSidebarToggle] = useState(false);
   const [userId, setUserId] = useState(null);
+  const location = useLocation();
 
   const OpenSidebar = () => {
     setOpenSidebarToggle(!openSidebarToggle);
@@ -20,7 +24,9 @@ const AdminLayout = () => {
 
     if (token && user_id) {
       try {
+
         const decoded = JSON.parse(atob(token.split(".")[1]));
+
         setIsLoggedIn(true);
         setUserId(user_id);
 
@@ -35,31 +41,26 @@ const AdminLayout = () => {
     }
   }, []);
 
+  // Check if current route is /movie-input
+  const isMovieInputRoute = location.pathname === "/movie-input";
+
   return (
-    <div>
-      {/* Only show NavbarSidebar if the user is an admin */}
+    <div className={`grid-container ${openSidebarToggle ? 'sidebar-open' : 'sidebar-closed'}`}>
+
+      {/* Display Header and Sidebar only if the user is an admin */}
       {isAdmin && (
-        <NavbarSidebar
-          openSidebarToggle={openSidebarToggle}
-          toggleSidebar={OpenSidebar}
-        />
+        <>
+          <Header OpenSidebar={OpenSidebar} openSidebarToggle={openSidebarToggle} />
+          <Sidebar openSidebarToggle={openSidebarToggle} OpenSidebar={OpenSidebar} />
+        </>
       )}
 
-      <div>
+      <div className="main-container">
         {isLoggedIn ? (
-          isAdmin ? (
-            <Outlet /> // Render main content for admin
+          isAdmin || isMovieInputRoute ? ( // Allow access if admin or accessing /movie-input
+            <Outlet />
           ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh", // Full viewport height
-                textAlign: "center",
-              }}
-            >
+            <div>
               <h2>Access Denied</h2>
               <p>
                 You do not have the necessary permissions to view this page.

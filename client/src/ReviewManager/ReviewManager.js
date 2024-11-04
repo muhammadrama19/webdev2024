@@ -1,67 +1,75 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Container, Button, Modal, Spinner, Form } from 'react-bootstrap';
-import PaginationCustom from "../components/pagination/pagination";
-import './ReviewManager.css';
+import React, { useState, useEffect } from "react";
+import { Container, Row, Col, Table, Button, Modal, Spinner, Pagination, InputGroup, FormControl, Form } from 'react-bootstrap';
+import { FaSearch } from 'react-icons/fa';
+import "./ReviewManager.css";
 
-const Reviews = () => {
-  const [currentPage, setCurrentPage] = useState(1);
+const ReviewManager = () => {
   const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedReview, setSelectedReview] = useState(null);
-  const [showCount] = useState(10);
-  const [totalPages, setTotalPages] = useState(0);
+  const [showCount, setShowCount] = useState(10);
+  const [loading, setLoading] = useState(true); // To handle loading state
+  const [currentPage, setCurrentPage] = useState(1); // State for current page  
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedReview, setSelectedReview] = useState(null);
+
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [modalType, setModalType] = useState("");
 
   useEffect(() => {
-    const fetchReviews = async () => {
+    const Reviews = async () => {
       try {
-        const response = await fetch("http://localhost:8001/reviews");
+        const response = await fetch('http://localhost:8001/reviews');
         const data = await response.json();
         setReviews(data);
         setLoading(false);
-        setTotalPages(Math.ceil(data.length / showCount));
+
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching actors:", error);
         setLoading(false);
       }
     };
+    Reviews();
+  }, []);
 
-    fetchReviews();
-  }, [showCount]);
-
-  const handleShowDetail = (review) => {
-    setSelectedReview(review);
-    setShowDetailModal(true);
-  };
-
-  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
-
-  // Delete review function
-  const handleDeleteReview = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this review?");
-    if (confirmDelete) {
-      try {
-        const response = await fetch(`http://localhost:8001/reviews/${id}`, {
-          method: 'DELETE',
-        });
-        const result = await response.json();
-
-        if (response.ok) {
-          setReviews(reviews.filter(review => review.review_id !== id)); // Update the state to remove the deleted review
-          alert(result.message);
-        } else {
-          alert(result.error);
-        }
-      } catch (error) {
-        console.error("Error deleting review:", error);
+  const approveReview = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8001/reviews/${id}`, {
+        method: "PUT",
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setReviews(reviews.map((review) =>
+          review.id === id ? { ...review, status: 1 } : review
+        ));
+        window.location.reload();
+      } else {
+        console.error("Error approving review:", data.error);
       }
+    } catch (error) {
+      console.error("Error approving review:", error);
     }
   };
 
-  const indexOfLastReview = currentPage * showCount;
-  const indexOfFirstReview = indexOfLastReview - showCount;
+  const deleteReview = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8001/reviews/${id}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        setReviews(reviews.filter(review => review.review_id !== id)); 
+        setSelectedReview(null);
+        setShowActionModal(false);
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      console.error("Error deleting review:", error);
+    }
+  };
+
 
   const filteredReviews = reviews.filter((review) => {
     const content = review.content || "";
@@ -73,81 +81,126 @@ const Reviews = () => {
       movieTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       userName.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || (statusFilter === "approved" && review.status === 1) || (statusFilter === "not-approved" && review.status === 0);
+    const matchesStatus = statusFilter === "all" || (statusFilter === "approved" && review.status === 1) || (statusFilter === "unapproved" && review.status === 0);
 
     return matchesSearchTerm && matchesStatus;
   });
 
-  useEffect(() => {
-    setTotalPages(Math.ceil(filteredReviews.length / showCount));
-  }, [filteredReviews, showCount]);
 
-  const currentReviews = filteredReviews.slice(indexOfFirstReview, indexOfLastReview);
+  // Pagination logic (setelah pencarian)
+  const indexOfLastReview = currentPage * showCount;
+  const indexOfFirstReview = indexOfLastReview - showCount;
+  const currentReviews = filteredReviews.slice(indexOfFirstReview, indexOfLastReview); // Paginate hasil pencarian
+  const totalPages = Math.ceil(filteredReviews.length / showCount);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Logic to show only 3 pages (current, previous, next)
+  const renderPagination = () => {
+    let items = [];
+    const startPage = Math.max(1, currentPage - 1);
+    const endPage = Math.min(totalPages, currentPage + 1);
+
+    for (let number = startPage; number <= endPage; number++) {
+      items.push(
+        <Pagination.Item key={number} active={number === currentPage} onClick={() => handlePageChange(number)}>
+          {number}
+        </Pagination.Item>
+      );
+    }
+
+    return (
+      <div className="d-flex justify-content-end">
+        <Pagination>
+          <Pagination.First onClick={() => setCurrentPage(1)} />
+          <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
+          {items}
+          <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
+          <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
+        </Pagination>
+      </div>
+    );
+  };
+
+  const truncateContent = (text, length = 50) => {
+    return text.length > length ? text.substring(0, length) + "..." : text;
+  };
+
+  const handleShowModal = (review, type) => {
+    setSelectedReview(review);
+    if (type === "detail") {
+      setShowDetailModal(true);
+    } else {
+      setModalType(type);
+      setShowActionModal(true);
+    }
+  };
 
   return (
-    <Container className="review-list" style={{ padding: '20px' }}>
-      <h2 className="my-4" style={{ textAlign: 'center' }}>Review List</h2>
+    <Container >
+      <Container className="App">
+        <h1 className="title">Reviews Manager</h1>
+      </Container>
+      {/* Filter Section */}
+      <Container className="d-flex justify-content-end">
+        <Row className="mb-3 justify-content-end">
+          <Col xs="auto" className="d-flex">
+            <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+              <InputGroup.Text>
+                <FaSearch />
+              </InputGroup.Text>
+              <FormControl
+                type="text"
+                placeholder="Search reviews, movie titles, or usernames..."
+                aria-label="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </InputGroup>
+          </Col>
+          <Col xs="auto" className="d-flex mb-4">
+            <Form.Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '150px', display: 'inline-block' }}>
+              <option value="all">All Reviews</option>
+              <option value="approved">Approved</option>
+              <option value="unapproved">Unapproved</option>
+            </Form.Select>
+          </Col>
+          <Col xs="auto" className="d-flex mb-4">
+            <Form.Select value={showCount} onChange={(e) => setShowCount(e.target.value)} style={{ width: '80px', display: 'inline-block' }}>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </Form.Select>
+          </Col>
+        </Row>
+      </Container>
 
-      <Form.Control
-        type="text"
-        placeholder="Search reviews, movie titles, or usernames..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-4"
-        style={{ marginBottom: '20px' }}
-      />
-
-      <div className="mb-4">
-        <Form.Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '200px', display: 'inline-block' }}>
-          <option value="all">All Reviews</option>
-          <option value="approved">Approved</option>
-          <option value="not-approved">Not Approved</option>
-        </Form.Select>
-      </div>
-
-      {loading ? (
-        <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
-      ) : (
-        <Table striped bordered hover responsive className="text-center" style={{ marginTop: '20px' }}>
-          <thead>
-            <tr>
-              <th>Review ID</th>
-              <th>User Name</th>
-              <th>Movie Title</th>
-              <th>Rating</th>
-              <th>Content</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentReviews.map((review) => (
-              <tr key={review.review_id}>
-                <td>{review.review_id}</td>
-                <td>{review.user_name}</td>
-                <td>{review.movie_title}</td>
-                <td>{review.rating}</td>
-                <td>{review.content}</td>
-                <td>{review.status === 1 ? "Approved" : "Not Approved"}</td>
-                <td>
-                  <Button variant="info" onClick={() => handleShowDetail(review)} style={{ marginRight: '10px' }}>
-                    Details
-                  </Button>
-                  <Button variant="danger" onClick={() => handleDeleteReview(review.review_id)}>
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-
-      <PaginationCustom
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+      {/* Action Modal */}
+      <Modal show={showActionModal} onHide={() => setShowActionModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{modalType === "approve" ? "Approve Review" : "Delete Review"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {modalType === "approve" ? (
+            <p>Are you sure you want to approve this review?</p>
+          ) : (
+            <p>Are you sure you want to delete this review?</p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowActionModal(false)}>Cancel</Button>
+          <Button
+            variant={modalType === "approve" ? "success" : "danger"}
+            onClick={() => {
+              modalType === "approve" ? approveReview(selectedReview.review_id) : deleteReview(selectedReview.review_id);
+            }}
+          >
+            {modalType === "approve" ? "Approve" : "Delete"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Detail Modal */}
       <Modal
@@ -172,8 +225,76 @@ const Reviews = () => {
           <Button variant="secondary" onClick={() => setShowDetailModal(false)}>Close</Button>
         </Modal.Footer>
       </Modal>
+
+
+      {loading ? (
+        <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
+      ) : (
+        <>
+
+          {/* Table Section */}
+          <Container className="review-table-wrapper">
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Rate</th>
+                  <th>Drama</th>
+                  <th>Content</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentReviews.map((review) => (
+                  <tr key={review.review_id}>
+                    <td>{review.user_name}</td>
+                    <td>{review.rating}</td>
+                    <td>{review.movie_title}</td>
+                    <td>{truncateContent(review.content, 100)}</td>
+                    <td>{review.status === 1 ? "Approved" : "Unapproved"}</td>
+                    <td>
+                      <Container className="action-button">
+                        <Button
+                          variant="info"
+                          className="me-2"
+                          size="sm"
+                          onClick={() => handleShowModal(review, "detail")}
+                          style={{ marginRight: '10px' }}
+                        >
+                          Details
+                        </Button>
+                        {review.status === 0 && (
+                          <Button
+                            variant="success"
+                            className="me-2"
+                            size="sm"
+                            onClick={() => handleShowModal(review, "approve")}
+                          >
+                            Approve
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleShowModal(review, "delete")}
+                        >
+                          Delete
+                        </Button>
+                      </Container>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Container>
+
+          {renderPagination()}
+        </>
+      )}
     </Container>
   );
 };
 
-export default Reviews;
+export default ReviewManager;

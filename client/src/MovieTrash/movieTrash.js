@@ -1,3 +1,4 @@
+// MovieTrash.js
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button } from "react-bootstrap";
 
@@ -22,38 +23,33 @@ const MovieTrash = () => {
     fetchTrashMovies();
   }, []);
   
-
-  // Fungsi untuk menghapus secara permanen
   // Fungsi untuk menghapus secara permanen (ubah status menjadi 3)
-const handlePermanentDelete = async (id) => {
-  try {
-    // Lakukan request PUT ke backend untuk mengubah status menjadi 3
-    await fetch(`http://localhost:8001/movie-permanent-delete/${id}`, {
-      method: 'PUT', // Menggunakan metode PUT untuk soft delete permanen
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ status: 4 }) // Kirim status baru (3) ke backend
-    });
+  const handlePermanentDelete = async (id) => {
+    try {
+      await fetch(`http://localhost:8001/movie-permanent-delete/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 4 }) // Mengubah status menjadi 4
+      });
 
-    // Update state setelah penghapusan berhasil
-    setTrashDramas(trashDramas.filter((drama) => drama.id !== id));
-  } catch (error) {
-    console.error("Error permanently deleting movie:", error);
-  }
-};
-
+      // Update state setelah penghapusan berhasil
+      setTrashDramas(trashDramas.filter((drama) => drama.id !== id));
+    } catch (error) {
+      console.error("Error permanently deleting movie:", error);
+    }
+  };
 
   // Fungsi untuk mengembalikan movie dari trash (ubah status menjadi 1)
   const handleRestore = async (id) => {
     try {
-      // Lakukan request PUT ke backend untuk mengubah status menjadi 1
       await fetch(`http://localhost:8001/movie-restore/${id}`, {
-        method: 'PUT', // Ubah status movie menjadi 1
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status: 1 }) // Kirim status baru (1) ke backend
+        body: JSON.stringify({ status: 1 }) // Mengubah status menjadi 1
       });
   
       // Hapus movie dari trashDramas setelah restore berhasil
@@ -63,7 +59,6 @@ const handlePermanentDelete = async (id) => {
     }
   };
   
-
   return (
     <Container>
       <Container className="App">
@@ -112,6 +107,9 @@ const handlePermanentDelete = async (id) => {
               ))}
             </tbody>
           </Table>
+          {trashDramas.length === 0 && (
+            <p className="text-center mt-3">There's no movies in trash.</p>
+          )}
         </div>
       )}
     </Container>

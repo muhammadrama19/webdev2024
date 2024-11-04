@@ -57,7 +57,7 @@ function Sidebar({ openSidebarToggle, OpenSidebar }) {
       </div>
       <ul className="sidebar-list">
         <li className="sidebar-list-item">
-          <NavLink to="/" className="sidebar-link" activeClassName="active">
+          <NavLink to="/dashboard" className="sidebar-link" activeClassName="active">
             <BsGrid1X2Fill className="icon" /> <span>Dashboard</span>
           </NavLink>
         </li>
@@ -175,18 +175,13 @@ function Sidebar({ openSidebarToggle, OpenSidebar }) {
         </li>
         <br />
         <li className="sidebar-list-item">
-          <span
-            onClick={() => {
-              const newTab = window.open("http://localhost:3001/", "clientTab");
-              if (newTab) {
-                newTab.focus(); // Memfokuskan ke tab jika sudah terbuka
-              }
-            }}
+          <NavLink
+            to="/"
             className="sidebar-link"
-            style={{ cursor: "pointer" }} 
+            activeClassName="active"
           >
             <BsArrowLeftRight className="icon" /> <span>Switch to Client</span>
-          </span>
+          </NavLink>
         </li>
       </ul>
     </aside>

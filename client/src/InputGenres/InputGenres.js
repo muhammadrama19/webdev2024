@@ -1,91 +1,97 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Container, Button, Modal, Spinner, Form } from 'react-bootstrap';
-import PaginationCustom from "../components/pagination/pagination"; // Import custom pagination component
-import './InputGenres.css';
+import React, { useState, useEffect } from "react";
+import { Container, Table, Form, Button, Modal, Pagination, Col, Row, InputGroup, FormControl, Spinner } from 'react-bootstrap';
+import { FaPlus, FaSearch } from "react-icons/fa";
+import axios from "axios";
+import "./InputGenres.css";
 
-const Genres = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [genres, setGenres] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showAddEditModal, setShowAddEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState(null);
-  const [newGenreName, setNewGenreName] = useState("");
-  const [showCount] = useState(10); // Number of items per page
-  const [totalPages, setTotalPages] = useState(0);
-  const [searchTerm, setSearchTerm] = useState(""); // State for search term
+const GenreManager = () => {
+    const [genres, setGenres] = useState([]);
+    const [newGenre, setNewGenre] = useState("");
+    const [editing, setEditing] = useState(null);
+    const [editName, setEditName] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(true); // To handle loading state
+    const [currentPage, setCurrentPage] = useState(1); // State for current page
+    const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
+    const [showCount, setShowCount] = useState(10); // Items per page
 
-  useEffect(() => {
-    fetchGenres();
-  }, [showCount]);
+    // New state for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [genreToDelete, setGenreToDelete] = useState(null);
 
-  const fetchGenres = async () => {
-    try {
-      const response = await fetch("http://localhost:8001/genres");
-      const data = await response.json();
-      setGenres(data);
-      setLoading(false);
-      setTotalPages(Math.ceil(data.length / showCount));
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setLoading(false);
-    }
-  };
+    const handleShowModal = () => setShowModal(true);
 
-  const handleShowDetail = (genre) => {
-    setSelectedGenre(genre);
-    setShowDetailModal(true);
-  };
+    useEffect(() => {
+        const fetchGenres = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/genres');
+                const data = await response.json();
+                setGenres(data);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching actors:", error);
+                setLoading(false);
+            }
+        };
+        fetchGenres();
+    }, []);
 
-  const handleShowAddEditModal = (genre = null) => {
-    setSelectedGenre(genre);
-    setNewGenreName(genre ? genre.name : "");
-    setShowAddEditModal(true);
-  };
+    const handleCloseModal = () => {
+        setIsEditing(false);
+        setShowModal(false);
+    };
 
-  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+    const handleInputChange = (e) => {
+        if (isEditing) {
+            setEditName(e.target.value);
+        } else {
+            setNewGenre(e.target.value);
+        }
+    };
 
-  const indexOfLastGenre = currentPage * showCount;
-  const indexOfFirstGenre = indexOfLastGenre - showCount;
+    const handleAddGenre = async () => {
+        const trimmedGenre = newGenre.trim();
 
-  const filteredGenres = genres.filter((genre) =>
-    (genre.name || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  useEffect(() => {
-    setTotalPages(Math.ceil(filteredGenres.length / showCount));
-  }, [filteredGenres, showCount]);
-
-  const currentGenres = filteredGenres.slice(indexOfFirstGenre, indexOfLastGenre);
-
-  const handleAddEditGenre = async (e) => {
-    e.preventDefault();
-    const method = selectedGenre ? 'PUT' : 'POST';
-    const url = selectedGenre
-      ? `http://localhost:8001/genres/${selectedGenre.id}`
-      : 'http://localhost:8001/genres';
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newGenreName }),
-        credentials: 'include', // Ensure cookies are sent with the request
-      });
-
-      if (!response.ok) throw new Error('Failed to add/update genre');
-
-      fetchGenres(); // Refresh genres list after adding/updating
-      setShowAddEditModal(false);
-      setNewGenreName(""); // Reset input
-    } catch (error) {
-      console.error("Error adding/updating genre:", error);
-    }
-  };
+        if (trimmedGenre) {
+            if (genres.some(genre => genre.name.toLowerCase() === trimmedGenre.toLowerCase())) {
+                alert("Genre already exists!");
+            } else {
+                try {
+                    const response = await axios.post('http://localhost:8001/genres', 
+                        { name: trimmedGenre }, 
+                        { withCredentials: true, // Enable cookies to be sent
+                    });
+                    setGenres([...genres, response.data]);
+                    setNewGenre("");
+                    handleCloseModal();
+                } catch (error) {
+                    console.error("Error adding genre:", error);
+                }
+            }
+        } else {
+            alert("Genre name cannot be empty or just spaces!");
+        }
+    };
 
 
-  const softDeleteGenre = async (genreId) => {
+
+    const handleDeleteGenre = async () => {
+        if (genreToDelete) {
+            try {
+                await fetch(`http://localhost:8001/genres/${genreToDelete.id}`, {
+                    method: 'DELETE',
+                });
+                setGenres(genres.filter((genre) => genre.id !== genreToDelete.id));
+                setShowDeleteModal(false);
+                setGenreToDelete(null);
+            } catch (error) {
+                console.error("Error deleting genre:", error);
+            }
+        }
+    };
+  
+    const softDeleteGenre = async (genreId) => {
     const url = `http://localhost:8001/genres/delete/${genreId}`;
   
     try {
@@ -104,116 +110,231 @@ const Genres = () => {
       console.error("Error soft deleting genre:", error);
     }
   };
-  
-  return (
-    <Container className="genre-list pt-3" style={{ padding: '20px' }}>
-      <h2 className="my-4" style={{ textAlign: 'center' }}>Genre List</h2>
 
-      <Form.Control
-        type="text"
-        placeholder="Search genres..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-4"
-        style={{ marginBottom: '20px' }}
-      />
+    const handleEditGenre = (id) => {
+        setEditing(id);
+        const genre = genres.find((genre) => genre.id === id);
+        setEditName(genre);
+        setIsEditing(true);
+        setShowModal(true);
+    };
 
-      <Button variant="primary" onClick={() => handleShowAddEditModal()} className="mb-4">
-        Add Genre
-      </Button>
+    const handleRenameGenre = async (e) => {
+        e.preventDefault();
 
-      {loading ? (
-        <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
-      ) : (
-        <Table striped bordered hover responsive className="text-center" style={{ marginTop: '20px' }}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Genre Name</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentGenres.map((genre) => (
-              <tr key={genre.id}>
-                <td>{genre.id}</td>
-                <td>{genre.name}</td>
-                <td>
-                  <Button variant="info" onClick={() => handleShowDetail(genre)} style={{ marginRight: '10px' }}>
-                    Details
-                  </Button>
-                  <Button variant="warning" onClick={() => handleShowAddEditModal(genre)} style={{ marginRight: '10px' }}>
-                    Edit
-                  </Button>
-                  <Button variant="danger" onClick={() => { setSelectedGenre(genre); setShowDeleteModal(true); }}>
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+        if (editName.trim()) {
+            if (genres.some(genre => genre.name.toLowerCase() === editName.toLowerCase())) {
+                alert("Genre already exists!");
+            } else {
+                try {
+                    await fetch(`http://localhost:8001/genres/${editing}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name: editName }),
+                    });
+                    setGenres(
+                        genres.map((genre) =>
+                            genre.id === editing ? { ...genre, name: editName } : genre
+                        )
+                    );
+                    setEditing(null);
+                    setShowModal(false);
+                    setEditName("");
+                } catch (error) {
+                    console.error("Error updating genre:", error);
+                }
+            }
+        }
+    };
 
-      <PaginationCustom
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+    // Function untuk filter drama berdasarkan search term (sebelum pagination)
+    const filteredGenres = genres.filter((genre) =>
+        genre.name && genre.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-      {/* Detail Modal */}
-      <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{selectedGenre?.name}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p><strong>Genre ID:</strong> {selectedGenre?.id}</p>
-          <p><strong>Name:</strong> {selectedGenre?.name}</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDetailModal(false)}>Close</Button>
-        </Modal.Footer>
-      </Modal>
+    const indexOfLastGenre = currentPage * showCount;
+    const indexOfFirstGenre = indexOfLastGenre - showCount;
+    const currentGenres = filteredGenres.slice(indexOfFirstGenre, indexOfLastGenre); // Paginate hasil pencarian
+    const totalPages = Math.ceil(filteredGenres.length / showCount);
 
-      {/* Add/Edit Modal */}
-      <Modal show={showAddEditModal} onHide={() => setShowAddEditModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{selectedGenre ? "Edit Genre" : "Add Genre"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleAddEditGenre}>
-            <Form.Group controlId="formGenreName">
-              <Form.Label>Genre Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={newGenreName}
-                onChange={(e) => setNewGenreName(e.target.value)}
-                required
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAddEditModal(false)}>Close</Button>
-          <Button variant="primary" onClick={handleAddEditGenre}>Save Changes</Button>
-        </Modal.Footer>
-      </Modal>
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
 
-      {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Deletion</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Are you sure you want to delete the genre <strong>{selectedGenre?.name}</strong>?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-          <Button variant="danger" onClick={() => softDeleteGenre(selectedGenre.id)}>Delete</Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
-  );
+    // Logic to show only 3 pages (current, previous, next)
+    const renderPagination = () => {
+        let items = [];
+        const startPage = Math.max(1, currentPage - 1);
+        const endPage = Math.min(totalPages, currentPage + 1);
+
+        for (let number = startPage; number <= endPage; number++) {
+            items.push(
+                <Pagination.Item key={number} active={number === currentPage} onClick={() => handlePageChange(number)}>
+                    {number}
+                </Pagination.Item>
+            );
+        }
+        return (
+            <div className="d-flex justify-content-end">
+                <Pagination>
+                    <Pagination.First onClick={() => setCurrentPage(1)} />
+                    <Pagination.Prev onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)} />
+                    {items}
+                    <Pagination.Next onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)} />
+                    <Pagination.Last onClick={() => setCurrentPage(totalPages)} />
+                </Pagination>
+            </div>
+        );
+    };
+
+    return (
+        <Container>
+            <Container className="App">
+                <h1 className="title">Genres Manager</h1>
+            </Container>
+            {/* Form Section */}
+            <Container className="d-flex justify-content-end">
+                <Row className="justify-content-end">
+                    <Col xs="auto" className="d-flex mb-4">
+                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                            <InputGroup.Text>
+                                <FaSearch />
+                            </InputGroup.Text>
+                            <FormControl
+                                type="text"
+                                placeholder="Search Genre..."
+                                aria-label="Search"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </InputGroup>
+                    </Col>
+                    <Col xs="auto" className="d-flex mb-4">
+                        <Form.Select className="mb-4" value={showCount} onChange={(e) => setShowCount(e.target.value)} style={{ width: '80px', display: 'inline-block' }}>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </Form.Select>
+                    </Col>
+
+                    {/* Button to Add New Genre */}
+                    <Col xs="auto" className="d-flex mb-4">
+                        <Button
+                            variant="success"
+                            className="d-flex align-items-center w-auto px-4 py-2 mb-4"
+                            style={{ whiteSpace: 'nowrap' }}
+                            onClick={handleShowModal}>
+                            <FaPlus className="me-2" />
+                            Add New Genre
+                        </Button>
+                    </Col>
+                </Row>
+            </Container>
+
+            <Modal show={showModal} onHide={handleCloseModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>{isEditing ? "Edit Genre" : "Add New Genre"}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3">
+                            <Form.Label className="me-2">Genre</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={isEditing ? editName.name : newGenre.name}
+                                onChange={handleInputChange}
+                                placeholder="Enter genre name"
+                            />
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={handleCloseModal}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-2"
+                        onClick={isEditing ? handleRenameGenre : handleAddGenre}
+                        style={{ backgroundColor: '#ff5722', borderColor: '#ff5722' }}
+                    >
+                        {isEditing ? "Save Changes" : "Add Genre"}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete Genre</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the genre "{genreToDelete?.name}"?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                    <Button variant="danger" onClick={handleDeleteGenre}>Delete</Button>
+                </Modal.Footer>
+            </Modal>
+
+            {loading ? (
+                <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
+            ) : (
+                <>
+                    {/* Table Section */}
+                    <Container className="genre-table-wrapper">
+                        <Table className="genre-table" striped bordered hover>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Genre</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentGenres.map((genre) => (
+                                    <tr key={genre.id}>
+                                        <td>{genre.id}</td>
+                                        <td>{genre.name}</td>
+                                        <td>
+                                            <Container className="action-button">
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    className="me-2"
+                                                    onClick={() => handleEditGenre(genre.id)}
+                                                >
+                                                    Rename
+                                                </Button>
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    className="me-2"
+                                                    onClick={() => {
+                                                        setShowDeleteModal(true);
+                                                        setGenreToDelete(genre);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </Container>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Container>
+                    {renderPagination()}
+                </>
+            )}
+        </Container>
+    );
 };
 
-export default Genres;
+export default GenreManager;
