@@ -672,33 +672,36 @@ app.get("/movie-list", (req, res) => {
 
   let query = `
     SELECT
-      m.status, 
-      m.id, 
-      m.title,
-      m.imdb_score,
-      m.alt_title,
-      m.director,
-      m.poster, 
-      m.background,
-      m.view,
-      m.trailer,
-      m.release_year,
-      GROUP_CONCAT(DISTINCT ac.name SEPARATOR ', ') AS Actors,
-      GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,
-      m.synopsis,
-      mac.role
-    FROM movies m
-    JOIN movie_actors mac ON mac.movie_id = m.id
-    JOIN actors ac ON ac.id = mac.actor_id
-    JOIN movie_genres mg ON mg.movie_id = m.id
-    JOIN genres g ON g.id = mg.genre_id
-    JOIN status s ON s.id = m.status_id
-    JOIN availability av ON av.id = m.availability_id
-    JOIN movie_countries mc ON mc.movie_id = m.id
-    JOIN countries c ON c.id = mc.country_id
-    JOIN movie_awards ma ON ma.movie_id = m.id
-    JOIN awards a ON a.id = ma.awards_id
-  `;
+    m.status, 
+    m.id, 
+    m.title,
+    m.imdb_score,
+    m.alt_title,
+    m.director,
+    m.poster, 
+    m.background,
+    m.view,
+    m.trailer,
+    m.release_year,
+    GROUP_CONCAT(DISTINCT CONCAT(ac.name, ' (', mac.role, ')') SEPARATOR ', ') AS Actors,
+    GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,
+    GROUP_CONCAT(DISTINCT c.country_name SEPARATOR ', ') AS Countries,
+    GROUP_CONCAT(DISTINCT a.awards_name SEPARATOR ', ') AS Awards,
+    m.synopsis,
+    m.availability_id,
+    m.status_id
+FROM movies m
+JOIN movie_actors mac ON mac.movie_id = m.id
+JOIN actors ac ON ac.id = mac.actor_id
+JOIN movie_genres mg ON mg.movie_id = m.id
+JOIN genres g ON g.id = mg.genre_id
+JOIN status s ON s.id = m.status_id
+JOIN availability av ON av.id = m.availability_id
+JOIN movie_countries mc ON mc.movie_id = m.id
+JOIN countries c ON c.id = mc.country_id
+JOIN movie_awards ma ON ma.movie_id = m.id
+JOIN awards a ON a.id = ma.awards_id
+    `;
 
   // Tambahkan filter berdasarkan status jika parameter status ada
   if (status) {
@@ -1802,7 +1805,7 @@ app.put("/update-drama", async (req, res) => {
     const statusQuery = `SELECT id FROM status WHERE name = ?`;
     const [statusResult] = await db.promise().query(statusQuery, [status]);
     const status_id = statusResult.length > 0 ? statusResult[0].id : null;
-
+    
     // Update movies table
     const movieQuery = `
       UPDATE movies
@@ -1820,7 +1823,7 @@ app.put("/update-drama", async (req, res) => {
       backgroundUrl,
       trailer,
       director,
-      3,
+      1,
       status_id,
       availabilityId,
       id, // ID film yang akan diperbarui
@@ -1828,11 +1831,11 @@ app.put("/update-drama", async (req, res) => {
 
     await db.promise().query(movieQuery, movieValues);
 
-    // Hapus data genres, actors, countries, dan awards terkait sebelumnya
-    await db.promise().query(`DELETE FROM movie_genres WHERE movie_id = ?`, [id]);
-    await db.promise().query(`DELETE FROM movie_actors WHERE movie_id = ?`, [id]);
-    await db.promise().query(`DELETE FROM movie_countries WHERE movie_id = ?`, [id]);
-    await db.promise().query(`DELETE FROM movie_awards WHERE movie_id = ?`, [id]);
+    // // Hapus data genres, actors, countries, dan awards terkait sebelumnya
+    // await db.promise().query(`DELETE FROM movie_genres WHERE movie_id = ?`, [id]);
+    // await db.promise().query(`DELETE FROM movie_actors WHERE movie_id = ?`, [id]);
+    // await db.promise().query(`DELETE FROM movie_countries WHERE movie_id = ?`, [id]);
+    // await db.promise().query(`DELETE FROM movie_awards WHERE movie_id = ?`, [id]);
 
     // Insert genres
     for (const genre of genres) {
@@ -1997,14 +2000,14 @@ app.post("/login", (req, res) => {
             );
 
             // Send token and user_id in cookies
-            res.cookie("token", token, { httpOnly: true, sameSite: "strict", secure: false });
+            res.cookie("token", token, { httpOnly: false, sameSite: "strict", secure: false });
             res.cookie("user_id", user.id, {
-              httpOnly: true,
+              httpOnly: false,
               sameSite: "strict",
               secure: false,
             });
             res.cookie("role", user.role, {
-              httpOnly: true,
+              httpOnly: false,
               sameSite: "strict",
               secure: false,
             }); // Tambahkan role ke cookie
