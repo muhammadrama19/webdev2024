@@ -214,7 +214,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
                       <Container className="action-button">
                       <Button
                         className="btn btn-sm btn-primary me-3"
-                        onClick={() => handleEdit({...drama})}
+                        onClick={() => handleEdit({...drama, imdb_score: drama.imdb_score})}
                       >
                           Edit
                         </Button>

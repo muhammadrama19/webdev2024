@@ -26,7 +26,6 @@ const AdminLayout = () => {
       try {
 
         const decoded = JSON.parse(atob(token.split(".")[1]));
-
         setIsLoggedIn(true);
         setUserId(user_id);
 
@@ -60,7 +59,14 @@ const AdminLayout = () => {
           isAdmin || isMovieInputRoute ? ( // Allow access if admin or accessing /movie-input
             <Outlet />
           ) : (
-            <div>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100vh",
+              textAlign: "center",
+            }}>
               <h2>Access Denied</h2>
               <p>
                 You do not have the necessary permissions to view this page.
