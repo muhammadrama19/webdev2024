@@ -1144,7 +1144,6 @@ app.get("/countries", (req, res) => {
 
 // Get a single country berdasarkan country_name
 app.get(
-
   "/countries/:country_name",
   isAuthenticated,
   hasAdminRole,
