@@ -882,54 +882,69 @@ app.get("/actors", (req, res) => {
 });
 
 // Route to add a new actor
-
 app.post("/actors", isAuthenticated, hasAdminRole, (req, res) => {
   const { name, birthdate, country_name, actor_picture } = req.body;
+  // Start a transaction
+  db.beginTransaction((err) => {
+    if (err) {
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
 
+    if (!name || !birthdate || !country_name) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
 
-  if (!name || !birthdate || !country_name) {
-    return res.status(400).json({ error: "Missing required fields." });
-  }
-
-  // Check if the country exists in the database
-  const checkCountryQuery = `
+    // Check if the country exists in the database
+    const checkCountryQuery = `
     SELECT id FROM countries WHERE country_name = ?;
   `;
 
-  db.query(checkCountryQuery, [country_name], (err, countryResult) => {
-    if (err) {
-      console.error("Error checking country:", err.message);
-      return res.status(500).json({ error: "Failed to check country." });
-    }
+    db.query(checkCountryQuery, [country_name], (err, countryResult) => {
+      if (err) {
+        console.error("Error checking country:", err.message);
+        return res.status(500).json({ error: "Failed to check country." });
+      }
 
-    if (countryResult.length === 0) {
-      // If country doesn't exist, return an error
-      return res
-        .status(400)
-        .json({ error: "Country not found. Please add the country first." });
-    }
+      if (countryResult.length === 0) {
+        // If country doesn't exist, return an error
+        return res
+          .status(400)
+          .json({ error: "Country not found. Please add the country first." });
+      }
 
-    // If country exists, proceed with adding the actor
-    const country_birth_id = countryResult[0].id;
+      // If country exists, proceed with adding the actor
+      const country_birth_id = countryResult[0].id;
 
-    const addActorQuery = `
+      const addActorQuery = `
       INSERT INTO actors (name, birthdate, country_birth_id, actor_picture) 
       VALUES (?, ?, ?, ?);
     `;
-    const values = [name, birthdate, country_birth_id, actor_picture];
+      const values = [name, birthdate, country_birth_id, actor_picture];
 
-    db.query(addActorQuery, values, (err, result) => {
-      if (err) {
-        console.error("Error inserting actor:", err.message);
-        return res.status(500).json({ error: "Failed to add actor." });
-      }
-      res
-        .status(201)
-        .json({ message: "Actor added successfully.", id: result.insertId });
+      db.query(addActorQuery, values, (err, result) => {
+        if (err) {
+          console.error("Error inserting actor:", err.message);
+          return res.status(500).json({ error: "Failed to add actor." });
+        }
+        // Commit the transaction if the update succeeds
+        db.commit((err) => {
+          if (err) {
+            console.error("Error committing transaction:", err);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Internal Server Error" });
+            });
+          }
+          res
+            .status(201)
+            .json({ message: "Actor added successfully.", id: result.insertId });
+
+        });
+      });
     });
   });
-}
-);
+});
+
 
 // Route to update an existing actor with country existence check
 app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
@@ -1147,7 +1162,6 @@ app.get(
   "/countries/:country_name",
   isAuthenticated,
   hasAdminRole,
-
   (req, res) => {
     const { country_name } = req.params;
     const query =
