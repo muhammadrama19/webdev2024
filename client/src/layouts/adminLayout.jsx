@@ -1,4 +1,4 @@
-// AdminLayout.js
+
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Cookies from 'js-cookie';
@@ -24,17 +24,20 @@ const AdminLayout = () => {
 
     if (token && user_id) {
       try {
+
+        const decoded = JSON.parse(atob(token.split(".")[1]));
+
         setIsLoggedIn(true);
         setUserId(user_id);
 
-        if (role === 'Admin') {
+        if (role === "Admin") {
           setIsAdmin(true);
         }
       } catch (error) {
-        console.error('Error decoding token:', error); 
+        console.error("Error decoding token:", error);
       }
     } else {
-      console.log("Token or user_id not found"); 
+      console.log("Token or user_id not found");
     }
   }, []);
 
@@ -59,11 +62,22 @@ const AdminLayout = () => {
           ) : (
             <div>
               <h2>Access Denied</h2>
-              <p>You do not have the necessary permissions to view this page.</p>
+              <p>
+                You do not have the necessary permissions to view this page.
+              </p>
             </div>
           )
         ) : (
-          <div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100vh",
+              textAlign: "center",
+            }}
+          >
             <h2>Unauthorized Access</h2>
             <p>Please log in to access this page.</p>
           </div>

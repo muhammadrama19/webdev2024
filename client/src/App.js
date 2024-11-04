@@ -30,16 +30,17 @@
   function App() {
     return (
       <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/movies/:id" element={<Detailmovie />} />
-            <Route path="/searchresult" element={<SearchResult />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-          </Route>
+      <Routes>
+        {/* Public Routes */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/movies/:id" element={<Detailmovie />} />
+          <Route path="/searchresult" element={<SearchResult />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword/>} />
+        </Route>
 
           {/* Admin Routes */}
           <Route
@@ -65,5 +66,4 @@
       </Router>
     );
   }
-
   export default App;
