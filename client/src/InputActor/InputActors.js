@@ -1,18 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-    Container,
-    Table,
-    Form,
-    Button,
-    Modal,
-    Col,
-    Row,
-    InputGroup,
-    FormControl,
-    Pagination,
-    Spinner,
-    Image
-} from 'react-bootstrap';
+import { Container, Table, Form, Button, Modal, Col, Row, InputGroup, FormControl, Pagination, Spinner, Image } from 'react-bootstrap';
 import { FaPlus, FaSearch } from "react-icons/fa";
 import "./InputActor.scss";
 import Icon from 'client/public/assets/Oval.svg';
@@ -25,7 +12,6 @@ const ActorManager = () => {
         country_name: '',
         actor_picture: ''
     });
-    const [newActor, setNewActor] = useState({ country_name: "", name: "", birthdate: "", actor_picture: "" });
     const [editing, setEditing] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -34,7 +20,6 @@ const ActorManager = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
     const [showCount, setShowCount] = useState(10);
-
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [actorToDelete, setActorToDelete] = useState(null);
 
@@ -68,6 +53,7 @@ const ActorManager = () => {
         e.preventDefault();
 
         const countryExists = await checkCountryExists(actorData.country_name);
+
         if (!countryExists) {
             alert("Country does not exist. Please add the country first.");
             return;
@@ -78,14 +64,13 @@ const ActorManager = () => {
                 const response = await axios.post('http://localhost:8001/actors', actorData, {
                     withCredentials: true
                 });
-
-                const data = await response.json();
+                const data = await response.data; // Axios automatically parses JSON
                 setActors((prevActors) => [...prevActors, data]);
             } catch (error) {
                 console.error("Error adding actor:", error);
             }
 
-            setNewActor({ country_name: "", name: "", birthdate: "", actor_picture: "" });
+            setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
             setShowModal(false);
         } else {
             alert("All fields must be filled!");
