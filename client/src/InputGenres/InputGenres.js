@@ -15,6 +15,7 @@ const GenreManager = () => {
     const [currentPage, setCurrentPage] = useState(1); // State for current page
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
+    const [selectedGenre, setSelectedGenre] = useState(null);
 
     // New state for delete confirmation modal
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -23,19 +24,20 @@ const GenreManager = () => {
     const handleShowModal = () => setShowModal(true);
 
     useEffect(() => {
-        const fetchGenres = async () => {
-            try {
-                const response = await fetch('http://localhost:8001/genres');
-                const data = await response.json();
-                setGenres(data);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching actors:", error);
-                setLoading(false);
-            }
-        };
         fetchGenres();
-    }, []);
+    }, [showCount]);
+
+    const fetchGenres = async () => {
+        try {
+            const response = await fetch("http://localhost:8001/genres");
+            const data = await response.json();
+            setGenres(data);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            setLoading(false);
+        }
+    };
 
     const handleCloseModal = () => {
         setIsEditing(false);
@@ -58,10 +60,11 @@ const GenreManager = () => {
                 alert("Genre already exists!");
             } else {
                 try {
-                    const response = await axios.post('http://localhost:8001/genres', 
-                        { name: trimmedGenre }, 
-                        { withCredentials: true, // Enable cookies to be sent
-                    });
+                    const response = await axios.post('http://localhost:8001/genres',
+                        { name: trimmedGenre },
+                        {
+                            withCredentials: true, // Enable cookies to be sent
+                        });
                     setGenres([...genres, response.data]);
                     setNewGenre("");
                     handleCloseModal();
@@ -90,26 +93,26 @@ const GenreManager = () => {
             }
         }
     };
-  
+
     const softDeleteGenre = async (genreId) => {
-    const url = `http://localhost:8001/genres/delete/${genreId}`;
-  
-    try {
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Ensure cookies are sent with the request
-      });
-  
-      if (!response.ok) throw new Error("Failed to soft delete genre");
-  
-      fetchGenres(); // Refresh genres list after deletion
-      setShowDeleteModal(false); // Close delete modal
-      setSelectedGenre(null); // Reset selected genre
-    } catch (error) {
-      console.error("Error soft deleting genre:", error);
-    }
-  };
+        const url = `http://localhost:8001/genres/delete/${genreId}`;
+
+        try {
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include", // Ensure cookies are sent with the request
+            });
+
+            if (!response.ok) throw new Error("Failed to soft delete genre");
+
+            fetchGenres(); // Refresh genres list after deletion
+            setShowDeleteModal(false); // Close delete modal
+            setSelectedGenre(null); // Reset selected genre
+        } catch (error) {
+            console.error("Error soft deleting genre:", error);
+        }
+    };
 
     const handleEditGenre = (id) => {
         setEditing(id);

@@ -37,13 +37,12 @@ const DramaInput = () => {
     imdbScore: 0,
   });
 
-  
-  
+  const [isEdit, setIsEdit] = useState(false);
 
   useEffect(() => {
     if (location.state && location.state.movieData) {
       const movieData = location.state.movieData;
-  
+
       setFormData({
         posterUrl: movieData.poster || "",
         status: movieData.status || "",
@@ -64,9 +63,9 @@ const DramaInput = () => {
         backgroundUrl: movieData.background || "",
         imdbScore: movieData.imdb_score || 0,
       });
+      setIsEdit(true);
     }
-  }, [location.state]);  
-  
+  }, [location.state]);
 
   const [genresList, setGenresList] = useState([]); // State untuk genres dari backend
   const [actorsList, setActorsList] = useState([]); // State untuk daftar aktor
@@ -76,7 +75,6 @@ const DramaInput = () => {
   const [countriesList, setCountriesList] = useState([]); // State untuk countries dari backend
   const [platformList, setPlatformList] = useState([]); // State untuk platform dari backend
   const [statusList, setStatusList] = useState([]); // State untuk status dari backend
-
 
   // Fetch genres dari backend menggunakan useEffect
   useEffect(() => {
@@ -341,6 +339,51 @@ const DramaInput = () => {
     }
   };
 
+  const handleEdit = async (e) => {
+    e.preventDefault();
+  
+    // Siapkan data untuk diperbarui
+    const dataToSubmit = {
+      view: formData.view,
+      status: formData.status,
+      title: formData.title,
+      alt_title: formData.alternativeTitle,
+      director: formData.director,
+      release_year: formData.year,
+      country: formData.country,
+      synopsis: formData.synopsis,
+      availability: formData.availability,
+      genres: formData.genres,
+      actors: formData.actors,
+      trailer: formData.trailer,
+      awards: formData.awards,
+      imdb_score: formData.imdbScore,
+      posterUrl: formData.posterUrl,
+      backgroundUrl: formData.backgroundUrl,
+    };
+  
+    try {
+      const response = await fetch("http://localhost:8001/update-drama", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataToSubmit), // Kirim data JSON
+      });
+  
+      if (response.ok) {
+        const result = await response.json();
+        console.log(result.message); // Tampilkan pesan sukses
+        navigate("/movie-list"); // Redirect ke halaman movie list jika berhasil
+      } else {
+        console.error("Error updating form data:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+  
+
   const handleBack = () => {
     navigate("/movie-list"); // Redirect to movie-list on Back button click
   };
@@ -582,7 +625,12 @@ const DramaInput = () => {
                       onChange={(e) =>
                         handleRoleChange(actor.name, e.target.value)
                       }
-                      style={{ height: "70%", width: "40%", marginLeft: "10px", marginRight: "10px" }}
+                      style={{
+                        height: "70%",
+                        width: "40%",
+                        marginLeft: "10px",
+                        marginRight: "10px",
+                      }}
                     />
                   </div>
                 ))}
@@ -681,9 +729,9 @@ const DramaInput = () => {
                 variant="primary"
                 className="submit-button"
                 style={{ backgroundColor: "#ff5722", borderColor: "#ff5722" }}
-                onClick={handleSubmit} // Use handleSubmit function
+                onClick={isEdit ? handleEdit : handleSubmit}
               >
-                Submit
+                {isEdit ? "Update" : "Submit"}
               </Button>
             </div>
           </Col>
