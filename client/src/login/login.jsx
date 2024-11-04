@@ -29,8 +29,8 @@ const LoginForm = () => {
     axios.post('http://localhost:8001/login', values)
       .then(res => {
         if (res.data.Status === "Login Success") {
-
           // Simpan data ke dalam cookie dengan js-cookie
+          console.log(res);
           Cookies.set('username', res.data.username, { expires: 1 }); // Set cookie username dengan kadaluarsa 1 hari
           Cookies.set('email', res.data.email, { expires: 1 }); // Set cookie email
           Cookies.set('role', res.data.role, { expires: 1 }); // Set cookie role
