@@ -11,15 +11,12 @@ const GenreManager = () => {
     const [editName, setEditName] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(true); // To handle loading state
-    const [currentPage, setCurrentPage] = useState(1); // State for current page
-    const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
-    const [showCount, setShowCount] = useState(10); // Items per page
+    const [loading, setLoading] = useState(true); 
+    const [currentPage, setCurrentPage] = useState(1); 
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showCount, setShowCount] = useState(10); 
     const [selectedGenre, setSelectedGenre] = useState(null);
-
-    // New state for delete confirmation modal
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [genreToDelete, setGenreToDelete] = useState(null);
 
     const handleShowModal = () => setShowModal(true);
 
@@ -77,25 +74,8 @@ const GenreManager = () => {
         }
     };
 
-
-
     const handleDeleteGenre = async () => {
-        if (genreToDelete) {
-            try {
-                await fetch(`http://localhost:8001/genres/${genreToDelete.id}`, {
-                    method: 'DELETE',
-                });
-                setGenres(genres.filter((genre) => genre.id !== genreToDelete.id));
-                setShowDeleteModal(false);
-                setGenreToDelete(null);
-            } catch (error) {
-                console.error("Error deleting genre:", error);
-            }
-        }
-    };
-
-    const softDeleteGenre = async (genreId) => {
-        const url = `http://localhost:8001/genres/delete/${genreId}`;
+        const url = `http://localhost:8001/genres/delete/${selectedGenre.id}`;
 
         try {
             const response = await fetch(url, {
@@ -130,8 +110,9 @@ const GenreManager = () => {
                 alert("Genre already exists!");
             } else {
                 try {
-                    await fetch(`http://localhost:8001/genres/${editing}`, {
+                    await fetch(`http://localhost:8001/genres/update/${editing}`, {
                         method: 'PUT',
+                        credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -278,7 +259,7 @@ const GenreManager = () => {
                     <Modal.Title>Confirm Delete Genre</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    Are you sure you want to delete the genre "{genreToDelete?.name}"?
+                    Are you sure you want to delete the genre "{selectedGenre?.name}"?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
@@ -321,7 +302,7 @@ const GenreManager = () => {
                                                     className="me-2"
                                                     onClick={() => {
                                                         setShowDeleteModal(true);
-                                                        setGenreToDelete(genre);
+                                                        setSelectedGenre(genre);
                                                     }}
                                                 >
                                                     Delete
