@@ -142,7 +142,7 @@ const DramaInput = () => {
     });
   };
 
-  const handleActorChange = (actorName) => {
+  const handleActorChange = (actorName, actorRole) => {
     // Pastikan tidak lebih dari 10 aktor yang dipilih dan aktor belum dipilih
     if (
       formData.actors.length < 10 &&
@@ -150,7 +150,7 @@ const DramaInput = () => {
     ) {
       setFormData((prevState) => ({
         ...prevState,
-        actors: [...prevState.actors, { name: actorName, role: "" }],
+        actors: [...prevState.actors, { name: actorName, role: actorRole }],
       }));
     }
     setSearchTerm(""); // Reset pencarian setelah aktor dipilih
@@ -544,7 +544,7 @@ const DramaInput = () => {
                   {filteredActors.map((actor) => (
                     <li
                       key={actor.id}
-                      onClick={() => handleActorChange(actor.name)}
+                      onClick={() => handleActorChange(actor.name, actor.role)}
                     >
                       {actor.name}
                     </li>

@@ -25,6 +25,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
         const response = await fetch(`http://localhost:8001/movie-list?status=${viewTrash ? 0 : 1}`);
         const data = await response.json();
         setDramas(data);
+        console.log("Data fetched:", data);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -36,6 +37,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   }, [viewTrash]); // Menjalankan ulang useEffect jika viewTrash berubah
 
   const handleEdit = (drama) => {
+    console.info("Editing movie:", drama);
     navigate("/movie-input", { state: { movieData: drama } }); // Redirect with existing movie data
   };
 
@@ -89,6 +91,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   const indexOfLastDrama = currentPage * showCount;
   const indexOfFirstDrama = indexOfLastDrama - showCount;
   const currentDramas = filteredDramas.slice(indexOfFirstDrama, indexOfLastDrama);
+  console.log("currentDramas", currentDramas);
   const totalPages = Math.ceil(filteredDramas.length / showCount);
 
   const handlePageChange = (pageNumber) => {
@@ -211,7 +214,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
                       <Container className="action-button">
                       <Button
                         className="btn btn-sm btn-primary me-3"
-                        onClick={() => handleEdit(drama)}
+                        onClick={() => handleEdit({...drama})}
                       >
                           Edit
                         </Button>
