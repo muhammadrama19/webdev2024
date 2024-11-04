@@ -668,16 +668,29 @@ app.get("/movie-list", (req, res) => {
       m.status, 
       m.id, 
       m.title,
+      m.imdb_score,
+      m.alt_title,
+      m.director,
       m.poster, 
+      m.background,
+      m.view,
+      m.trailer,
       m.release_year,
       GROUP_CONCAT(DISTINCT ac.name SEPARATOR ', ') AS Actors,
       GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,
-      m.synopsis
+      m.synopsis,
+      mac.role
     FROM movies m
     JOIN movie_actors mac ON mac.movie_id = m.id
     JOIN actors ac ON ac.id = mac.actor_id
     JOIN movie_genres mg ON mg.movie_id = m.id
     JOIN genres g ON g.id = mg.genre_id
+    JOIN status s ON s.id = m.status_id
+    JOIN availability av ON av.id = m.availability_id
+    JOIN movie_countries mc ON mc.movie_id = m.id
+    JOIN countries c ON c.id = mc.country_id
+    JOIN movie_awards ma ON ma.movie_id = m.id
+    JOIN awards a ON a.id = ma.awards_id
   `;
 
   // Tambahkan filter berdasarkan status jika parameter status ada
