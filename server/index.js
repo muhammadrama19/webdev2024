@@ -453,7 +453,7 @@ app.get("/movies/detail/review/:id", (req, res) => {
     JOIN
       users ON users.id = reviews.user_id
     WHERE
-      reviews.movie_id = ?
+      reviews.movie_id = ? AND reviews.status = 1 AND reviews.deleted_at IS NULL
   `;
 
   db.query(query, [id], (err, results) => {
@@ -473,17 +473,14 @@ app.get("/movies/detail/review/:id", (req, res) => {
 
 //fetch all filter criteria
 
-app.get("/filters", async (req, res) => {
+app.get('/filters', async (req, res) => {
   const queries = {
-    years:
-      "SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies",
-    genres: "SELECT id, name FROM genres ORDER BY name ASC",
-    awards: "SELECT id, awards_name FROM awards ORDER BY awards_name ASC",
-    countries:
-      "SELECT id, country_name FROM countries ORDER BY country_name ASC",
-    availability:
-      "SELECT id, platform_name FROM availability ORDER BY platform_name ASC",
-    status: "SELECT id, name FROM status ORDER BY name ASC",
+    years: 'SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies',
+    genres: 'SELECT id, name FROM genres ORDER BY name ASC',
+    awards: 'SELECT id, awards_name FROM awards ORDER BY awards_name ASC',
+    countries: 'SELECT id, country_name FROM countries ORDER BY country_name ASC',
+    availability: 'SELECT id, platform_name FROM availability ORDER BY platform_name ASC',
+    status: 'SELECT id, name FROM status ORDER BY name ASC',
   };
 
   const results = {};
@@ -491,73 +488,74 @@ app.get("/filters", async (req, res) => {
   try {
     // Fetch years first to calculate decades
     const [yearRows] = await db.promise().query(queries.years);
-
+    
     if (yearRows.length) {
       const minYear = yearRows[0].minYear;
       const maxYear = yearRows[0].maxYear;
-
+      
+     
       const different = minYear % 10;
-      const normalizedMinYear = minYear - different;
+      const normalizedMinYear = minYear - different; 
       const decades = [];
 
       for (let year = normalizedMinYear; year <= maxYear; year += 10) {
         decades.push({
           start: year,
-          end: year + 10,
+          end: year + 10, 
         });
       }
 
-      results.years = decades;
+      results.years = decades; 
     } else {
       results.years = [];
     }
 
     // Fetch genres
     const [genreRows] = await db.promise().query(queries.genres);
-    results.genres = genreRows.map((row) => ({
+    results.genres = genreRows.map(row => ({
       id: row.id,
       name: row.name,
     }));
 
     // Fetch awards
     const [awardRows] = await db.promise().query(queries.awards);
-    results.awards = awardRows.map((row) => ({
+    results.awards = awardRows.map(row => ({
       id: row.id,
       name: row.awards_name,
     }));
 
     // Fetch countries
     const [countryRows] = await db.promise().query(queries.countries);
-    results.countries = countryRows.map((row) => ({
+    results.countries = countryRows.map(row => ({
       id: row.id,
       name: row.country_name,
     }));
 
     // Fetch availability
     const [availabilityRows] = await db.promise().query(queries.availability);
-    results.availability = availabilityRows.map((row) => ({
+    results.availability = availabilityRows.map(row => ({
       id: row.id,
       name: row.platform_name,
     }));
 
     // Fetch status
     const [statusRows] = await db.promise().query(queries.status);
-    results.status = statusRows.map((row) => ({
+    results.status = statusRows.map(row => ({
       id: row.id,
       name: row.name,
     }));
 
-    res.json(results);
+    res.json(results); 
   } catch (error) {
-    console.error("Error fetching filters:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error('Error fetching filters:', error.message);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 // Fetch top 10 highest-rated movies
 app.get("/top-rated", (req, res) => {
   const query =
-    "SELECT title, background, imdb_score FROM movies ORDER BY imdb_score DESC LIMIT 15";
+    "SELECT title, background, imdb_score FROM movies WHERE id BETWEEN 1 AND 500 ORDER BY imdb_score DESC LIMIT 15";
 
   db.query(query, (err, results) => {
     if (err) {
@@ -667,7 +665,7 @@ app.get("/movie-genre-count-by-decade", (req, res) => {
   });
 });
 
-app.get("/movie-list", (req, res) => {
+app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
   const { status } = req.query; // Ambil query parameter status dari request
 
   let query = `
@@ -740,7 +738,7 @@ app.get("/users", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // POST endpoint untuk menambah user baru
-app.post("/users", async (req, res) => {
+app.post("/users",isAuthenticated, hasAdminRole, async (req, res) => {
   const { username, email, password, profile_picture, role } = req.body;
 
   // Validasi input
@@ -775,7 +773,7 @@ app.post("/users", async (req, res) => {
 });
 
 // PUT endpoint untuk mengupdate user yang sudah ada
-app.put("/users/:id", async (req, res) => {
+app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const { id } = req.params;
   const { username, email, role, profile_picture, password } = req.body;
 
@@ -807,13 +805,60 @@ app.put("/users/:id", async (req, res) => {
 });
 
 // DELETE endpoint untuk menghapus user
-app.delete("/users/:id", async (req, res) => {
+app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
   try {
     // Update nilai Status_Account menjadi 3
     const query = `UPDATE users SET Status_Account = 3 WHERE id = ?`;
-    await db.query(query, [userId]);
+    const result = await db.promise().query(query, [userId]);
+
+    //check if any row affected
+    if(result.affectedRows===0){
+      return res.status(404).json({message: "User not found", success: false});
+    }
+
+    //get user details
+    const userQuery = `SELECT * FROM users WHERE id = ?`;
+    const [userData] = await db.promise().query(userQuery, [userId]);
+    if (userData.length === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    const user = userData[0];
+    const templatePath = path.join(__dirname, "template", "banned.html");
+
+    // Read the email template file
+    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+      if (err) {
+        console.error("Error reading email template:", err);
+        return res
+          .status(500)
+          .json({ message: "Error reading email template", success: false });
+      }
+
+      // Replace placeholders in the template with actual data
+      const bannedHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: "Account Banned Notification",
+        html: bannedHTML, // Use the customized HTML content
+      };
+
+      // Send email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ message: "Error sending banned email", success: false });
+        }
+
+        res.json({ message: "User banned successfully and email sent", success: true });
+      });
+    });
 
     res.status(200).json({ message: "User suspended successfully" });
   } catch (err) {
@@ -822,36 +867,126 @@ app.delete("/users/:id", async (req, res) => {
   }
 });
 
-// Endpoint untuk menangguhkan user (Status_Account = 2)
-app.put("/users/suspend/:id", async (req, res) => {
+app.put("/users/suspend/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
   try {
-    // Update nilai Status_Account menjadi 2 (suspend)
+    // Update Status_Account to 2 (suspended)
     const query = `UPDATE users SET Status_Account = 2 WHERE id = ?`;
-    await db.query(query, [userId]);
+    const [result] = await db.promise().query(query, [userId]);
 
-    res.status(200).json({ message: "User suspended successfully" });
+    // Check if any rows were affected
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    // Get user details for email notification
+    const userQuery = `SELECT * FROM users WHERE id = ?`;
+    const [userData] = await db.promise().query(userQuery, [userId]);
+    if (userData.length === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    const user = userData[0];
+    const templatePath = path.join(__dirname, "template", "suspending.html");
+
+    // Read the email template file
+    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+      if (err) {
+        console.error("Error reading email template:", err);
+        return res
+          .status(500)
+          .json({ message: "Error reading email template", success: false });
+      }
+
+      // Replace placeholders in the template with actual data
+      const suspendingHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: "Account Suspension Notification",
+        html: suspendingHTML, // Use the customized HTML content
+      };
+
+      // Send email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ message: "Error sending suspension email", success: false });
+        }
+
+        res.json({ message: "User suspended successfully and email sent", success: true });
+      });
+    });
   } catch (err) {
     console.error("Error executing query:", err.message);
     res.status(500).json({ error: "Failed to suspend user" });
   }
 });
 
-app.put("/users/unlock/:id", async (req, res) => {
+app.put("/users/unlock/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
   try {
-    // Update nilai Status_Account menjadi 1
+    // Update Status_Account to 1 (unlocked)
     const query = `UPDATE users SET Status_Account = 1 WHERE id = ?`;
-    await db.query(query, [userId]);
+    const [result] = await db.promise().query(query, [userId]);
 
-    res.status(200).json({ message: "User unlocked successfully" });
+    // Check if any rows were affected
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    // Get user details for email notification
+    const userQuery = `SELECT * FROM users WHERE id = ?`;
+    const [userData] = await db.promise().query(userQuery, [userId]);
+    if (userData.length === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    const user = userData[0];
+    const templatePath = path.join(__dirname, "template", "unsuspending.html");
+
+    // Read the email template file
+    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+      if (err) {
+        console.error("Error reading email template:", err);
+        return res
+          .status(500)
+          .json({ message: "Error reading email template", success: false });
+      }
+
+      // Replace placeholders in the template with actual data
+      const unsuspendingHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: "Account Unsuspension Notification",
+        html: unsuspendingHTML, // Use the customized HTML content
+      };
+
+      // Send email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ message: "Error sending unsuspension email", success: false });
+        }
+
+        res.json({ message: "User unlocked successfully and email sent", success: true });
+      });
+    });
   } catch (err) {
     console.error("Error executing query:", err.message);
     res.status(500).json({ error: "Failed to unlock user" });
   }
 });
+
 
 // Route to fetch all actors
 app.get("/actors", (req, res) => {
@@ -1148,7 +1283,7 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Get all countries
-app.get("/countries", (req, res) => {
+app.get("/countries", isAuthenticated, hasAdminRole,(req, res) => {
   const query = "SELECT id, country_name FROM countries WHERE deleted_at IS NULL ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
@@ -1163,8 +1298,7 @@ app.get("/countries", (req, res) => {
 // Get a single country berdasarkan country_name
 app.get(
   "/countries/:country_name",
-  isAuthenticated,
-  hasAdminRole,
+
   (req, res) => {
     const { country_name } = req.params;
     const query =
@@ -1309,7 +1443,7 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Get all awards
-app.get("/awards", (req, res) => {
+app.get("/awards", isAuthenticated, hasAdminRole, (req, res) => {
   const query = `
     SELECT 
       a.id, 
@@ -1647,7 +1781,7 @@ app.get("/status", (req, res) => {
 //CRUD
 
 //ADD MOVIES
-app.post("/add-drama", async (req, res) => {
+app.post("/add-drama", isAuthenticated, async (req, res) => {
   const {
     imdb_score,
     status,
@@ -1772,7 +1906,7 @@ app.post("/add-drama", async (req, res) => {
   }
 });
 
-app.put("/update-drama", async (req, res) => {
+app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
   const {
     id,
     imdb_score,
@@ -1893,7 +2027,7 @@ app.put("/update-drama", async (req, res) => {
 
 
 //SET TRASH
-app.put("/movie-delete/:id", (req, res) => {
+app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 0 WHERE id = ?`;
@@ -1909,7 +2043,7 @@ app.put("/movie-delete/:id", (req, res) => {
 });
 
 //REJECTED MOVIES
-app.put("/movie-rejected/:id", (req, res) => {
+app.put("/movie-rejected/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 2 WHERE id = ?`;
@@ -1926,7 +2060,7 @@ app.put("/movie-rejected/:id", (req, res) => {
 
 //PERMANENT DELETE
 // Endpoint untuk mengubah status menjadi 3 (permanen delete dari trash)
-app.put("/movie-permanent-delete/:id", (req, res) => {
+app.put("/movie-permanent-delete/:id",isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 4 WHERE id = ?`;
@@ -1942,7 +2076,7 @@ app.put("/movie-permanent-delete/:id", (req, res) => {
 });
 
 //RESTORE
-app.put("/movie-restore/:id", (req, res) => {
+app.put("/movie-restore/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
   const query = `UPDATE movies SET status = 1 WHERE id = ?`;
 
@@ -2053,12 +2187,20 @@ app.get(
   (req, res) => {
     const user = req.user;
 
+    // Check if user suspended or not
+    if (user.Status_Account === 2) {
+      // Redirect with a custom error message in query params
+      return res.redirect(
+        `http://localhost:3001/login?error=Account_Suspended`
+      );
+    }
+
     // Generate JWT token with user info, including role
     const token = jwt.sign(
       {
         username: user.username,
         email: user.email,
-        role: user.role, // Ensure role is included
+        role: user.role,
         user_id: user.id,
       },
       "our-jsonwebtoken-secret-key",
@@ -2074,7 +2216,7 @@ app.get(
     });
 
     res.cookie("user_id", user.id, { httpOnly: false, sameSite: "strict" });
-    res.cookie("role", user.role, { httpOnly: false, sameSite: "strict" }); // Ensure role is added to cookies
+    res.cookie("role", user.role, { httpOnly: false, sameSite: "strict" });
 
     // Redirect to frontend after successful login
     res.redirect(
@@ -2082,6 +2224,7 @@ app.get(
     );
   }
 );
+
 
 app.post("/register", (req, res) => {
   const { username, email, password } = req.body;
@@ -2097,9 +2240,25 @@ app.post("/register", (req, res) => {
       console.error("Database check error:", checkErr); // Log the error
       return res.json({ message: "Database error occurred", success: false });
     }
+
+    // Check if any existing user has the same username or email
     if (checkData.length > 0) {
+      let message = "Username or email already exists.";
+
+      // Loop through each result to check if it’s banned
+      for (const user of checkData) {
+        // If any user has Status_Account as 3 (banned)
+        if (user.Status_Account === 3) {
+          return res.json({
+            message: "This email is associated with a banned account.",
+            success: false,
+          });
+        }
+      }
+
+      // If no banned user was found, return a message saying the username or email exists
       return res.json({
-        message: "Username or Email already exists",
+        message,
         success: false,
       });
     }
@@ -2175,6 +2334,7 @@ app.post("/register", (req, res) => {
   });
 });
 
+
 app.post("/forgot-password", (req, res) => {
   const { email } = req.body;
 
@@ -2188,6 +2348,22 @@ app.post("/forgot-password", (req, res) => {
       });
     }
 
+    //check if account suspended or not
+    if (userData[0].Status_Account === 2) {
+      return res.json({
+        message: "Account Suspended",
+        success: false,
+      });
+    }
+
+    //only account with traditional login can forgot password
+    if (userData[0].googleId) {
+      return res.json({
+        message: "It looks like you signed up with Google. Please log in using your Google account.",
+        success: false,
+      });
+    }
+
     const user = userData[0];
     const resetToken = jwt.sign(
       {
@@ -2195,7 +2371,7 @@ app.post("/forgot-password", (req, res) => {
         passwordVersion: user.password,
       },
       "RESET_PASSWORD_SECRET",
-      { expiresIn: "1h" }
+      { expiresIn: "5m" } // Token expires in 5 minutes
     );
 
     // Create reset link
@@ -2319,35 +2495,10 @@ app.get("/movies/:movieId/reviewed/:userId", isAuthenticated, (req, res) => {
   });
 });
 
-app.get("/confirm-email/:token", (req, res) => {
-  const { token } = req.params;
 
-  // Verify email confirmation token
-  jwt.verify(token, "EMAIL_SECRET", (err, decoded) => {
-    if (err) {
-      return res.json({ message: "Invalid or expired token" });
-    }
-
-    const email = decoded.email;
-
-    // Update the user to mark their email as confirmed
-    const updateSql =
-      "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
-
-    db.query(updateSql, [email], (err, result) => {
-      if (err) {
-        return res.json({ message: "Error confirming email" });
-      }
-
-      res.json({ message: "Email confirmed successfully! You can now login." });
-    });
-  });
-});
-
-module.exports = router;
 
 //Input Review
-app.post("/reviews", (req, res) => {
+app.post("/reviews", isAuthenticated, (req, res) => {
   const { movie_id, user_id, content, rating } = req.body;
 
   const query = `
