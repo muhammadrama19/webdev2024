@@ -28,6 +28,7 @@ const MovieTrash = () => {
     try {
       await fetch(`http://localhost:8001/movie-permanent-delete/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -46,6 +47,7 @@ const MovieTrash = () => {
     try {
       await fetch(`http://localhost:8001/movie-restore/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },

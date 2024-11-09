@@ -3,6 +3,7 @@ import { Container, Table, Form, Button, Modal, Pagination, Col, Row, InputGroup
 import { FaPlus, FaSearch } from "react-icons/fa";
 import axios from "axios";
 import "./InputGenres.css";
+import Swal from "sweetalert2";
 
 const GenreManager = () => {
     const [genres, setGenres] = useState([]);
@@ -54,7 +55,11 @@ const GenreManager = () => {
 
         if (trimmedGenre) {
             if (genres.some(genre => genre.name.toLowerCase() === trimmedGenre.toLowerCase())) {
-                alert("Genre already exists!");
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Genre already exists!",
+                });
             } else {
                 try {
                     const response = await axios.post('http://localhost:8001/genres',
@@ -63,14 +68,24 @@ const GenreManager = () => {
                             withCredentials: true, // Enable cookies to be sent
                         });
                     setGenres([...genres, response.data]);
+                    Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: "Genre added successfully!",
+                    });
                     setNewGenre("");
                     handleCloseModal();
+
                 } catch (error) {
                     console.error("Error adding genre:", error);
                 }
             }
         } else {
-            alert("Genre name cannot be empty or just spaces!");
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Genre name cannot be empty!",
+            });
         }
     };
 
@@ -83,9 +98,13 @@ const GenreManager = () => {
                 headers: { "Content-Type": "application/json" },
                 credentials: "include", // Ensure cookies are sent with the request
             });
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: "Genre deleted successfully!",
+            })
 
             if (!response.ok) throw new Error("Failed to soft delete genre");
-
             fetchGenres(); // Refresh genres list after deletion
             setShowDeleteModal(false); // Close delete modal
             setSelectedGenre(null); // Reset selected genre
@@ -107,7 +126,12 @@ const GenreManager = () => {
 
         if (editName.trim()) {
             if (genres.some(genre => genre.name.toLowerCase() === editName.toLowerCase())) {
-                alert("Genre already exists!");
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Genre already exists!",
+                });
+        
             } else {
                 try {
                     await fetch(`http://localhost:8001/genres/update/${editing}`, {
@@ -123,11 +147,20 @@ const GenreManager = () => {
                             genre.id === editing ? { ...genre, name: editName } : genre
                         )
                     );
+                    Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: "Genre updated successfully!",
+                    });
                     setEditing(null);
                     setShowModal(false);
                     setEditName("");
                 } catch (error) {
-                    console.error("Error updating genre:", error);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "Failed to update genre!",
+                    });
                 }
             }
         }

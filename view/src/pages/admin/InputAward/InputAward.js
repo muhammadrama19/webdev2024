@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Form, Button, Modal, Pagination, Row, Col, InputGroup, FormControl, Spinner } from 'react-bootstrap';
 import { FaPlus, FaSearch } from "react-icons/fa";
 import './InputAward.css';
+import Swal from 'sweetalert2';
 
 const AwardsManager = () => {
     const [awards, setAwards] = useState([]);
@@ -56,7 +57,11 @@ const AwardsManager = () => {
         const { name, value } = e.target;
 
         if (name === 'awards_years' && (value.length > 4 || isNaN(value))) {
-            alert("Year must be exactly 4 digits");
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid year',
+                text: 'Year must be exactly 4 digits and must be a number',
+            });
             return;
         }
 
@@ -87,19 +92,31 @@ const AwardsManager = () => {
         // Check if country exists in the backend
         const countryExists = await checkCountryExists(newAward.country_name);
         if (!countryExists) {
-            alert("Country does not exist. Please add the country first.");
+            Swal.fire({
+                icon: 'error',
+                title: 'Country not found',
+                text: 'Country does not exist. Please add the country first.',  
+            });
             return;
         }
 
         // Cek apakah tahun berisi tepat 4 angka
         if (newAward.awards_years.length !== 4 || isNaN(newAward.awards_years)) {
-            alert("Year must be exactly 4 digits");
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid year',
+                text: 'Year must be exactly 4 digits and must be a number',
+            });
             return;
         }
 
 
         if (parseInt(newAward.awards_years) < 1950) {
-            alert("Year must be greater than or equal to 1950");
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid year',
+                text: 'Year must be greater than or equal to 1950',
+            });
             return;
         }
 
@@ -122,13 +139,30 @@ const AwardsManager = () => {
 
                 const data = await response.json();
                 setAwards((prevAwards) => [...prevAwards, data]);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Award added successfully',
+                    timer: 3000,
+                });
             } catch (error) {
                 console.error("Error adding award:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while adding the award. Please try again later.',
+                    timer: 3000,
+                })
             }
             setNewAward({ country_name: '', awards_years: '', awards_name: '' });
             handleCloseModal();
         } else {
-            alert("All fields must be filled!");
+            Swal.fire({
+                icon: 'error',
+                title: 'All fields must be filled',
+                text: 'Please fill all fields before submitting',
+                timer: 3000,
+            });
         }
     };
 
@@ -136,7 +170,11 @@ const AwardsManager = () => {
         e.preventDefault();
 
         if (parseInt(editAward.awards_years) < 1950) {
-            alert("Year must be greater than or equal to 1950");
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid year',
+                text: 'Year must be greater than or equal to 1950',
+            });
             return;
         }
 
@@ -150,7 +188,11 @@ const AwardsManager = () => {
             // Check if the edited country exists in the backend
             const countryExists = await checkCountryExists(editAward.country_name);
             if (!countryExists) {
-                alert("Country does not exist. Please add the country first.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Country not found',
+                    text: 'Country does not exist. Please add the country first.',
+                });
                 return;
             }
 
@@ -168,14 +210,30 @@ const AwardsManager = () => {
                 setAwards((prevAwards) =>
                     prevAwards.map((award) => (award.id === editing ? data : award))
                 );
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Award updated successfully',
+                    timer: 3000,
+                });
                 setIsEditing(false);
                 setEditing(null);
                 handleCloseModal();
             } catch (error) {
-                console.error("Error updating award:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while updating the award. Please try again later.',
+                    timer: 3000,
+                });
             }
         } else {
-            alert("All fields must be filled!");
+            Swal.fire({
+                icon: 'error',
+                title: 'All fields must be filled',
+                text: 'Please fill all fields before submitting',
+                timer: 3000,
+            });
         }
     };
 
@@ -190,8 +248,19 @@ const AwardsManager = () => {
                 setAwards((prevAwards) => prevAwards.filter((award) => award.id !== awardToDelete.id));
                 setShowDeleteModal(false);
                 setAwardToDelete(null);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Award deleted successfully',
+                    timer: 3000,
+                });
             } catch (error) {
-                console.error("Error deleting award:", error);
+                Swal.fire({ 
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while deleting the award. Please try again later.',
+                    timer: 3000,
+                });
             }
         }
     };

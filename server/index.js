@@ -453,7 +453,7 @@ app.get("/movies/detail/review/:id", (req, res) => {
     JOIN
       users ON users.id = reviews.user_id
     WHERE
-      reviews.movie_id = ?
+      reviews.movie_id = ? AND reviews.status = 1 AND reviews.deleted_at IS NULL
   `;
 
   db.query(query, [id], (err, results) => {
@@ -738,7 +738,7 @@ app.get("/users", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // POST endpoint untuk menambah user baru
-app.post("/users", async (req, res) => {
+app.post("/users",isAuthenticated, hasAdminRole, async (req, res) => {
   const { username, email, password, profile_picture, role } = req.body;
 
   // Validasi input
@@ -773,7 +773,7 @@ app.post("/users", async (req, res) => {
 });
 
 // PUT endpoint untuk mengupdate user yang sudah ada
-app.put("/users/:id", async (req, res) => {
+app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const { id } = req.params;
   const { username, email, role, profile_picture, password } = req.body;
 
@@ -805,7 +805,7 @@ app.put("/users/:id", async (req, res) => {
 });
 
 // DELETE endpoint untuk menghapus user
-app.delete("/users/:id", async (req, res) => {
+app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
   try {
@@ -821,7 +821,7 @@ app.delete("/users/:id", async (req, res) => {
 });
 
 // Endpoint untuk menangguhkan user (Status_Account = 2)
-app.put("/users/suspend/:id", async (req, res) => {
+app.put("/users/suspend/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
   try {
@@ -843,7 +843,7 @@ app.put("/users/suspend/:id", async (req, res) => {
   }
 });
 
-app.put("/users/unlock/:id", async (req, res) => {
+app.put("/users/unlock/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
   try {
@@ -1921,7 +1921,7 @@ app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 //REJECTED MOVIES
-app.put("/movie-rejected/:id", (req, res) => {
+app.put("/movie-rejected/:id", isAuthenticated, hasAdminRole,(req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 2 WHERE id = ?`;
@@ -1938,7 +1938,7 @@ app.put("/movie-rejected/:id", (req, res) => {
 
 //PERMANENT DELETE
 // Endpoint untuk mengubah status menjadi 3 (permanen delete dari trash)
-app.put("/movie-permanent-delete/:id", (req, res) => {
+app.put("/movie-permanent-delete/:id",isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 4 WHERE id = ?`;
@@ -1954,7 +1954,7 @@ app.put("/movie-permanent-delete/:id", (req, res) => {
 });
 
 //RESTORE
-app.put("/movie-restore/:id", (req, res) => {
+app.put("/movie-restore/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
   const query = `UPDATE movies SET status = 1 WHERE id = ?`;
 
@@ -2232,9 +2232,8 @@ app.post("/forgot-password", (req, res) => {
         passwordVersion: user.password,
       },
       "RESET_PASSWORD_SECRET",
-      { expiresIn: "1h" }
+      { expiresIn: "5m" } // Token expires in 5 minutes
     );
-
 
     // Create reset link
     const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
@@ -2357,35 +2356,10 @@ app.get("/movies/:movieId/reviewed/:userId", isAuthenticated, (req, res) => {
   });
 });
 
-app.get("/confirm-email/:token", (req, res) => {
-  const { token } = req.params;
 
-  // Verify email confirmation token
-  jwt.verify(token, "EMAIL_SECRET", (err, decoded) => {
-    if (err) {
-      return res.json({ message: "Invalid or expired token" });
-    }
-
-    const email = decoded.email;
-
-    // Update the user to mark their email as confirmed
-    const updateSql =
-      "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
-
-    db.query(updateSql, [email], (err, result) => {
-      if (err) {
-        return res.json({ message: "Error confirming email" });
-      }
-
-      res.json({ message: "Email confirmed successfully! You can now login." });
-    });
-  });
-});
-
-module.exports = router;
 
 //Input Review
-app.post("/reviews", (req, res) => {
+app.post("/reviews", isAuthenticated, (req, res) => {
   const { movie_id, user_id, content, rating } = req.body;
 
   const query = `

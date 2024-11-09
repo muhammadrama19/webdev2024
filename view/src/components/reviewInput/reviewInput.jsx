@@ -5,6 +5,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CloseIcon from "@mui/icons-material/Close";
 import { Row, Col, Button, Form, Modal } from "react-bootstrap";
+import Swal from "sweetalert2";
 
 const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // Tambahkan movieId dan userId sebagai props
   const [rating, setRating] = useState(0);
@@ -32,6 +33,7 @@ const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // T
     try {
       const response = await fetch("http://localhost:8001/reviews", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -39,15 +41,27 @@ const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // T
       });
 
       if (response.ok) {
-        alert("Review saved successfully!");
+        Swal.fire({
+          icon: "success",
+          title: "Review added!",
+          text: "Your review has been added. It will be published after approval.", 
+        });
         onClose(); 
       } else {
         console.error("Error saving review:", response);
-        alert("Failed to save review. Please try again.");
+        Swal.fire({
+          icon: "error",
+          title: "Failed to save review",
+          text: "An error occurred while saving your review. Please try again later.",
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to save review due to a network error.");
+      Swal.fire({
+        icon: "error",
+        title: "Failed to save review",
+        text: "An error occurred while saving your review. Please try again later.",
+      });
     }
   };
 
