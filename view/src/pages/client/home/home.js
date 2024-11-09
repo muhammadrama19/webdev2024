@@ -160,7 +160,9 @@ useEffect(() => {
   };
 
   const handleAdminButtonClick = () => {
-    navigate("/dashboard");
+    //check the role first
+    if (role === "Admin") navigate("/dashboard");
+    else navigate("/movie-input");
   };
 
 
