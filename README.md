@@ -1,5 +1,5 @@
 
-# WebDev2024 Project
+# Movie Review App Project
 ![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=white&style=for-the-badge)  
 &nbsp;&nbsp;&nbsp;
 ![React Router](https://img.shields.io/badge/React%20Router-CA4245?logo=react-router&logoColor=white&style=for-the-badge)  
@@ -87,11 +87,7 @@ This project built for Web Development Course at JTK POLBAN.
    ```
 
 ### Importing the Database
-3. Import the database from the repo into your MySQL instance using the appropriate `.sql` file (assuming a file named `lalajoeuydb.sql` exists in the root):
-   ```bash
-   mysql -u [your-username] -p [your-database-name] < path/to/database.sql
-   ```
-   Replace `[your-username]` and `[your-database-name]` with your MySQL username and the database name you want to create.
+3. Import the database from the repo into your MySQL instance using the appropriate `.sql` file. The database is located in repository on folder database.
 
 ### Install Dependencies
 4. Navigate to the project directory and install dependencies:
@@ -111,7 +107,8 @@ This project built for Web Development Course at JTK POLBAN.
    SESSION_SECRET=
    ```
 
-### Running the Application
+### Running the Application  
+5. Start your sql database server  
 6. Start the backend server (assuming it is located in `index.js`):
    ```bash
    node index.js
