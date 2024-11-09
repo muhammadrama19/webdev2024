@@ -30,6 +30,7 @@ function ValidateDrama() {
     try {
       await fetch(`http://localhost:8001/movie-restore/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -47,6 +48,7 @@ function ValidateDrama() {
     try {
       await fetch(`http://localhost:8001/movie-rejected/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

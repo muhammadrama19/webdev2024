@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal, Pagination, Dropdown, Col } from "react-bootstrap";
 import { FaPlus, FaEnvelope } from "react-icons/fa";
 import "./UserSetting.css";
+import Swal from "sweetalert2";
 
 const UserSetting = () => {
   const [users, setUsers] = useState([]);
@@ -78,6 +79,7 @@ const UserSetting = () => {
     if (username.trim() && email.trim() && password.trim() && role.trim()) {
       fetch('http://localhost:8001/users', {
         method: 'POST',
+        credentials: 'include', // Add credentials include
         headers: {
           'Content-Type': 'application/json',
         },
@@ -87,11 +89,22 @@ const UserSetting = () => {
         .then((newUserFromBackend) => {
           setUsers([...users, newUserFromBackend]);
           handleCloseModal(); // Tutup modal
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "User has been created succesfully",
+            timer: 2000
+          })
           window.location.reload();
         })
         .catch((error) => console.error('Error adding user:', error));
     } else {
-      alert("All fields are required!");
+      Swal.fire({
+        icon: "error",
+        title: "All field are required ",
+        text: "Please filll all required field!",
+        timer: 2000
+      })
     }
   };
 
@@ -102,6 +115,7 @@ const UserSetting = () => {
 
     fetch(`http://localhost:8001/users/${editing.id}`, {
       method: 'PUT',
+      credentials: 'include', // Add credentials include
       headers: {
         'Content-Type': 'application/json',
       },
@@ -113,7 +127,13 @@ const UserSetting = () => {
           user.id === editing.id ? newUser : user
         );
         setUsers(updatedUsers);
+        Swal.fire({
+          icon: "success",
+          title: "User succesfully edited",
+          text: "The user is succesfully updated",
+      });
         handleCloseModal();
+       
       })
       .catch((error) => console.error('Error updating user:', error));
   };
@@ -135,6 +155,7 @@ const UserSetting = () => {
   const handleDeleteUser = (id) => {
     fetch(`http://localhost:8001/users/${id}`, {
       method: 'DELETE',
+      credentials: 'include', // Add credentials include
     })
       .then(() => {
         const updatedUsers = users.map(user =>
@@ -149,6 +170,7 @@ const UserSetting = () => {
   const handleSuspend = (id) => {
     fetch(`http://localhost:8001/users/suspend/${id}`, {
       method: 'PUT',
+      credentials: 'include', // Add credentials include
     })
       .then((response) => response.json())
       .then(() => {
@@ -156,6 +178,13 @@ const UserSetting = () => {
           user.id === id ? { ...user, Status_Account: 2 } : user
         );
         setUsers(updatedUsers);
+        Swal.fire({
+          icon: "success",
+          title: "Users Suspended",
+          text: "Users Suspended succesfully!",
+          timer: 2000
+
+        })
       })
       .catch((error) => console.error('Error suspending user:', error));
   };
@@ -163,6 +192,7 @@ const UserSetting = () => {
   const handleUnlockUser = (id) => {
     fetch(`http://localhost:8001/users/unlock/${id}`, {
       method: 'PUT',
+      credentials: 'include', // Add credentials include
     })
       .then((response) => response.json())
       .then(() => {
@@ -170,6 +200,13 @@ const UserSetting = () => {
           user.id === id ? { ...user, Status_Account: 1 } : user
         );
         setUsers(updatedUsers);
+        Swal.fire({
+          icon: "success",
+          title: "Users unsuspended",
+          text: "Users unsuspended succesfully!",
+          timer: 2000
+
+        })
       })
       .catch((error) => console.error('Error unlocking user:', error));
   };

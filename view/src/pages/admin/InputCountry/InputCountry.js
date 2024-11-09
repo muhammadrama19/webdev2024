@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal, Pagination, Row, Col, InputGroup, FormControl } from 'react-bootstrap';
 import { FaPlus, FaSearch } from "react-icons/fa";
 import "./InputCountry.scss";
+import Swal from "sweetalert2";
 
 const CountryManager = () => {
     const [countries, setCountries] = useState([]);
@@ -54,7 +55,11 @@ const CountryManager = () => {
 
         if (trimmedCountry) {
             if (countries.some(country => country.country_name.toLowerCase() === trimmedCountry.toLowerCase())) {
-                alert("Country already exists!");
+                Swal.fire({
+                    icon: "error",
+                    title: "Country already exists!",
+                    text: "The country you are trying to add already exists in the database.",      
+                });
             } else {
                 try {
                     const response = await fetch('http://localhost:8001/countries', {
@@ -71,12 +76,26 @@ const CountryManager = () => {
                     setCountries([...countries, data]);
                     setNewCountry("");
                     handleCloseModal();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Country added!",
+                        text: "The country has been added successfully.",
+                    });
                 } catch (error) {
                     console.error("Error adding country:", error);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed to add country!",
+                        text: "An error occurred while adding the country. Please try again later.",
+                    });
                 }
             }
         } else {
-            alert("Country name cannot be empty or just spaces!");
+            Swal.fire({
+                icon: "error",
+                title: "Country name cannot be empty!",
+                text: "Please enter a valid country name.",
+            });
         }
     };
     const handleDeleteCountry = async () => {
@@ -90,11 +109,26 @@ const CountryManager = () => {
                 setCountries((prevCountries) => prevCountries.filter((country) => country.id !== selectedCountry.id));
                 setShowDeleteModal(false);
                 setSelectedCountry(null);
+                Swal.fire({
+                    icon: "success",
+                    title: "Country deleted!",
+                    text: "The country has been deleted successfully.",
+                });
             } else {
                 console.error("Failed to delete country:", response.statusText);
+                Swal.fire({
+                    icon: "error",
+                    title: "Failed to delete country!",
+                    text: "An error occurred while deleting the country. Please try again later or contact support.",
+                });
             }
         } catch (error) {
             console.error("Error deleting country:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Failed to delete country!",
+                text: "An error occurred while deleting the country. Please try again later or contact support.",
+            });
         }
     };    
 
@@ -111,7 +145,11 @@ const CountryManager = () => {
 
         if (editName.trim()) {
             if (countries.some(country => country.country_name.toLowerCase() === editName.toLowerCase())) {
-                alert("Country already exists!");
+                Swal.fire({
+                    icon: "error",
+                    title: "Country already exists!",
+                    text: "The country you are trying to rename already exists in the database.",
+                })
             } else {
                 try {
                     await fetch(`http://localhost:8001/countries/${editing}`, {
@@ -130,8 +168,18 @@ const CountryManager = () => {
                     setEditing(null);
                     setShowModal(false);
                     setEditName("");
+                    Swal.fire({
+                        icon: "success",
+                        title: "Country renamed!",
+                        text: "The country has been renamed successfully.",
+                    });
                 } catch (error) {
                     console.error("Error updating country:", error);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed to rename country!",
+                        text: "An error occurred while renaming the country. Please try again later.",
+                    });
                 }
             }
         }

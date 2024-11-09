@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Table, Button, Modal, Spinner, Pagination, InputGroup, FormControl, Form } from 'react-bootstrap';
 import { FaSearch } from 'react-icons/fa';
 import "./ReviewManager.css";
+import Swal from "sweetalert2";
 
 const ReviewManager = () => {
   const [reviews, setReviews] = useState([]);
@@ -45,11 +46,25 @@ const ReviewManager = () => {
         setSelectedReview(null);
         setShowActionModal(false);
         window.location.reload(); // Refresh the page or consider using a state update instead
+        Swal.fire({
+          icon: "success",
+          title: "Review approved",
+          text: "The review has been approved successfully.",
+        });
       } else {
-        console.error("Error approving review:", data.error);
+        Swal.fire({
+          icon: "error",
+          title: "Failed to approve review",
+          text: "An error occurred while approving the review. Please try again later.",
+        });
       }
     } catch (error) {
       console.error("Error approving review:", error);
+      Swal.fire({ 
+        icon: "error",
+        title: "Failed to approve review",
+        text: "An error occurred while approving the review. Please try again later.",
+      });
     }
   };
 
@@ -67,11 +82,29 @@ const ReviewManager = () => {
         setSelectedReview(null);
         setShowActionModal(false);
         window.location.reload();
+        Swal.fire({
+          icon: "success",
+          title: "Review deleted!",
+          text: "Review has been succesfully deleted!",
+          timer: 2000
+
+        })
       } else {
-        alert(result.error);  // Display error message if request failed
+        Swal.fire({
+          icon: "error",
+          title: "Failed to delete review",
+          text: "An error occurred while deleting the review. Please try again later.",
+          timer: 2000
+        });
       }
     } catch (error) {
       console.error("Error soft-deleting review:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Failed to delete review",
+        text: "An error occurred while deleting the review. Please try again later.",
+        timer: 2000
+      })
     }
   };
 

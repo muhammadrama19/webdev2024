@@ -4,6 +4,7 @@ import { FaPlus, FaSearch } from "react-icons/fa";
 import "./InputActor.scss";
 import Icon from '../../../assets/Oval.svg';
 import axios from 'axios';
+import Swal from "sweetalert2";
 
 const ActorManager = () => {
     const [actorData, setActorData] = useState({
@@ -56,7 +57,11 @@ const ActorManager = () => {
         const countryExists = await checkCountryExists(actorData.country_name);
 
         if (!countryExists) {
-            alert("Country does not exist. Please add the country first.");
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Country does not exist. Please add the country first!',
+            });
             return;
         }
 
@@ -67,14 +72,27 @@ const ActorManager = () => {
                 });
                 const data = await response.data; // Axios automatically parses JSON
                 setActors((prevActors) => [...prevActors, data]);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Actor added successfully!',
+                });
             } catch (error) {
-                console.error("Error adding actor:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'An error occurred while adding the actor!',
+                });
             }
 
             setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
             setShowModal(false);
         } else {
-            alert("All fields must be filled!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'All fields must be filled!',
+            });
         }
     };
 
@@ -86,8 +104,18 @@ const ActorManager = () => {
             setActors(actors.filter(actor => actor.id !== actorToDelete.id));
             setShowDeleteModal(false);
             setActorToDelete(null);
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Actor deleted successfully!',
+            });
         } catch (error) {
             console.error("Error deleting actor:", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'An error occurred while deleting the actor!',
+            });
         }
     };
 
@@ -112,7 +140,12 @@ const ActorManager = () => {
 
             const countryExists = await checkCountryExists(actorData.country_name);
             if (!countryExists) {
-                alert("Country does not exist. Please add the country first.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Country does not exist. Please add the country first!',
+                });
+
                 return;
             }
 
@@ -133,11 +166,25 @@ const ActorManager = () => {
                 setEditing(null);
                 setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
                 setShowModal(false);
+                //if succes give alert
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Changes saved successfully!',
+                });
             } catch (error) {
-                console.error("Error saving edit:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'An error occurred while saving the changes!',   
+                });
             }
         } else {
-            alert("All fields must be filled!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'All fields must be filled!',
+            });
         }
     };
 
