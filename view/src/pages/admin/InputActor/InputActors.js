@@ -42,7 +42,8 @@ const ActorManager = () => {
             const response = await axios.get(`http://localhost:8001/countries/${countryName}`, {
                 withCredentials: true
             });
-            return !!response.data;
+            //if exist return true
+            return response.status === 200;
         } catch (error) {
             console.error("Error checking country existence:", error);
             return false;
@@ -122,6 +123,7 @@ const ActorManager = () => {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(updatedActor),
+                    credentials: 'include'
                 });
 
                 const data = await response.json();

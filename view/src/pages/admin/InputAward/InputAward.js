@@ -22,7 +22,9 @@ const AwardsManager = () => {
     useEffect(() => {
         const fetchAwards = async () => {
             try {
-                const response = await fetch('http://localhost:8001/awards');
+                const response = await fetch('http://localhost:8001/awards', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 setAwards(data);
                 setLoading(false);
@@ -115,6 +117,7 @@ const AwardsManager = () => {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(newAwardData),
+                    credentials: 'include'
                 });
 
                 const data = await response.json();
@@ -155,9 +158,10 @@ const AwardsManager = () => {
                 const response = await fetch(`http://localhost:8001/awards/${editing}`, {
                     method: 'PUT',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(updatedAwardData),
+                    credentials: 'include',
                 });
 
                 const data = await response.json();
@@ -181,6 +185,7 @@ const AwardsManager = () => {
             try {
                 await fetch(`http://localhost:8001/awards/${awardToDelete.id}`, {
                     method: 'DELETE',
+                    credentials: 'include'
                 });
                 setAwards((prevAwards) => prevAwards.filter((award) => award.id !== awardToDelete.id));
                 setShowDeleteModal(false);

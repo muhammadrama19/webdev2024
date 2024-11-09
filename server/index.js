@@ -665,7 +665,7 @@ app.get("/movie-genre-count-by-decade", (req, res) => {
   });
 });
 
-app.get("/movie-list", (req, res) => {
+app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
   const { status } = req.query; // Ambil query parameter status dari request
 
   let query = `
@@ -1161,7 +1161,7 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Get all countries
-app.get("/countries", (req, res) => {
+app.get("/countries", isAuthenticated, hasAdminRole,(req, res) => {
   const query = "SELECT id, country_name FROM countries WHERE deleted_at IS NULL ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
@@ -1176,8 +1176,7 @@ app.get("/countries", (req, res) => {
 // Get a single country berdasarkan country_name
 app.get(
   "/countries/:country_name",
-  isAuthenticated,
-  hasAdminRole,
+
   (req, res) => {
     const { country_name } = req.params;
     const query =
@@ -1322,7 +1321,7 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Get all awards
-app.get("/awards", (req, res) => {
+app.get("/awards", isAuthenticated, hasAdminRole, (req, res) => {
   const query = `
     SELECT 
       a.id, 
@@ -1660,7 +1659,7 @@ app.get("/status", (req, res) => {
 //CRUD
 
 //ADD MOVIES
-app.post("/add-drama", async (req, res) => {
+app.post("/add-drama", isAuthenticated, async (req, res) => {
   const {
     imdb_score,
     status,
@@ -1785,7 +1784,7 @@ app.post("/add-drama", async (req, res) => {
   }
 });
 
-app.put("/update-drama", async (req, res) => {
+app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
   const {
     id,
     imdb_score,
@@ -1906,7 +1905,7 @@ app.put("/update-drama", async (req, res) => {
 
 
 //SET TRASH
-app.put("/movie-delete/:id", (req, res) => {
+app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 0 WHERE id = ?`;
