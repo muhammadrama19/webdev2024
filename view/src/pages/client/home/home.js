@@ -9,6 +9,8 @@ import PaginationCustom from "../../../components/pagination/pagination";
 import { useNavigate } from "react-router-dom";
 import { Search } from "@mui/icons-material";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import AddIcon from '@mui/icons-material/Add';
+import Cookies from 'js-cookie';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState(""); 
@@ -18,6 +20,14 @@ const Home = () => {
   const [totalPages, setTotalPages] = useState(0);
   const limit = 10;
   const sortOptions = ["Ascending", "Descending"];
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    //fetch user role from cookie
+    const userRole = Cookies.get("role");
+    console.log(userRole);
+    setRole(userRole);
+  }, []);
   
   // Debouncing effect for search query
   useEffect(() => {
@@ -153,6 +163,8 @@ useEffect(() => {
     navigate("/dashboard");
   };
 
+
+
   return (
     <div className="home">
       <Featured type="movie" />
@@ -269,27 +281,51 @@ useEffect(() => {
           onPageChange={handlePageChange}
         />
       </Container>
-      <Button
-        variant="primary"
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          borderRadius: "50%",
-          width: "60px",
-          height: "60px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-          color: "white",
-          backgroundColor: "var(--primary-color)",
-          border: "none",
-        }}
-        onClick={handleAdminButtonClick}
-      >
-        <AdminPanelSettingsIcon />
-      </Button>
+      {role === "Admin" ? (
+        <Button
+          variant="primary"
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            right: "20px",
+            borderRadius: "50%",
+            width: "60px",
+            height: "60px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            color: "white",
+            backgroundColor: "var(--primary-color)",
+            border: "none",
+          }}
+          onClick={handleAdminButtonClick}
+        >
+          <AdminPanelSettingsIcon />
+        </Button>
+      ) : (
+        <Button
+          variant="primary"
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            right: "20px",
+            borderRadius: "50%",
+            width: "60px",
+            height: "60px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            color: "white",
+            backgroundColor: "var(--primary-color)",
+            border: "none",
+          }}
+          onClick={handleAdminButtonClick}
+        >
+          <AddIcon />
+        </Button>
+      )}
     </div>
   );
 };

@@ -404,6 +404,7 @@ const DramaInput = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(dataToSubmit), // Send JSON data
+        credentials: "include"
       });
 
       if (response.ok) {
@@ -447,6 +448,7 @@ const DramaInput = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(dataToSubmit),
+        credentials: "include"
       });
 
       if (response.ok) {

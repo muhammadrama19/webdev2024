@@ -22,7 +22,9 @@ const CountryManager = () => {
     useEffect(() => {
         const fetchCountries = async () => {
             try {
-                const response = await fetch('http://localhost:8001/countries');
+                const response = await fetch('http://localhost:8001/countries', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 setCountries(data);
                 setLoading(false);
@@ -62,6 +64,7 @@ const CountryManager = () => {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ country_name: trimmedCountry }),
+                        credentials: 'include',
                     });
 
                     const data = await response.json();

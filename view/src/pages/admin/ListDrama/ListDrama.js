@@ -22,7 +22,9 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
     const fetchMovies = async () => {
       try {
         // Jika di halaman trash, ambil movie dengan status 0
-        const response = await fetch(`http://localhost:8001/movie-list?status=${viewTrash ? 0 : 1}`);
+        const response = await fetch(`http://localhost:8001/movie-list?status=${viewTrash ? 0 : 1}`, {
+          credentials: 'include'
+        });
         const data = await response.json();
         setDramas(data);
         console.log("Data fetched:", data);
@@ -54,6 +56,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ status: 0 }),
+        credentials: 'include'
       });
       setDramas(dramas.filter((drama) => drama.id !== id));
     } catch (error) {
