@@ -12,7 +12,6 @@ const ActorManager = () => {
         country_name: '',
         actor_picture: ''
     });
-    const [editing, setEditing] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [actors, setActors] = useState([]);
@@ -21,7 +20,6 @@ const ActorManager = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [showCount, setShowCount] = useState(10);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [actorToDelete, setActorToDelete] = useState(null);
 
     useEffect(() => {
         const fetchActors = async () => {
@@ -79,63 +77,43 @@ const ActorManager = () => {
 
     const handleDeleteActor = async () => {
         try {
-            await axios.put(`http://localhost:8001/actors/delete/${actorToDelete.id}`, {}, {
+            await axios.put(`http://localhost:8001/actors/delete/${actorData.id}`, {}, {
                 withCredentials: true
             });
-            setActors(actors.filter(actor => actor.id !== actorToDelete.id));
+            setActors(actors.filter(actor => actor.id !== actorData.id));
             setShowDeleteModal(false);
-            setActorToDelete(null);
+            setActorData({ name: '', birthdate: '', country_name: '', actor_picture: '' });
         } catch (error) {
             console.error("Error deleting actor:", error);
         }
     };
 
-    const handleEditActor = (id) => {
-        setEditing(id);
-        const actorToEdit = actors.find((actor) => actor.id === id);
-        setActorData(actorToEdit);
+    const handleEditActor = (actor) => {
+        setActorData(actor);
         setIsEditing(true);
         setShowModal(true);
     };
 
     const handleSaveEdit = async (e) => {
         e.preventDefault();
+        console.log(actorData);
+        const countryExists = await checkCountryExists(actorData.country_name);
+        if (!countryExists) {
+            alert("Country does not exist. Please add the country first.");
+            return;
+        }
 
-        if (actorData.name && actorData.country_name && actorData.birthdate && actorData.actor_picture) {
-            const updatedActor = {
-                name: actorData.name,
-                country_name: actorData.country_name,
-                birthdate: actorData.birthdate,
-                actor_picture: actorData.actor_picture
-            };
-
-            const countryExists = await checkCountryExists(actorData.country_name);
-            if (!countryExists) {
-                alert("Country does not exist. Please add the country first.");
-                return;
-            }
-
-            try {
-                const response = await fetch(`http://localhost:8001/actors/${editing}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(updatedActor),
-                });
-
-                const data = await response.json();
-                setActors((prevActors) =>
-                    prevActors.map((actor) => (actor.id === editing ? data : actor))
-                );
-                setEditing(null);
-                setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
-                setShowModal(false);
-            } catch (error) {
-                console.error("Error saving edit:", error);
-            }
-        } else {
-            alert("All fields must be filled!");
+        try {
+            const response = await axios.put(`http://localhost:8001/actors/${actorData.id}`, actorData, {
+                withCredentials: true
+            });
+            const data = await response.data; // Axios automatically parses JSON
+            setActors((prevActors) => [...prevActors, data]);
+            setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
+            setShowModal(false);
+            setIsEditing(false);
+        } catch (error) {
+            console.error("Error saving edit:", error);
         }
     };
 
@@ -325,7 +303,7 @@ const ActorManager = () => {
                     <Modal.Title>Confirm Delete Actor</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    Are you sure you want to delete the actor "{actorToDelete?.name}"?
+                    Are you sure you want to delete the actor "{actorData?.name}"?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
@@ -371,14 +349,16 @@ const ActorManager = () => {
                                             </td>
                                             <td>
                                                 <Container className="action-button">
-                                                    <Button className="btn btn-sm btn-primary me-2" onClick={() => handleEditActor(actor.id)}>
+                                                    <Button
+                                                        className="btn btn-sm btn-primary me-2"
+                                                        onClick={() => handleEditActor(actor)}>
                                                         Edit
                                                     </Button>
                                                     <Button
                                                         className="btn btn-sm btn-danger"
                                                         onClick={() => {
                                                             setShowDeleteModal(true);
-                                                            setActorToDelete(actor);
+                                                            setActorData(actor);
                                                         }}
                                                     >
                                                         Delete
