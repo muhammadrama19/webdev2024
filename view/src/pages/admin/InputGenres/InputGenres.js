@@ -153,6 +153,7 @@ const GenreManager = () => {
                         text: "Genre updated successfully!",
                     });
                     setEditing(null);
+                    setIsEditing(false);
                     setShowModal(false);
                     setEditName("");
                 } catch (error) {

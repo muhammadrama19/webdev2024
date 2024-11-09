@@ -69,7 +69,6 @@ const CountryManager = () => {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ country_name: trimmedCountry }),
-                        credentials: 'include',
                     });
 
                     const data = await response.json();
@@ -167,6 +166,7 @@ const CountryManager = () => {
                     );
                     setEditing(null);
                     setShowModal(false);
+                    setIsEditing(false);
                     setEditName("");
                     Swal.fire({
                         icon: "success",

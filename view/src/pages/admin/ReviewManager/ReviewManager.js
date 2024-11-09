@@ -38,14 +38,12 @@ const ReviewManager = () => {
         method: "PUT", // or you could change it to PATCH if preferred
         credentials: "include",
       });
-      const data = await response.json();
       if (response.ok) {
         setReviews(reviews.map((review) =>
           review.id === id ? { ...review, status: 1 } : review
         ));
         setSelectedReview(null);
         setShowActionModal(false);
-        window.location.reload(); // Refresh the page or consider using a state update instead
         Swal.fire({
           icon: "success",
           title: "Review approved",
@@ -74,14 +72,12 @@ const ReviewManager = () => {
         method: 'PUT', // or change to PATCH
         credentials: "include",
       });
-      const result = await response.json();
 
       if (response.ok) {
         // Update reviews list by removing the soft-deleted review
         setReviews(reviews.filter(review => review.id !== id)); // Adjust to match your data structure
         setSelectedReview(null);
         setShowActionModal(false);
-        window.location.reload();
         Swal.fire({
           icon: "success",
           title: "Review deleted!",

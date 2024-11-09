@@ -122,7 +122,7 @@ This project built for Web Development Course at JTK POLBAN.
 
 ## Author
 Akmal Goniyyu Hartono 	(221524002)  
-M. Azharrudin Hamid 	(221524018)  
+M. Azharuddin Hamid 	(221524018)  
 M. Rama Nurimani 		(221524021)
 
 
