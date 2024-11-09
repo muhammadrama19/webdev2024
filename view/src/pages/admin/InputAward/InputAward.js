@@ -6,19 +6,19 @@ import Swal from 'sweetalert2';
 
 const AwardsManager = () => {
     const [awards, setAwards] = useState([]);
-    const [newAward, setNewAward] = useState({ country_name: '', awards_years: '', awards_name: '' });
+    const [awardData, setAwardData] = useState({
+        country_name: '',
+        awards_years: '',
+        awards_name: ''
+    });
     const [editing, setEditing] = useState(null);
-    const [editAward, setEditAward] = useState({ country_name: '', awards_years: '', awards_name: '' });
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true); // To handle loading state
     const [currentPage, setCurrentPage] = useState(1); // State for current page
     const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian
     const [showCount, setShowCount] = useState(10); // Items per page
-
-    // New state for delete confirmation modal
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [awardToDelete, setAwardToDelete] = useState(null);
 
     useEffect(() => {
         const fetchAwards = async () => {
@@ -46,10 +46,10 @@ const AwardsManager = () => {
         setShowModal(false);
         if (isEditing) {
             // Reset the editing state and clear editActor data
-            setEditAward({ country_name: '', awards_years: '', awards_name: '' });
+            setAwardData({ country_name: '', awards_years: '', awards_name: '' });
         } else {
             // Reset the newActor state
-            setNewAward({ country_name: '', awards_years: '', awards_name: '' });
+            setAwardData({ country_name: '', awards_years: '', awards_name: '' });
         }
     };
 
@@ -64,12 +64,7 @@ const AwardsManager = () => {
             });
             return;
         }
-
-        if (isEditing) {
-            setEditAward((prev) => ({ ...prev, [name]: value }));
-        } else {
-            setNewAward((prev) => ({ ...prev, [name]: value }));
-        }
+        setAwardData((prev) => ({ ...prev, [name]: value }));
     };
 
     const checkCountryExists = async (countryName) => {
@@ -90,18 +85,18 @@ const AwardsManager = () => {
         e.preventDefault();
 
         // Check if country exists in the backend
-        const countryExists = await checkCountryExists(newAward.country_name);
+        const countryExists = await checkCountryExists(awardData.country_name);
         if (!countryExists) {
             Swal.fire({
                 icon: 'error',
                 title: 'Country not found',
-                text: 'Country does not exist. Please add the country first.',  
+                text: 'Country does not exist. Please add the country first.',
             });
             return;
         }
 
         // Cek apakah tahun berisi tepat 4 angka
-        if (newAward.awards_years.length !== 4 || isNaN(newAward.awards_years)) {
+        if (awardData.awards_years.length !== 4 || isNaN(awardData.awards_years)) {
             Swal.fire({
                 icon: 'error',
                 title: 'Invalid year',
@@ -111,7 +106,7 @@ const AwardsManager = () => {
         }
 
 
-        if (parseInt(newAward.awards_years) < 1950) {
+        if (parseInt(awardData.awards_years) < 1950) {
             Swal.fire({
                 icon: 'error',
                 title: 'Invalid year',
@@ -120,11 +115,11 @@ const AwardsManager = () => {
             return;
         }
 
-        if (newAward.awards_name && newAward.country_name && newAward.awards_years) {
-            const newAwardData = {
-                awards_name: newAward.awards_name,
-                country_name: newAward.country_name,
-                awards_years: newAward.awards_years,
+        if (awardData.awards_name && awardData.country_name && awardData.awards_years) {
+            const awardDataData = {
+                awards_name: awardData.awards_name,
+                country_name: awardData.country_name,
+                awards_years: awardData.awards_years,
             };
 
             try {
@@ -133,7 +128,7 @@ const AwardsManager = () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(newAwardData),
+                    body: JSON.stringify(awardDataData),
                     credentials: 'include'
                 });
 
@@ -154,7 +149,7 @@ const AwardsManager = () => {
                     timer: 3000,
                 })
             }
-            setNewAward({ country_name: '', awards_years: '', awards_name: '' });
+            setAwardData({ country_name: '', awards_years: '', awards_name: '' });
             handleCloseModal();
         } else {
             Swal.fire({
@@ -169,7 +164,7 @@ const AwardsManager = () => {
     const handleEditAward = async (e) => {
         e.preventDefault();
 
-        if (parseInt(editAward.awards_years) < 1950) {
+        if (parseInt(awardData.awards_years) < 1950) {
             Swal.fire({
                 icon: 'error',
                 title: 'Invalid year',
@@ -178,15 +173,15 @@ const AwardsManager = () => {
             return;
         }
 
-        if (editAward.awards_name && editAward.country_name && editAward.awards_years) {
+        if (awardData.awards_name && awardData.country_name && awardData.awards_years) {
             const updatedAwardData = {
-                awards_name: editAward.awards_name,
-                country_name: editAward.country_name,
-                awards_years: editAward.awards_years,
+                awards_name: awardData.awards_name,
+                country_name: awardData.country_name,
+                awards_years: awardData.awards_years,
             };
 
             // Check if the edited country exists in the backend
-            const countryExists = await checkCountryExists(editAward.country_name);
+            const countryExists = await checkCountryExists(awardData.country_name);
             if (!countryExists) {
                 Swal.fire({
                     icon: 'error',
@@ -239,15 +234,15 @@ const AwardsManager = () => {
 
 
     const handleDeleteAward = async () => {
-        if (awardToDelete) {
+        if (awardData) {
             try {
-                await fetch(`http://localhost:8001/awards/${awardToDelete.id}`, {
+                await fetch(`http://localhost:8001/awards/${awardData.id}`, {
                     method: 'DELETE',
                     credentials: 'include'
                 });
-                setAwards((prevAwards) => prevAwards.filter((award) => award.id !== awardToDelete.id));
+                setAwards((prevAwards) => prevAwards.filter((award) => award.id !== awardData.id));
                 setShowDeleteModal(false);
-                setAwardToDelete(null);
+                setAwardData({ country_name: '', awards_years: '', awards_name: '' });
                 Swal.fire({
                     icon: 'success',
                     title: 'Success',
@@ -255,7 +250,7 @@ const AwardsManager = () => {
                     timer: 3000,
                 });
             } catch (error) {
-                Swal.fire({ 
+                Swal.fire({
                     icon: 'error',
                     title: 'Error',
                     text: 'An error occurred while deleting the award. Please try again later.',
@@ -363,7 +358,7 @@ const AwardsManager = () => {
                                 <Form.Control
                                     type="text"
                                     name="awards_name"
-                                    value={isEditing ? editAward.awards_name : newAward.awards_name}
+                                    value={awardData.awards_name}
                                     onChange={handleInputChange}
                                     placeholder="Enter award"
                                 />
@@ -373,7 +368,7 @@ const AwardsManager = () => {
                                 <Form.Control
                                     type="text"
                                     name="country_name"
-                                    value={isEditing ? editAward.country_name : newAward.country_name}
+                                    value={awardData.country_name}
                                     onChange={handleInputChange}
                                     placeholder="Enter country"
                                 />
@@ -383,7 +378,7 @@ const AwardsManager = () => {
                                 <Form.Control
                                     type="number"
                                     name="awards_years"
-                                    value={isEditing ? editAward.awards_years : newAward.awards_years}
+                                    value={awardData.awards_years}
                                     onChange={handleInputChange}
                                     placeholder="Enter year"
                                 />
@@ -416,7 +411,7 @@ const AwardsManager = () => {
                     <Modal.Title>Confirm Delete</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    Are you sure you want to delete the genre "{awardToDelete?.awards_name}"?
+                    Are you sure you want to delete the genre "{awardData?.awards_name}"?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
@@ -455,7 +450,7 @@ const AwardsManager = () => {
                                                     onClick={() => {
                                                         setIsEditing(true);
                                                         setShowModal(true);
-                                                        setEditAward(award);
+                                                        setAwardData(award);
                                                         setEditing(award.id);
                                                     }}
                                                 >
@@ -465,7 +460,7 @@ const AwardsManager = () => {
                                                     className="btn btn-sm btn-danger"
                                                     onClick={() => {
                                                         setShowDeleteModal(true);
-                                                        setAwardToDelete(award);
+                                                        setAwardData(award);
                                                     }}
                                                 >
                                                     Delete
