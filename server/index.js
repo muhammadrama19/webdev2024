@@ -900,7 +900,7 @@ app.post("/actors", isAuthenticated, hasAdminRole, (req, res) => {
 
     // Check if the country exists in the database
     const checkCountryQuery = `
-    SELECT id FROM countries WHERE country_name = ?;
+    SELECT id FROM countries WHERE country_name = ? AND deleted_at IS NULL;
   `;
 
     db.query(checkCountryQuery, [country_name], (err, countryResult) => {
@@ -959,7 +959,7 @@ app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
   }
 
   // Check if country exists before updating actor
-  const checkCountryQuery = "SELECT id FROM countries WHERE country_name = ?";
+  const checkCountryQuery = "SELECT id FROM countries WHERE country_name = ? AND deleted_at IS NULL";
   db.query(checkCountryQuery, [country_name], (err, countryResult) => {
     if (err) {
       console.error("Error checking country existence:", err.message);
@@ -1168,7 +1168,7 @@ app.get(
   (req, res) => {
     const { country_name } = req.params;
     const query =
-      "SELECT id, country_name FROM countries WHERE country_name = ?";
+      "SELECT id, country_name FROM countries WHERE country_name = ? AND deleted_at IS NULL";
     db.query(query, [country_name], (err, results) => {
       if (err) {
         console.error("Error executing query:", err.message);
