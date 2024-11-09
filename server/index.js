@@ -473,17 +473,14 @@ app.get("/movies/detail/review/:id", (req, res) => {
 
 //fetch all filter criteria
 
-app.get("/filters", async (req, res) => {
+app.get('/filters', async (req, res) => {
   const queries = {
-    years:
-      "SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies",
-    genres: "SELECT id, name FROM genres ORDER BY name ASC",
-    awards: "SELECT id, awards_name FROM awards ORDER BY awards_name ASC",
-    countries:
-      "SELECT id, country_name FROM countries ORDER BY country_name ASC",
-    availability:
-      "SELECT id, platform_name FROM availability ORDER BY platform_name ASC",
-    status: "SELECT id, name FROM status ORDER BY name ASC",
+    years: 'SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies',
+    genres: 'SELECT id, name FROM genres ORDER BY name ASC',
+    awards: 'SELECT id, awards_name FROM awards ORDER BY awards_name ASC',
+    countries: 'SELECT id, country_name FROM countries ORDER BY country_name ASC',
+    availability: 'SELECT id, platform_name FROM availability ORDER BY platform_name ASC',
+    status: 'SELECT id, name FROM status ORDER BY name ASC',
   };
 
   const results = {};
@@ -491,73 +488,74 @@ app.get("/filters", async (req, res) => {
   try {
     // Fetch years first to calculate decades
     const [yearRows] = await db.promise().query(queries.years);
-
+    
     if (yearRows.length) {
       const minYear = yearRows[0].minYear;
       const maxYear = yearRows[0].maxYear;
-
+      
+     
       const different = minYear % 10;
-      const normalizedMinYear = minYear - different;
+      const normalizedMinYear = minYear - different; 
       const decades = [];
 
       for (let year = normalizedMinYear; year <= maxYear; year += 10) {
         decades.push({
           start: year,
-          end: year + 10,
+          end: year + 10, 
         });
       }
 
-      results.years = decades;
+      results.years = decades; 
     } else {
       results.years = [];
     }
 
     // Fetch genres
     const [genreRows] = await db.promise().query(queries.genres);
-    results.genres = genreRows.map((row) => ({
+    results.genres = genreRows.map(row => ({
       id: row.id,
       name: row.name,
     }));
 
     // Fetch awards
     const [awardRows] = await db.promise().query(queries.awards);
-    results.awards = awardRows.map((row) => ({
+    results.awards = awardRows.map(row => ({
       id: row.id,
       name: row.awards_name,
     }));
 
     // Fetch countries
     const [countryRows] = await db.promise().query(queries.countries);
-    results.countries = countryRows.map((row) => ({
+    results.countries = countryRows.map(row => ({
       id: row.id,
       name: row.country_name,
     }));
 
     // Fetch availability
     const [availabilityRows] = await db.promise().query(queries.availability);
-    results.availability = availabilityRows.map((row) => ({
+    results.availability = availabilityRows.map(row => ({
       id: row.id,
       name: row.platform_name,
     }));
 
     // Fetch status
     const [statusRows] = await db.promise().query(queries.status);
-    results.status = statusRows.map((row) => ({
+    results.status = statusRows.map(row => ({
       id: row.id,
       name: row.name,
     }));
 
-    res.json(results);
+    res.json(results); 
   } catch (error) {
-    console.error("Error fetching filters:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error('Error fetching filters:', error.message);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 // Fetch top 10 highest-rated movies
 app.get("/top-rated", (req, res) => {
   const query =
-    "SELECT title, background, imdb_score FROM movies ORDER BY imdb_score DESC LIMIT 15";
+    "SELECT title, background, imdb_score FROM movies WHERE id BETWEEN 1 AND 500 ORDER BY imdb_score DESC LIMIT 15";
 
   db.query(query, (err, results) => {
     if (err) {
@@ -824,9 +822,16 @@ app.put("/users/suspend/:id", async (req, res) => {
   const userId = req.params.id;
 
   try {
-    // Update nilai Status_Account menjadi 2 (suspend)
+    // Update Status_Account to 2 (suspended)
     const query = `UPDATE users SET Status_Account = 2 WHERE id = ?`;
-    await db.query(query, [userId]);
+
+    // Use .promise() to return a promise from the query
+    const [result] = await db.promise().query(query, [userId]);
+
+    // Check if any rows were affected
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
 
     res.status(200).json({ message: "User suspended successfully" });
   } catch (err) {
@@ -839,9 +844,16 @@ app.put("/users/unlock/:id", async (req, res) => {
   const userId = req.params.id;
 
   try {
-    // Update nilai Status_Account menjadi 1
+    // Update Status_Account to 1 (unlocked)
     const query = `UPDATE users SET Status_Account = 1 WHERE id = ?`;
-    await db.query(query, [userId]);
+
+    // Use .promise() to return a promise from the query
+    const [result] = await db.promise().query(query, [userId]);
+
+    // Check if any rows were affected
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
 
     res.status(200).json({ message: "User unlocked successfully" });
   } catch (err) {
@@ -849,6 +861,7 @@ app.put("/users/unlock/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to unlock user" });
   }
 });
+
 
 // Route to fetch all actors
 app.get("/actors", (req, res) => {
@@ -1945,14 +1958,14 @@ app.post("/login", (req, res) => {
             );
 
             // Send token and user_id in cookies
-            res.cookie("token", token, { httpOnly: true, sameSite: "strict", secure: false });
+            res.cookie("token", token, { httpOnly: false, sameSite: "strict", secure: false });
             res.cookie("user_id", user.id, {
-              httpOnly: true,
+              httpOnly: false,
               sameSite: "strict",
               secure: false,
             });
             res.cookie("role", user.role, {
-              httpOnly: true,
+              httpOnly: false,
               sameSite: "strict",
               secure: false,
             }); // Tambahkan role ke cookie
@@ -1998,12 +2011,20 @@ app.get(
   (req, res) => {
     const user = req.user;
 
+    // Check if user suspended or not
+    if (user.Status_Account === 2) {
+      // Redirect with a custom error message in query params
+      return res.redirect(
+        `http://localhost:3001/login?error=Account_Suspended`
+      );
+    }
+
     // Generate JWT token with user info, including role
     const token = jwt.sign(
       {
         username: user.username,
         email: user.email,
-        role: user.role, // Ensure role is included
+        role: user.role,
         user_id: user.id,
       },
       "our-jsonwebtoken-secret-key",
@@ -2019,7 +2040,7 @@ app.get(
     });
 
     res.cookie("user_id", user.id, { httpOnly: false, sameSite: "strict" });
-    res.cookie("role", user.role, { httpOnly: false, sameSite: "strict" }); // Ensure role is added to cookies
+    res.cookie("role", user.role, { httpOnly: false, sameSite: "strict" });
 
     // Redirect to frontend after successful login
     res.redirect(
@@ -2027,6 +2048,7 @@ app.get(
     );
   }
 );
+
 
 app.post("/register", (req, res) => {
   const { username, email, password } = req.body;
@@ -2133,6 +2155,22 @@ app.post("/forgot-password", (req, res) => {
       });
     }
 
+    //check if account suspended or not
+    if (userData[0].Status_Account === 2) {
+      return res.json({
+        message: "Account Suspended",
+        success: false,
+      });
+    }
+
+    //only account with traditional login can forgot password
+    if (userData[0].googleId) {
+      return res.json({
+        message: "It looks like you signed up with Google. Please log in using your Google account.",
+        success: false,
+      });
+    }
+
     const user = userData[0];
     const resetToken = jwt.sign(
       {
@@ -2142,6 +2180,7 @@ app.post("/forgot-password", (req, res) => {
       "RESET_PASSWORD_SECRET",
       { expiresIn: "1h" }
     );
+
 
     // Create reset link
     const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
