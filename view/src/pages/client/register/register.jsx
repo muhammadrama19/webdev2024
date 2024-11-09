@@ -62,6 +62,11 @@ const RegisterForm = () => {
             setConfirmationMessage(
               "Registration successful. Please check your email to confirm your account."
             );
+            Swal.fire({
+              icon: "success",
+              title: "Success",
+              text: "Registration successful. Please check your email to confirm your account.",
+            });
           } else {
             Swal.fire({
               icon: "error",

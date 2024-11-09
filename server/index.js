@@ -2240,9 +2240,25 @@ app.post("/register", (req, res) => {
       console.error("Database check error:", checkErr); // Log the error
       return res.json({ message: "Database error occurred", success: false });
     }
+
+    // Check if any existing user has the same username or email
     if (checkData.length > 0) {
+      let message = "Username or email already exists.";
+
+      // Loop through each result to check if it’s banned
+      for (const user of checkData) {
+        // If any user has Status_Account as 3 (banned)
+        if (user.Status_Account === 3) {
+          return res.json({
+            message: "This email is associated with a banned account.",
+            success: false,
+          });
+        }
+      }
+
+      // If no banned user was found, return a message saying the username or email exists
       return res.json({
-        message: "Username or Email already exists",
+        message,
         success: false,
       });
     }
@@ -2317,6 +2333,7 @@ app.post("/register", (req, res) => {
     });
   });
 });
+
 
 app.post("/forgot-password", (req, res) => {
   const { email } = req.body;
