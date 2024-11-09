@@ -811,7 +811,54 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   try {
     // Update nilai Status_Account menjadi 3
     const query = `UPDATE users SET Status_Account = 3 WHERE id = ?`;
-    await db.query(query, [userId]);
+    const result = await db.promise().query(query, [userId]);
+
+    //check if any row affected
+    if(result.affectedRows===0){
+      return res.status(404).json({message: "User not found", success: false});
+    }
+
+    //get user details
+    const userQuery = `SELECT * FROM users WHERE id = ?`;
+    const [userData] = await db.promise().query(userQuery, [userId]);
+    if (userData.length === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    const user = userData[0];
+    const templatePath = path.join(__dirname, "template", "banned.html");
+
+    // Read the email template file
+    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+      if (err) {
+        console.error("Error reading email template:", err);
+        return res
+          .status(500)
+          .json({ message: "Error reading email template", success: false });
+      }
+
+      // Replace placeholders in the template with actual data
+      const bannedHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: "Account Banned Notification",
+        html: bannedHTML, // Use the customized HTML content
+      };
+
+      // Send email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ message: "Error sending banned email", success: false });
+        }
+
+        res.json({ message: "User banned successfully and email sent", success: true });
+      });
+    });
 
     res.status(200).json({ message: "User suspended successfully" });
   } catch (err) {
@@ -820,15 +867,12 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   }
 });
 
-// Endpoint untuk menangguhkan user (Status_Account = 2)
 app.put("/users/suspend/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
   try {
     // Update Status_Account to 2 (suspended)
     const query = `UPDATE users SET Status_Account = 2 WHERE id = ?`;
-
-    // Use .promise() to return a promise from the query
     const [result] = await db.promise().query(query, [userId]);
 
     // Check if any rows were affected
@@ -836,7 +880,47 @@ app.put("/users/suspend/:id", isAuthenticated, hasAdminRole, async (req, res) =>
       return res.status(404).json({ message: "User not found", success: false });
     }
 
-    res.status(200).json({ message: "User suspended successfully" });
+    // Get user details for email notification
+    const userQuery = `SELECT * FROM users WHERE id = ?`;
+    const [userData] = await db.promise().query(userQuery, [userId]);
+    if (userData.length === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    const user = userData[0];
+    const templatePath = path.join(__dirname, "template", "suspending.html");
+
+    // Read the email template file
+    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+      if (err) {
+        console.error("Error reading email template:", err);
+        return res
+          .status(500)
+          .json({ message: "Error reading email template", success: false });
+      }
+
+      // Replace placeholders in the template with actual data
+      const suspendingHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: "Account Suspension Notification",
+        html: suspendingHTML, // Use the customized HTML content
+      };
+
+      // Send email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ message: "Error sending suspension email", success: false });
+        }
+
+        res.json({ message: "User suspended successfully and email sent", success: true });
+      });
+    });
   } catch (err) {
     console.error("Error executing query:", err.message);
     res.status(500).json({ error: "Failed to suspend user" });
@@ -849,8 +933,6 @@ app.put("/users/unlock/:id", isAuthenticated, hasAdminRole, async (req, res) => 
   try {
     // Update Status_Account to 1 (unlocked)
     const query = `UPDATE users SET Status_Account = 1 WHERE id = ?`;
-
-    // Use .promise() to return a promise from the query
     const [result] = await db.promise().query(query, [userId]);
 
     // Check if any rows were affected
@@ -858,7 +940,47 @@ app.put("/users/unlock/:id", isAuthenticated, hasAdminRole, async (req, res) => 
       return res.status(404).json({ message: "User not found", success: false });
     }
 
-    res.status(200).json({ message: "User unlocked successfully" });
+    // Get user details for email notification
+    const userQuery = `SELECT * FROM users WHERE id = ?`;
+    const [userData] = await db.promise().query(userQuery, [userId]);
+    if (userData.length === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    const user = userData[0];
+    const templatePath = path.join(__dirname, "template", "unsuspending.html");
+
+    // Read the email template file
+    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+      if (err) {
+        console.error("Error reading email template:", err);
+        return res
+          .status(500)
+          .json({ message: "Error reading email template", success: false });
+      }
+
+      // Replace placeholders in the template with actual data
+      const unsuspendingHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: "Account Unsuspension Notification",
+        html: unsuspendingHTML, // Use the customized HTML content
+      };
+
+      // Send email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ message: "Error sending unsuspension email", success: false });
+        }
+
+        res.json({ message: "User unlocked successfully and email sent", success: true });
+      });
+    });
   } catch (err) {
     console.error("Error executing query:", err.message);
     res.status(500).json({ error: "Failed to unlock user" });
