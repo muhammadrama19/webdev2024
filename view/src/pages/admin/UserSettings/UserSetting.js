@@ -133,6 +133,7 @@ const UserSetting = () => {
           text: "The user is succesfully updated",
       });
         handleCloseModal();
+        window.location.reload();
        
       })
       .catch((error) => console.error('Error updating user:', error));
@@ -374,7 +375,7 @@ const UserSetting = () => {
                 <td>{user.username}</td>
                 <td>{user.role}</td>
                 <td>{user.email}</td>
-                <td>{user.Status_Account === 1 ? "Active" : user.Status_Account === 2 ? "Suspended" : "Deleted"}</td>
+                <td>{user.Status_Account === 1 ? "Active" : user.Status_Account === 2 ? "Suspended" : "Active"}</td>
                 <td>
                   {user.Status_Account === 2 ? (
                     <>

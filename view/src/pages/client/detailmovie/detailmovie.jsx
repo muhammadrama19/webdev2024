@@ -9,50 +9,59 @@ import ActorSlider from "../../../components/actorSlider/actorSlider";
 import MediaPlayer from "../../../components/media/media";
 import { useParams } from 'react-router-dom'; 
 import Cookies from 'js-cookie';
+import ErrorPage from  '../error/errorPage'; 
 
 const Detailmovie = () => {
   const [movieData, setMovieData] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { id } = useParams(); // Mengambil movieId dari URL
   const [userId, setUserId] = useState(null); // Tambahkan userId
+  const [error, setError] = useState(null);
 
   // Fetch movie details
   useEffect(() => {
-    const fetchMovieDetail = async () => {
+    const fetchMovie = async () => {
       try {
-        const response = await fetch(`http://localhost:8001/movies/detail/${id}`); 
+        const response = await fetch(`http://localhost:8001/movie/${id}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError(true); // Set error state if movie is not found
+          }
+          return;
+        }
+
         const data = await response.json();
         setMovieData(data);
       } catch (error) {
-        console.error("Error fetching movie details:", error);
+        setError(true); // Handle fetch error
       }
     };
 
-    fetchMovieDetail();
-  }, [id]); 
+    fetchMovie();
+  }, [id]);
 
-  // Cek apakah pengguna sudah login
+  // Check if user is logged in
   useEffect(() => {
     const token = Cookies.get("token");
     const user_id = Cookies.get("user_id");
-    console.log('Token from cookie:', token); // Debug: Pastikan token dicetak di console
-    console.log('User ID from cookie:', user_id); // Debug: Pastikan user_id dicetak di console
-  
+
     if (token && user_id) {
       try {
-        const decoded = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
-        console.log('Decoded JWT token:', decoded); // Debug: Lihat isi token yang didecode
-  
+        const decoded = JSON.parse(atob(token.split('.')[1])); // Decode JWT token (simplified decoding)
+        console.log('Decoded JWT token:', decoded); // Debug: Print decoded token contents
         setIsLoggedIn(true);
-        setUserId(user_id); // Set userId dari cookie
+        setUserId(user_id);
       } catch (error) {
-        console.error('Error decoding token:', error); // Jika ada error saat decoding
+        console.error('Error decoding token:', error); // Log decoding errors
       }
     } else {
-      console.log("Token or user_id not found"); // Jika token atau user_id tidak ditemukan
+      console.log("Token or user_id not found"); // Log if token/user_id not found
     }
   }, []);
-  
+
+  if (error) {
+    return <ErrorPage />;
+  }
 
   if (!movieData) {
     return <div>Loading...</div>;
