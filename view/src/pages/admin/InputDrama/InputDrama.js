@@ -27,7 +27,7 @@ const DramaInput = () => {
     alternativeTitle: "",
     director: "",
     year: "",
-    country: "",
+    country: [],
     synopsis: "",
     availability: "",
     genres: [],
@@ -40,37 +40,68 @@ const DramaInput = () => {
 
   const [isEdit, setIsEdit] = useState(false);
   const [platformList, setPlatformList] = useState([]);
-  const [countriesList, setCountriesList] = useState([]); // State untuk countries dari backend
-  const [awardsList, setAwardsList] = useState([]); // State untuk awards dari backend
-  const [statusList, setStatusList] = useState([]); // State untuk status dari backend
+  const [countriesList, setCountriesList] = useState([]);
+  const [awardsList, setAwardsList] = useState([]);
+  const [statusList, setStatusList] = useState([]);
+  const [genresList, setGenresList] = useState([]);
+  const [actorsList, setActorsList] = useState([]);
+  const [filteredActors, setFilteredActors] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchPlatformsAndCountries = async () => {
       try {
-        const platformResponse = await fetch("http://localhost:8001/platforms");
+        const platformResponse = await fetch("http://localhost:8001/platforms", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
         const platformData = await platformResponse.json();
         setPlatformList(platformData);
 
-        const countriesResponse = await fetch(
-          "http://localhost:8001/countries"
-        );
+        const countriesResponse = await fetch("http://localhost:8001/countries", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
         const countriesData = await countriesResponse.json();
         setCountriesList(countriesData);
 
-        const awardsResponse = await fetch("http://localhost:8001/awards");
+        const awardsResponse = await fetch("http://localhost:8001/awards", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
         const awardsData = await awardsResponse.json();
         setAwardsList(awardsData);
 
-        const statusResponse = await fetch("http://localhost:8001/status");
+        const statusResponse = await fetch("http://localhost:8001/status", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
         const statusData = await statusResponse.json();
-        setStatusList(statusData); // Set statusList dengan data dari backend
+        setStatusList(statusData);
+
+        const actorsResponse = await fetch("http://localhost:8001/actors");
+        const actorsData = await actorsResponse.json();
+        setActorsList(actorsData);
+
+        const genresResponse = await fetch("http://localhost:8001/genres");
+        const genresData = await genresResponse.json();
+        setGenresList(genresData);
+
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-    fetchPlatformsAndCountries();
 
-    if (location.state && location.state.movieData) {
+    fetchPlatformsAndCountries();
+  }, []);
+    
+
+  useEffect(() => {
+    if (location.state && location.state.movieData && platformList.length && countriesList.length && awardsList.length && statusList.length) {
       const movieData = location.state.movieData;
 
       const availabilityPlatform = platformList.find(
@@ -120,9 +151,7 @@ const DramaInput = () => {
         year: movieData.release_year || "",
         country: selectedCountries,
         synopsis: movieData.synopsis || "",
-        availability: availabilityPlatform
-          ? availabilityPlatform.platform_name
-          : "",
+        availability: availabilityPlatform ? availabilityPlatform.platform_name : "",
         genres: selectedGenres,
         actors: parsedActors,
         trailer: movieData.trailer || "",
@@ -134,56 +163,11 @@ const DramaInput = () => {
     }
   }, [location.state, platformList, countriesList, awardsList, statusList]);
 
-  const [genresList, setGenresList] = useState([]); // State untuk genres dari backend
-  const [actorsList, setActorsList] = useState([]); // State untuk daftar aktor
-  const [filteredActors, setFilteredActors] = useState([]); // State untuk hasil pencarian aktor
-  const [searchTerm, setSearchTerm] = useState(""); // State untuk menyimpan input pencarian aktor
-  // const [countriesList, setCountriesList] = useState([]); // State untuk countries dari backend
-  // const [platformList, setPlatformList] = useState([]); // State untuk platform dari backend
-
-  // Fetch genres dari backend menggunakan useEffect
-  useEffect(() => {
-    const fetchGenresActorsAwards = async () => {
-      try {
-        const statusResponse = await fetch("http://localhost:8001/status");
-        const statusData = await statusResponse.json();
-        setStatusList(statusData);
-
-        const genresResponse = await fetch("http://localhost:8001/genres");
-        const genresData = await genresResponse.json();
-        setGenresList(genresData);
-
-        const platformResponse = await fetch("http://localhost:8001/platforms");
-        const platformData = await platformResponse.json();
-        setPlatformList(platformData);
-
-        const countriesResponse = await fetch(
-          "http://localhost:8001/countries"
-        );
-        const countriesData = await countriesResponse.json();
-        setCountriesList(countriesData);
-
-        const actorsResponse = await fetch("http://localhost:8001/actors");
-        const actorsData = await actorsResponse.json();
-        setActorsList(actorsData);
-
-        const awardsResponse = await fetch("http://localhost:8001/awards");
-        const awardsData = await awardsResponse.json();
-        setAwardsList(awardsData); // Set Awards List dengan data dari backend
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchGenresActorsAwards();
-  }, []);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Validasi khusus untuk "Year" field
     if (name === "year") {
-      const yearRegex = /^\d{0,4}$/; // Memungkinkan 0 hingga 4 digit angka
+      const yearRegex = /^\d{0,4}$/;
       if (!yearRegex.test(value)) {
         alert("Year must be a 4-digit number and only digits are allowed");
         return;
@@ -192,7 +176,7 @@ const DramaInput = () => {
 
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -206,7 +190,6 @@ const DramaInput = () => {
   };
 
   const handleActorChange = (actorName, actorRole) => {
-    // Pastikan tidak lebih dari 10 aktor yang dipilih dan aktor belum dipilih
     if (
       formData.actors.length < 10 &&
       !formData.actors.some((actor) => actor.name === actorName)
@@ -216,8 +199,8 @@ const DramaInput = () => {
         actors: [...prevState.actors, { name: actorName, role: actorRole }],
       }));
     }
-    setSearchTerm(""); // Reset pencarian setelah aktor dipilih
-    setFilteredActors([]); // Kosongkan hasil pencarian setelah aktor dipilih
+    setSearchTerm("");
+    setFilteredActors([]);
   };
 
   const handleRoleChange = (actorName, role) => {
@@ -236,48 +219,29 @@ const DramaInput = () => {
     }));
   };
 
-  // const handleActorChange = (actorName) => {
-  //   // Pastikan tidak lebih dari 10 aktor yang dipilih dan aktor belum dipilih
-  //   if (formData.actors.length < 10 && !formData.actors.includes(actorName)) {
-  //     setFormData((prevState) => ({
-  //       ...prevState,
-  //       actors: [...prevState.actors, actorName],
-  //     }));
-  //   }
-  //   setSearchTerm(""); // Reset pencarian setelah aktor dipilih
-  //   setFilteredActors([]); // Kosongkan hasil pencarian setelah aktor dipilih
-  // };
-
-  // const removeActor = (actorName) => {
-  //   setFormData((prevState) => ({
-  //     ...prevState,
-  //     actors: prevState.actors.filter((actor) => actor !== actorName),
-  //   }));
-  // };
-
   const handleSearchActor = (e) => {
     const searchValue = e.target.value;
     setSearchTerm(searchValue);
 
-    // Filter aktor berdasarkan input pengguna
     if (searchValue.length > 0) {
       const filtered = actorsList.filter((actor) =>
         actor.name.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredActors(filtered);
     } else {
-      setFilteredActors([]); // Kosongkan hasil pencarian jika input kosong
+      setFilteredActors([]);
     }
   };
 
-  const handleAwardsChange = (selectedOptions) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      awards: selectedOptions
-        ? selectedOptions.map((option) => option.value)
-        : [],
-    }));
-  };
+  // const handleAwardsChange = (selectedOptions) => {
+  //   setFormData((prevState) => ({
+  //     ...prevState,
+  //     awards: selectedOptions
+  //       ? selectedOptions.map((option) => option.value)
+  //       : [],
+  //   }));
+  //   console.log()
+  // };
 
   const awardsOptions = awardsList.map((awards) => ({
     value: awards.awards_name,
@@ -289,75 +253,6 @@ const DramaInput = () => {
     label: country.country_name,
   }));
 
-  const removeAwards = (awardsName) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      awards: prevState.awards.filter((awards) => awards !== awardsName),
-    }));
-  };
-
-  // Ref untuk kontainer besar
-  // const imgRefLarge = useRef(null);
-  // const iconRefLarge = useRef(null);
-  // const textRefLarge = useRef(null);
-  // const containerRefLarge = useRef(null);
-
-  // // Ref untuk kontainer kecil
-  // const imgRefSmall = useRef(null);
-  // const iconRefSmall = useRef(null);
-  // const textRefSmall = useRef(null);
-  // const containerRefSmall = useRef(null);
-
-  // const handleImageChange = (event, isSmall) => {
-  //   const file = event.target.files[0];
-  //   if (file) {
-  //     setFormData((prevState) => ({
-  //       ...prevState,
-  //       image: isSmall ? file : prevState.image,
-  //       backgroundImage: !isSmall ? file : prevState.backgroundImage,
-  //     }));
-  //     const reader = new FileReader();
-  //     reader.onload = function (e) {
-  //       if (isSmall) {
-  //         if (imgRefSmall.current) {
-  //           imgRefSmall.current.src = e.target.result;
-  //           imgRefSmall.current.style.display = "block";
-  //           imgRefSmall.current.style.width = "100%";
-  //           imgRefSmall.current.style.height = "auto";
-  //         }
-  //         if (iconRefSmall.current) {
-  //           iconRefSmall.current.style.display = "none";
-  //         }
-  //         if (textRefSmall.current) {
-  //           textRefSmall.current.style.display = "none"; // Sembunyikan teks
-  //         }
-  //         if (containerRefSmall.current) {
-  //           containerRefSmall.current.style.border = "none";
-  //         }
-  //       } else {
-  //         if (imgRefLarge.current) {
-  //           imgRefLarge.current.src = e.target.result;
-  //           imgRefLarge.current.style.display = "block";
-  //           imgRefLarge.current.style.width = "100%";
-  //           imgRefLarge.current.style.height = "auto";
-  //         }
-  //         if (iconRefLarge.current) {
-  //           iconRefLarge.current.style.display = "none";
-  //         }
-  //         if (textRefLarge.current) {
-  //           textRefLarge.current.style.display = "none"; // Sembunyikan teks
-  //         }
-  //         if (containerRefLarge.current) {
-  //           containerRefLarge.current.style.border = "none";
-  //         }
-  //       }
-  //     };
-  //     reader.readAsDataURL(file);
-  //   } else {
-  //     console.error("No file selected");
-  //   }
-  // };
-
   const handleRatingChange = (newRating) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -368,15 +263,25 @@ const DramaInput = () => {
   const handleCountryChange = (selectedOptions) => {
     setFormData((prevState) => ({
       ...prevState,
-      country: selectedOptions
-        ? selectedOptions.map((option) => option.value)
-        : [],
+      country: selectedOptions ? selectedOptions : [], // Simpan objek lengkap, bukan hanya nilai
     }));
   };
+  
+  const handleAwardsChange = (selectedOptions) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      awards: selectedOptions ? selectedOptions : [], // Simpan objek lengkap, bukan hanya nilai
+    }));
+  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
+    // Extract values for country and awards
+    const countryValues = formData.country.map((option) => option.value);
+    const awardsValues = formData.awards.map((option) => option.value);
+  
     // Prepare the data as a plain JSON object
     const dataToSubmit = {
       view: formData.view,
@@ -385,18 +290,18 @@ const DramaInput = () => {
       alt_title: formData.alternativeTitle,
       director: formData.director,
       release_year: formData.year,
-      country: formData.country,
+      country: countryValues, // Send array of country names
       synopsis: formData.synopsis,
       availability: formData.availability,
       genres: formData.genres, // Array
       actors: formData.actors, // Array
       trailer: formData.trailer,
-      awards: formData.awards, // Array
+      awards: awardsValues, // Send array of award names
       imdb_score: formData.imdbScore,
-      posterUrl: formData.posterUrl, // Using poster URL instead of file
-      backgroundUrl: formData.backgroundUrl, // Using background URL instead of file
+      posterUrl: formData.posterUrl,
+      backgroundUrl: formData.backgroundUrl,
     };
-
+  
     try {
       const response = await fetch("http://localhost:8001/add-drama", {
         method: "POST",
@@ -406,7 +311,7 @@ const DramaInput = () => {
         body: JSON.stringify(dataToSubmit), // Send JSON data
         credentials: "include"
       });
-
+  
       if (response.ok) {
         const result = await response.json();
         console.log(result.message); // Tampilkan pesan sukses
@@ -421,6 +326,11 @@ const DramaInput = () => {
 
   const handleEdit = async (e) => {
     e.preventDefault();
+  
+    // Extract values for country and awards
+    const countryValues = formData.country.map((option) => option.value);
+    const awardsValues = formData.awards.map((option) => option.value);
+  
     const dataToSubmit = {
       id: formData.id,
       view: formData.view,
@@ -429,28 +339,26 @@ const DramaInput = () => {
       alt_title: formData.alternativeTitle,
       director: formData.director,
       release_year: formData.year,
-      country: formData.country,
+      country: countryValues, // Send array of country names
       synopsis: formData.synopsis,
       availability: formData.availability,
       genres: formData.genres,
       actors: formData.actors,
       trailer: formData.trailer,
-      awards: formData.awards,
+      awards: awardsValues, // Send array of award names
       imdb_score: formData.imdbScore,
       posterUrl: formData.posterUrl,
       backgroundUrl: formData.backgroundUrl,
     };
-
+  
     try {
       const response = await fetch("http://localhost:8001/update-drama", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSubmit),
         credentials: "include"
       });
-
+  
       if (response.ok) {
         const result = await response.json();
         console.log(result.message);
@@ -506,33 +414,6 @@ const DramaInput = () => {
                 ))}
               </Form.Select>
             </Form.Group>
-            {/* <div className="small-image-upload-container">
-              <link
-                rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-              ></link>
-              <div className="small-camera-icon" ref={containerRefSmall}>
-                <Image
-                  ref={imgRefSmall}
-                  src="#"
-                  alt="Small Img Preview"
-                  style={{ display: "none" }}
-                />
-                <i className="fa fa-camera" ref={iconRefSmall}></i>
-                <span ref={textRefSmall} className="upload-text">
-                  Upload Poster Here
-                </span>
-              </div>
-              <Form.Group
-                controlId="formFileSmall"
-                className="small-file-input-container"
-              >
-                <Form.Control
-                  type="file"
-                  onChange={(e) => handleImageChange(e, true)}
-                />
-              </Form.Group>
-            </div> */}
             <Form.Group className="mb-3 imdb-score-label">
               <FormLabel className="imdb-score-label">IMDB SCORE</FormLabel>
               <Rating
@@ -767,31 +648,6 @@ const DramaInput = () => {
                 </div>
               )}
             </Form.Group>
-
-            {/* <div className="image-upload-container">
-              <link
-                rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-              ></link>
-              <div className="camera-icon" ref={containerRefLarge}>
-                <Image
-                  ref={imgRefLarge}
-                  src="#"
-                  alt="Large Img Preview"
-                  style={{ display: "none" }}
-                />
-                <i className="fa fa-camera" ref={iconRefLarge}></i>
-                <span ref={textRefLarge} className="upload-text">
-                  Upload Background Movie Image Here
-                </span>
-              </div>
-              <Form.Group controlId="formFile" className="file-input-container">
-                <Form.Control
-                  type="file"
-                  onChange={(e) => handleImageChange(e, false)}
-                />
-              </Form.Group>
-            </div> */}
             <div className="d-flex justify-content-end form-group-submit">
               <Button
                 variant="secondary"

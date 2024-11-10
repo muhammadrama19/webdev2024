@@ -82,6 +82,22 @@ body {
     border-radius: 5px;
   }
 
+  .main-cards .card:first-child {
+    background-color: #2962ff;
+  }
+  
+  .main-cards .card:nth-child(2) {
+    background-color: #ff6d00;
+  }
+  
+  .main-cards .card:nth-child(3) {
+    background-color: #2e7d32;
+  }
+  
+  .main-cards .card:nth-child(4) {
+    background-color: #d50000;
+  }
+  
   
   .card-inner {
     display: flex;

@@ -84,7 +84,8 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
     navigate("/movie-trash");
   };
 
-  const filteredDramas = dramas.filter(
+  const 
+  filteredDramas = dramas.filter(
     (drama) =>
       (drama.title && drama.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (drama.Actors && drama.Actors.toLowerCase().includes(searchTerm.toLowerCase())) ||

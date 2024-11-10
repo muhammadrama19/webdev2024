@@ -12,8 +12,13 @@ function ValidateDrama() {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await fetch("http://localhost:8001/movie-list?status=3");
+        const response = await fetch("http://localhost:8001/movie-list?status=3", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
         const data = await response.json();
+        console.log("Data Validasi: ", data);
         setDramas(data);
         setLoading(false);
       } catch (error) {

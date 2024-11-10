@@ -18,7 +18,7 @@ const isAuthenticated = (req, res, next) => {
       return res.status(403).json({ error: "Invalid or expired token." });
     }
   
-    console.log("Decoded token:", decoded); // Log the decoded token for debugging
+    // console.log("Decoded token:", decoded); // Log the decoded token for debugging
     req.user = decoded;
     next();
   });  
