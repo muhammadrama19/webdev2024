@@ -2375,6 +2375,31 @@ app.get(
   }
 );
 
+app.get('/confirm-email/:token', (req, res) => {
+  const { token } = req.params;
+
+  // Verify email confirmation token
+  jwt.verify(token, 'EMAIL_SECRET', (err, decoded) => {
+    if (err) {
+      return res.json({ message: 'Invalid or expired token' });
+    }
+
+    const email = decoded.email;
+
+    // Update the user to mark their email as confirmed
+    const updateSql = "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
+    
+    db.query(updateSql, [email], (err, result) => {
+      if (err) {
+        return res.json({ message: 'Error confirming email' });
+      }
+
+      res.json({ message: "Email confirmed successfully! You can now login." });
+    });
+  });
+});
+
+
 app.post("/register", (req, res) => {
   const { username, email, password } = req.body;
 
