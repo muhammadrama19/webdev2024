@@ -90,7 +90,6 @@ const DramaInput = () => {
         const genresResponse = await fetch("http://localhost:8001/genres");
         const genresData = await genresResponse.json();
         setGenresList(genresData);
-
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -311,7 +310,6 @@ const DramaInput = () => {
         body: JSON.stringify(dataToSubmit), // Send JSON data
         credentials: "include"
       });
-  
       if (response.ok) {
         const result = await response.json();
         console.log(result.message); // Tampilkan pesan sukses
@@ -330,7 +328,6 @@ const DramaInput = () => {
     // Extract values for country and awards
     const countryValues = formData.country.map((option) => option.value);
     const awardsValues = formData.awards.map((option) => option.value);
-  
     const dataToSubmit = {
       id: formData.id,
       view: formData.view,

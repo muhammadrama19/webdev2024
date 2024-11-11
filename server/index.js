@@ -671,7 +671,8 @@ app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
   const { status } = req.query; // Ambil query parameter status dari request
 
   let query = `
-  SELECT
+
+    SELECT
     m.status, 
     m.id, 
     m.title,
@@ -690,18 +691,20 @@ app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
     m.synopsis,
     m.availability_id,
     m.status_id
-  FROM movies m
-  JOIN movie_actors mac ON mac.movie_id = m.id
-  JOIN actors ac ON ac.id = mac.actor_id
-  JOIN movie_genres mg ON mg.movie_id = m.id
-  JOIN genres g ON g.id = mg.genre_id
-  JOIN status s ON s.id = m.status_id
-  JOIN availability av ON av.id = m.availability_id
-  JOIN movie_countries mc ON mc.movie_id = m.id
-  JOIN countries c ON c.id = mc.country_id
-  JOIN movie_awards ma ON ma.movie_id = m.id
-  JOIN awards a ON a.id = ma.awards_id
-`;
+
+FROM movies m
+JOIN movie_actors mac ON mac.movie_id = m.id
+JOIN actors ac ON ac.id = mac.actor_id
+JOIN movie_genres mg ON mg.movie_id = m.id
+JOIN genres g ON g.id = mg.genre_id
+JOIN status s ON s.id = m.status_id
+JOIN availability av ON av.id = m.availability_id
+JOIN movie_countries mc ON mc.movie_id = m.id
+JOIN countries c ON c.id = mc.country_id
+JOIN movie_awards ma ON ma.movie_id = m.id
+JOIN awards a ON a.id = ma.awards_id
+    `;
+
 
   // Tambahkan filter berdasarkan status jika parameter status ada
   if (status) {
@@ -721,6 +724,7 @@ app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
   });
 });
 
+
 // app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
 app.get("/users", isAuthenticated, hasAdminRole, (req, res) => {
   const query = `
@@ -739,6 +743,7 @@ app.get("/users", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // POST endpoint untuk menambah user baru
+
 app.post("/users", isAuthenticated, hasAdminRole, async (req, res) => {
   const { username, email, password, profile_picture, role } = req.body;
 
@@ -753,6 +758,7 @@ app.post("/users", isAuthenticated, hasAdminRole, async (req, res) => {
 
     // Query untuk menambahkan user baru
     const query = `
+
       INSERT INTO users (username, email, password, role, Status_Account, isEmailConfirmed)
       VALUES (?, ?, ?, ?, 1, 1)
     `;
@@ -786,9 +792,11 @@ app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   `;
 
   try {
+
     await db
       .promise()
       .query(query, [username, email, role, profile_picture, password, id]);
+
     res.status(200).json({ message: "User updated successfully" });
   } catch (err) {
     console.error("Error executing query:", err.message);
@@ -802,6 +810,7 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
 
   try {
     // Update nilai Status_Account menjadi 3
+
     const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW(), email = NULL WHERE id = ?`;
     const result = await db.promise().query(query, [userId]);
 
@@ -810,15 +819,18 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
       return res
         .status(404)
         .json({ message: "User not found", success: false });
+
     }
 
     //get user details
     const userQuery = `SELECT * FROM users WHERE id = ?`;
     const [userData] = await db.promise().query(userQuery, [userId]);
     if (userData.length === 0) {
+
       return res
         .status(404)
         .json({ message: "User not found", success: false });
+
     }
 
     const user = userData[0];
@@ -852,10 +864,12 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
             .json({ message: "Error sending banned email", success: false });
         }
 
+
         res.json({
           message: "User banned successfully and email sent",
           success: true,
         });
+
       });
     });
 
@@ -865,6 +879,7 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
     res.status(500).json({ error: "Failed to update user status" });
   }
 });
+
 
 app.put(
   "/users/suspend/:id",
@@ -1022,6 +1037,7 @@ app.put(
   }
 );
 
+
 // Route to fetch all actors
 app.get("/actors", (req, res) => {
   const query = `
@@ -1107,6 +1123,7 @@ app.post("/actors", isAuthenticated, hasAdminRole, (req, res) => {
               res.status(500).json({ error: "Internal Server Error" });
             });
           }
+
           res.status(201).json({
             message: "Actor added successfully.",
             id: result.insertId,
@@ -1116,6 +1133,7 @@ app.post("/actors", isAuthenticated, hasAdminRole, (req, res) => {
     });
   });
 });
+
 
 // Route to update an existing actor with country existence check
 app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
@@ -1127,8 +1145,10 @@ app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
   }
 
   // Check if country exists before updating actor
+
   const checkCountryQuery =
     "SELECT id FROM countries WHERE country_name = ? AND deleted_at IS NULL";
+
   db.query(checkCountryQuery, [country_name], (err, countryResult) => {
     if (err) {
       console.error("Error checking country existence:", err.message);
@@ -1191,6 +1211,7 @@ app.put("/actors/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 app.get("/genres", (req, res) => {
   const query =
     "SELECT id, name FROM genres WHERE deleted_at IS NULL ORDER BY id ASC ";
+
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
@@ -1238,6 +1259,7 @@ app.post("/genres", isAuthenticated, hasAdminRole, (req, res) => {
     });
   });
 });
+
 
 // Update an existing genre
 app.put("/genres/update/:id", isAuthenticated, hasAdminRole, (req, res) => {
@@ -1290,6 +1312,7 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
+
     const query = `
       UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
     `;
@@ -1323,8 +1346,10 @@ app.get("/countries", isAuthenticated, hasAdminRole, (req, res) => {
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
+
       res.status(500).json({ error: "Internal Server Error" });
       return;
+
     }
     res.json(results);
   });
@@ -1404,6 +1429,7 @@ app.put("/countries/:id", isAuthenticated, hasAdminRole, (req, res) => {
   // Start a transaction
   db.beginTransaction((err) => {
     if (err) {
+
       console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
@@ -1442,6 +1468,7 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
+
 
     const query = `
       UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
@@ -1499,8 +1526,10 @@ app.get("/awards", isAuthenticated, hasAdminRole, (req, res) => {
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
+
       res.status(500).json({ error: "Internal Server Error" });
       return;
+
     }
     res.json(results);
   });
@@ -1720,6 +1749,7 @@ app.get("/reviews", (req, res) => {
   });
 });
 
+
 // Route to approve a review
 app.put("/reviews/:id/approve", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
@@ -1818,6 +1848,7 @@ app.get("/status", (req, res) => {
     res.json(results); // Mengirimkan hasil dalam bentuk JSON
   });
 });
+
 
 //CRUD
 
@@ -2452,6 +2483,7 @@ app.post("/register", (req, res) => {
   });
 });
 
+
 app.post("/forgot-password", (req, res) => {
   const { email } = req.body;
 
@@ -2472,6 +2504,15 @@ app.post("/forgot-password", (req, res) => {
         success: false,
       });
     }
+
+    //only account with traditional login can forgot password
+    if (userData[0].googleId) {
+      return res.json({
+        message: "It looks like you signed up with Google. Please log in using your Google account.",
+        success: false,
+      });
+    }
+
 
     //only account with traditional login can forgot password
     if (userData[0].googleId) {
@@ -2563,10 +2604,13 @@ app.post("/reset-password/:token", (req, res) => {
 
       // Check if the password has changed since the token was issued
       if (passwordVersion !== currentPasswordVersion) {
-        return res.status(400).json({
-          message: "Invalid token due to password change",
-          success: false,
-        });
+
+        return res
+          .status(400)
+          .json({
+            message: "Invalid token due to password change",
+            success: false,
+          });
       }
 
       // Proceed with password reset
@@ -2591,6 +2635,23 @@ app.post("/reset-password/:token", (req, res) => {
         });
       });
     });
+  });
+});
+
+//movie check if reviewed or not
+app.get("/movies/:movieId/reviewed/:userId", isAuthenticated, (req, res) => {
+  const userId = req.params.userId;
+  const movieId = req.params.movieId;
+
+  const query = "SELECT * FROM reviews WHERE user_id = ? AND movie_id = ?";
+
+  db.query(query, [userId, movieId], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    res.json({ reviewed: results.length > 0 });
   });
 });
 
