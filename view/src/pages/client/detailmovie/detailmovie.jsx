@@ -11,6 +11,7 @@ import { useParams } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import ErrorPage from  '../error/errorPage'; 
 
+
 const Detailmovie = () => {
   const [movieData, setMovieData] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);

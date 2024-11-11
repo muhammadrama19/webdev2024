@@ -473,14 +473,17 @@ app.get("/movies/detail/review/:id", (req, res) => {
 
 //fetch all filter criteria
 
-app.get('/filters', async (req, res) => {
+app.get("/filters", async (req, res) => {
   const queries = {
-    years: 'SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies',
-    genres: 'SELECT id, name FROM genres ORDER BY name ASC',
-    awards: 'SELECT id, awards_name FROM awards ORDER BY awards_name ASC',
-    countries: 'SELECT id, country_name FROM countries ORDER BY country_name ASC',
-    availability: 'SELECT id, platform_name FROM availability ORDER BY platform_name ASC',
-    status: 'SELECT id, name FROM status ORDER BY name ASC',
+    years:
+      "SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies",
+    genres: "SELECT id, name FROM genres ORDER BY name ASC",
+    awards: "SELECT id, awards_name FROM awards ORDER BY awards_name ASC",
+    countries:
+      "SELECT id, country_name FROM countries ORDER BY country_name ASC",
+    availability:
+      "SELECT id, platform_name FROM availability ORDER BY platform_name ASC",
+    status: "SELECT id, name FROM status ORDER BY name ASC",
   };
 
   const results = {};
@@ -488,67 +491,66 @@ app.get('/filters', async (req, res) => {
   try {
     // Fetch years first to calculate decades
     const [yearRows] = await db.promise().query(queries.years);
-    
+
     if (yearRows.length) {
       const minYear = yearRows[0].minYear;
       const maxYear = yearRows[0].maxYear;
-      
-     
+
       const different = minYear % 10;
-      const normalizedMinYear = minYear - different; 
+      const normalizedMinYear = minYear - different;
       const decades = [];
 
       for (let year = normalizedMinYear; year <= maxYear; year += 10) {
         decades.push({
           start: year,
-          end: year + 10, 
+          end: year + 10,
         });
       }
 
-      results.years = decades; 
+      results.years = decades;
     } else {
       results.years = [];
     }
 
     // Fetch genres
     const [genreRows] = await db.promise().query(queries.genres);
-    results.genres = genreRows.map(row => ({
+    results.genres = genreRows.map((row) => ({
       id: row.id,
       name: row.name,
     }));
 
     // Fetch awards
     const [awardRows] = await db.promise().query(queries.awards);
-    results.awards = awardRows.map(row => ({
+    results.awards = awardRows.map((row) => ({
       id: row.id,
       name: row.awards_name,
     }));
 
     // Fetch countries
     const [countryRows] = await db.promise().query(queries.countries);
-    results.countries = countryRows.map(row => ({
+    results.countries = countryRows.map((row) => ({
       id: row.id,
       name: row.country_name,
     }));
 
     // Fetch availability
     const [availabilityRows] = await db.promise().query(queries.availability);
-    results.availability = availabilityRows.map(row => ({
+    results.availability = availabilityRows.map((row) => ({
       id: row.id,
       name: row.platform_name,
     }));
 
     // Fetch status
     const [statusRows] = await db.promise().query(queries.status);
-    results.status = statusRows.map(row => ({
+    results.status = statusRows.map((row) => ({
       id: row.id,
       name: row.name,
     }));
 
-    res.json(results); 
+    res.json(results);
   } catch (error) {
-    console.error('Error fetching filters:', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error fetching filters:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -669,6 +671,7 @@ app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
   const { status } = req.query; // Ambil query parameter status dari request
 
   let query = `
+
     SELECT
     m.status, 
     m.id, 
@@ -688,6 +691,7 @@ app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
     m.synopsis,
     m.availability_id,
     m.status_id
+
 FROM movies m
 JOIN movie_actors mac ON mac.movie_id = m.id
 JOIN actors ac ON ac.id = mac.actor_id
@@ -700,6 +704,7 @@ JOIN countries c ON c.id = mc.country_id
 JOIN movie_awards ma ON ma.movie_id = m.id
 JOIN awards a ON a.id = ma.awards_id
     `;
+
 
   // Tambahkan filter berdasarkan status jika parameter status ada
   if (status) {
@@ -738,7 +743,8 @@ app.get("/users", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // POST endpoint untuk menambah user baru
-app.post("/users",isAuthenticated, hasAdminRole, async (req, res) => {
+
+app.post("/users", isAuthenticated, hasAdminRole, async (req, res) => {
   const { username, email, password, profile_picture, role } = req.body;
 
   // Validasi input
@@ -752,17 +758,14 @@ app.post("/users",isAuthenticated, hasAdminRole, async (req, res) => {
 
     // Query untuk menambahkan user baru
     const query = `
-      INSERT INTO users (username, email, password, role, Status_Account)
-      VALUES (?, ?, ?, ?, 1)
+
+      INSERT INTO users (username, email, password, role, Status_Account, isEmailConfirmed)
+      VALUES (?, ?, ?, ?, 1, 1)
     `;
     // Menggunakan password yang sudah di-hash untuk disimpan
-    const [result] = await db.query(query, [
-      username,
-      email,
-      hashedPassword,
-      profile_picture,
-      role,
-    ]);
+    const [result] = await db
+      .promise()
+      .query(query, [username, email, hashedPassword, role]);
 
     // Mengembalikan response user yang baru ditambahkan tanpa menampilkan password
     res.status(200).json({ id: result.insertId, username, email, role });
@@ -789,14 +792,11 @@ app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   `;
 
   try {
-    await db.query(query, [
-      username,
-      email,
-      role,
-      profile_picture,
-      password,
-      id,
-    ]);
+
+    await db
+      .promise()
+      .query(query, [username, email, role, profile_picture, password, id]);
+
     res.status(200).json({ message: "User updated successfully" });
   } catch (err) {
     console.error("Error executing query:", err.message);
@@ -810,19 +810,27 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
 
   try {
     // Update nilai Status_Account menjadi 3
-    const query = `UPDATE users SET Status_Account = 3 WHERE id = ?`;
+
+    const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW(), email = NULL WHERE id = ?`;
     const result = await db.promise().query(query, [userId]);
 
     //check if any row affected
-    if(result.affectedRows===0){
-      return res.status(404).json({message: "User not found", success: false});
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+
     }
 
     //get user details
     const userQuery = `SELECT * FROM users WHERE id = ?`;
     const [userData] = await db.promise().query(userQuery, [userId]);
     if (userData.length === 0) {
-      return res.status(404).json({ message: "User not found", success: false });
+
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+
     }
 
     const user = userData[0];
@@ -856,7 +864,12 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
             .json({ message: "Error sending banned email", success: false });
         }
 
-        res.json({ message: "User banned successfully and email sent", success: true });
+
+        res.json({
+          message: "User banned successfully and email sent",
+          success: true,
+        });
+
       });
     });
 
@@ -867,125 +880,162 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   }
 });
 
-app.put("/users/suspend/:id", isAuthenticated, hasAdminRole, async (req, res) => {
-  const userId = req.params.id;
 
-  try {
-    // Update Status_Account to 2 (suspended)
-    const query = `UPDATE users SET Status_Account = 2 WHERE id = ?`;
-    const [result] = await db.promise().query(query, [userId]);
+app.put(
+  "/users/suspend/:id",
+  isAuthenticated,
+  hasAdminRole,
+  async (req, res) => {
+    const userId = req.params.id;
 
-    // Check if any rows were affected
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "User not found", success: false });
-    }
+    try {
+      // Update Status_Account to 2 (suspended)
+      const query = `UPDATE users SET Status_Account = 2 WHERE id = ?`;
+      const [result] = await db.promise().query(query, [userId]);
 
-    // Get user details for email notification
-    const userQuery = `SELECT * FROM users WHERE id = ?`;
-    const [userData] = await db.promise().query(userQuery, [userId]);
-    if (userData.length === 0) {
-      return res.status(404).json({ message: "User not found", success: false });
-    }
-
-    const user = userData[0];
-    const templatePath = path.join(__dirname, "template", "suspending.html");
-
-    // Read the email template file
-    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
-      if (err) {
-        console.error("Error reading email template:", err);
+      // Check if any rows were affected
+      if (result.affectedRows === 0) {
         return res
-          .status(500)
-          .json({ message: "Error reading email template", success: false });
+          .status(404)
+          .json({ message: "User not found", success: false });
       }
 
-      // Replace placeholders in the template with actual data
-      const suspendingHTML = htmlTemplate.replace(/{{username}}/g, user.username);
-
-      // Mail options
-      const mailOptions = {
-        from: process.env.EMAIL,
-        to: user.email,
-        subject: "Account Suspension Notification",
-        html: suspendingHTML, // Use the customized HTML content
-      };
-
-      // Send email
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          return res
-            .status(500)
-            .json({ message: "Error sending suspension email", success: false });
-        }
-
-        res.json({ message: "User suspended successfully and email sent", success: true });
-      });
-    });
-  } catch (err) {
-    console.error("Error executing query:", err.message);
-    res.status(500).json({ error: "Failed to suspend user" });
-  }
-});
-
-app.put("/users/unlock/:id", isAuthenticated, hasAdminRole, async (req, res) => {
-  const userId = req.params.id;
-
-  try {
-    // Update Status_Account to 1 (unlocked)
-    const query = `UPDATE users SET Status_Account = 1 WHERE id = ?`;
-    const [result] = await db.promise().query(query, [userId]);
-
-    // Check if any rows were affected
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "User not found", success: false });
-    }
-
-    // Get user details for email notification
-    const userQuery = `SELECT * FROM users WHERE id = ?`;
-    const [userData] = await db.promise().query(userQuery, [userId]);
-    if (userData.length === 0) {
-      return res.status(404).json({ message: "User not found", success: false });
-    }
-
-    const user = userData[0];
-    const templatePath = path.join(__dirname, "template", "unsuspending.html");
-
-    // Read the email template file
-    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
-      if (err) {
-        console.error("Error reading email template:", err);
+      // Get user details for email notification
+      const userQuery = `SELECT * FROM users WHERE id = ?`;
+      const [userData] = await db.promise().query(userQuery, [userId]);
+      if (userData.length === 0) {
         return res
-          .status(500)
-          .json({ message: "Error reading email template", success: false });
+          .status(404)
+          .json({ message: "User not found", success: false });
       }
 
-      // Replace placeholders in the template with actual data
-      const unsuspendingHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+      const user = userData[0];
+      const templatePath = path.join(__dirname, "template", "suspending.html");
 
-      // Mail options
-      const mailOptions = {
-        from: process.env.EMAIL,
-        to: user.email,
-        subject: "Account Unsuspension Notification",
-        html: unsuspendingHTML, // Use the customized HTML content
-      };
-
-      // Send email
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
+      // Read the email template file
+      fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+        if (err) {
+          console.error("Error reading email template:", err);
           return res
             .status(500)
-            .json({ message: "Error sending unsuspension email", success: false });
+            .json({ message: "Error reading email template", success: false });
         }
 
-        res.json({ message: "User unlocked successfully and email sent", success: true });
+        // Replace placeholders in the template with actual data
+        const suspendingHTML = htmlTemplate.replace(
+          /{{username}}/g,
+          user.username
+        );
+
+        // Mail options
+        const mailOptions = {
+          from: process.env.EMAIL,
+          to: user.email,
+          subject: "Account Suspension Notification",
+          html: suspendingHTML, // Use the customized HTML content
+        };
+
+        // Send email
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            return res.status(500).json({
+              message: "Error sending suspension email",
+              success: false,
+            });
+          }
+
+          res.json({
+            message: "User suspended successfully and email sent",
+            success: true,
+          });
+        });
       });
-    });
-  } catch (err) {
-    console.error("Error executing query:", err.message);
-    res.status(500).json({ error: "Failed to unlock user" });
+    } catch (err) {
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Failed to suspend user" });
+    }
   }
-});
+);
+
+app.put(
+  "/users/unlock/:id",
+  isAuthenticated,
+  hasAdminRole,
+  async (req, res) => {
+    const userId = req.params.id;
+
+    try {
+      // Update Status_Account to 1 (unlocked)
+      const query = `UPDATE users SET Status_Account = 1 WHERE id = ?`;
+      const [result] = await db.promise().query(query, [userId]);
+
+      // Check if any rows were affected
+      if (result.affectedRows === 0) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
+
+      // Get user details for email notification
+      const userQuery = `SELECT * FROM users WHERE id = ?`;
+      const [userData] = await db.promise().query(userQuery, [userId]);
+      if (userData.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
+
+      const user = userData[0];
+      const templatePath = path.join(
+        __dirname,
+        "template",
+        "unsuspending.html"
+      );
+
+      // Read the email template file
+      fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+        if (err) {
+          console.error("Error reading email template:", err);
+          return res
+            .status(500)
+            .json({ message: "Error reading email template", success: false });
+        }
+
+        // Replace placeholders in the template with actual data
+        const unsuspendingHTML = htmlTemplate.replace(
+          /{{username}}/g,
+          user.username
+        );
+
+        // Mail options
+        const mailOptions = {
+          from: process.env.EMAIL,
+          to: user.email,
+          subject: "Account Unsuspension Notification",
+          html: unsuspendingHTML, // Use the customized HTML content
+        };
+
+        // Send email
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            return res.status(500).json({
+              message: "Error sending unsuspension email",
+              success: false,
+            });
+          }
+
+          res.json({
+            message: "User unlocked successfully and email sent",
+            success: true,
+          });
+        });
+      });
+    } catch (err) {
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Failed to unlock user" });
+    }
+  }
+);
 
 
 // Route to fetch all actors
@@ -1073,10 +1123,11 @@ app.post("/actors", isAuthenticated, hasAdminRole, (req, res) => {
               res.status(500).json({ error: "Internal Server Error" });
             });
           }
-          res
-            .status(201)
-            .json({ message: "Actor added successfully.", id: result.insertId });
 
+          res.status(201).json({
+            message: "Actor added successfully.",
+            id: result.insertId,
+          });
         });
       });
     });
@@ -1094,7 +1145,10 @@ app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
   }
 
   // Check if country exists before updating actor
-  const checkCountryQuery = "SELECT id FROM countries WHERE country_name = ? AND deleted_at IS NULL";
+
+  const checkCountryQuery =
+    "SELECT id FROM countries WHERE country_name = ? AND deleted_at IS NULL";
+
   db.query(checkCountryQuery, [country_name], (err, countryResult) => {
     if (err) {
       console.error("Error checking country existence:", err.message);
@@ -1153,10 +1207,11 @@ app.put("/actors/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   });
 });
 
-
 // Get all genres
 app.get("/genres", (req, res) => {
-  const query = "SELECT id, name FROM genres WHERE deleted_at IS NULL ORDER BY id ASC ";
+  const query =
+    "SELECT id, name FROM genres WHERE deleted_at IS NULL ORDER BY id ASC ";
+
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
@@ -1204,6 +1259,7 @@ app.post("/genres", isAuthenticated, hasAdminRole, (req, res) => {
     });
   });
 });
+
 
 // Update an existing genre
 app.put("/genres/update/:id", isAuthenticated, hasAdminRole, (req, res) => {
@@ -1256,6 +1312,7 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
+
     const query = `
       UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
     `;
@@ -1283,13 +1340,16 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Get all countries
-app.get("/countries", isAuthenticated, hasAdminRole,(req, res) => {
-  const query = "SELECT id, country_name FROM countries WHERE deleted_at IS NULL ORDER BY id ASC ";
+app.get("/countries", isAuthenticated, hasAdminRole, (req, res) => {
+  const query =
+    "SELECT id, country_name FROM countries WHERE deleted_at IS NULL ORDER BY id ASC ";
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
+
       res.status(500).json({ error: "Internal Server Error" });
       return;
+
     }
     res.json(results);
   });
@@ -1369,6 +1429,7 @@ app.put("/countries/:id", isAuthenticated, hasAdminRole, (req, res) => {
   // Start a transaction
   db.beginTransaction((err) => {
     if (err) {
+
       console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
@@ -1407,6 +1468,7 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
+
 
     const query = `
       UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
@@ -1464,8 +1526,10 @@ app.get("/awards", isAuthenticated, hasAdminRole, (req, res) => {
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error executing query:", err.message);
+
       res.status(500).json({ error: "Internal Server Error" });
       return;
+
     }
     res.json(results);
   });
@@ -1685,6 +1749,7 @@ app.get("/reviews", (req, res) => {
   });
 });
 
+
 // Route to approve a review
 app.put("/reviews/:id/approve", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
@@ -1715,7 +1780,6 @@ app.put("/reviews/:id/approve", isAuthenticated, hasAdminRole, (req, res) => {
           });
         }
 
-
         res.json({ message: "Review approved successfully." });
       });
     });
@@ -1723,42 +1787,49 @@ app.put("/reviews/:id/approve", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Route to soft-delete a review by updating the deleted_at column
-app.put("/reviews/:id/soft-delete", isAuthenticated, hasAdminRole, (req, res) => {
-  const { id } = req.params;
+app.put(
+  "/reviews/:id/soft-delete",
+  isAuthenticated,
+  hasAdminRole,
+  (req, res) => {
+    const { id } = req.params;
 
-  // Start a transaction
-  db.beginTransaction((err) => {
-    if (err) {
-      console.error("Error starting transaction:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-
-    const query = "UPDATE reviews SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?";
-    db.query(query, [id], (err, result) => {
+    // Start a transaction
+    db.beginTransaction((err) => {
       if (err) {
-        console.error("Error updating deleted_at for review:", err.message);
-        return res.status(500).json({ error: "Failed to soft-delete review." });
+        console.error("Error starting transaction:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: "Review not found." });
-      }
-
-      // Commit the transaction if the update succeeds
-      db.commit((err) => {
+      const query =
+        "UPDATE reviews SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?";
+      db.query(query, [id], (err, result) => {
         if (err) {
-          console.error("Error committing transaction:", err);
-          return db.rollback(() => {
-            res.status(500).json({ error: "Internal Server Error" });
-          });
+          console.error("Error updating deleted_at for review:", err.message);
+          return res
+            .status(500)
+            .json({ error: "Failed to soft-delete review." });
         }
 
-        res.json({ message: "Review soft-deleted successfully." });
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ error: "Review not found." });
+        }
+
+        // Commit the transaction if the update succeeds
+        db.commit((err) => {
+          if (err) {
+            console.error("Error committing transaction:", err);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Internal Server Error" });
+            });
+          }
+
+          res.json({ message: "Review soft-deleted successfully." });
+        });
       });
     });
-  });
-});
-
+  }
+);
 
 app.get("/status", (req, res) => {
   const query = `
@@ -1777,6 +1848,7 @@ app.get("/status", (req, res) => {
     res.json(results); // Mengirimkan hasil dalam bentuk JSON
   });
 });
+
 
 //CRUD
 
@@ -1906,6 +1978,7 @@ app.post("/add-drama", isAuthenticated, async (req, res) => {
   }
 });
 
+//UPDATE
 app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
   const {
     id,
@@ -1927,104 +2000,166 @@ app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
     awards,
   } = req.body;
 
-  console.log(req.body);
-
   try {
-    // Query to get `availability_id`
-    const availabilityQuery = `SELECT id FROM availability WHERE platform_name = ?`;
-    const [availabilityResult] = await db.promise().query(availabilityQuery, [availability]);
-    const availabilityId = availabilityResult.length > 0 ? availabilityResult[0].id : null;
+    // Ambil data film saat ini dari database
+    const [currentData] = await db
+      .promise()
+      .query("SELECT * FROM movies WHERE id = ?", [id]);
 
-    // Query to get `status_id`
-    const statusQuery = `SELECT id FROM status WHERE name = ?`;
+    if (!currentData.length) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
+
+    // Query untuk mendapatkan availability_id dan status_id jika diperlukan
+    const availabilityQuery =
+      "SELECT id FROM availability WHERE platform_name = ?";
+    const [availabilityResult] = await db
+      .promise()
+      .query(availabilityQuery, [availability]);
+    const availabilityId =
+      availabilityResult.length > 0
+        ? availabilityResult[0].id
+        : currentData[0].availability_id;
+
+    const statusQuery = "SELECT id FROM status WHERE name = ?";
     const [statusResult] = await db.promise().query(statusQuery, [status]);
-    const status_id = statusResult.length > 0 ? statusResult[0].id : null;
-    
-    // Update movies table
-    const movieQuery = `
-      UPDATE movies
-      SET title = ?, alt_title = ?, release_year = ?, imdb_score = ?, synopsis = ?, view = ?, poster = ?, background = ?, trailer = ?, director = ?, status = ?, status_id = ?, availability_id = ?
-      WHERE id = ?
-    `;
+    const status_id =
+      statusResult.length > 0 ? statusResult[0].id : currentData[0].status_id;
+
+    // Update tabel movies hanya jika ada perubahan
     const movieValues = [
-      title,
-      alt_title,
-      release_year,
-      imdb_score,
-      synopsis,
-      view,
-      posterUrl,
-      backgroundUrl,
-      trailer,
-      director,
-      1,
+      title !== currentData[0].title ? title : currentData[0].title,
+      alt_title !== currentData[0].alt_title
+        ? alt_title
+        : currentData[0].alt_title,
+      release_year !== currentData[0].release_year
+        ? release_year
+        : currentData[0].release_year,
+      imdb_score !== currentData[0].imdb_score
+        ? imdb_score
+        : currentData[0].imdb_score,
+      synopsis !== currentData[0].synopsis ? synopsis : currentData[0].synopsis,
+      view !== currentData[0].view ? view : currentData[0].view,
+      posterUrl !== currentData[0].poster ? posterUrl : currentData[0].poster,
+      backgroundUrl !== currentData[0].background
+        ? backgroundUrl
+        : currentData[0].background,
+      trailer !== currentData[0].trailer ? trailer : currentData[0].trailer,
+      director !== currentData[0].director ? director : currentData[0].director,
       status_id,
       availabilityId,
-      id, // ID film yang akan diperbarui
+      id,
     ];
 
-    await db.promise().query(movieQuery, movieValues);
+    await db
+      .promise()
+      .query(
+        "UPDATE movies SET title = ?, alt_title = ?, release_year = ?, imdb_score = ?, synopsis = ?, view = ?, poster = ?, background = ?, trailer = ?, director = ?, status_id = ?, availability_id = ? WHERE id = ?",
+        movieValues
+      );
 
-    // // Hapus data genres, actors, countries, dan awards terkait sebelumnya
-    // await db.promise().query(`DELETE FROM movie_genres WHERE movie_id = ?`, [id]);
-    // await db.promise().query(`DELETE FROM movie_actors WHERE movie_id = ?`, [id]);
-    // await db.promise().query(`DELETE FROM movie_countries WHERE movie_id = ?`, [id]);
-    // await db.promise().query(`DELETE FROM movie_awards WHERE movie_id = ?`, [id]);
-
-    // Insert genres
-    for (const genre of genres) {
-      const genreQuery = `SELECT id FROM genres WHERE name = ?`;
-      const [genreResult] = await db.promise().query(genreQuery, [genre]);
-      const genreId = genreResult.length > 0 ? genreResult[0].id : null;
-
-      if (genreId) {
-        const movieGenreQuery = `INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)`;
-        await db.promise().query(movieGenreQuery, [id, genreId]);
+    // Update genres
+    if (
+      genres &&
+      JSON.stringify(genres) !== JSON.stringify(currentData[0].genres)
+    ) {
+      await db
+        .promise()
+        .query("DELETE FROM movie_genres WHERE movie_id = ?", [id]);
+      for (const genre of genres) {
+        const [genreResult] = await db
+          .promise()
+          .query("SELECT id FROM genres WHERE name = ?", [genre]);
+        if (genreResult.length > 0) {
+          await db
+            .promise()
+            .query(
+              "INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)",
+              [id, genreResult[0].id]
+            );
+        }
       }
     }
 
-    // Insert actors with roles
-    for (const actor of actors) {
-      const actorQuery = `SELECT id FROM actors WHERE name = ?`;
-      const [actorResult] = await db.promise().query(actorQuery, [actor.name]);
-      const actorId = actorResult.length > 0 ? actorResult[0].id : null;
-
-      if (actorId) {
-        const movieActorQuery = `INSERT INTO movie_actors (movie_id, actor_id, role) VALUES (?, ?, ?)`;
-        await db.promise().query(movieActorQuery, [id, actorId, actor.role]);
+    // Update actors with roles
+    if (
+      actors &&
+      JSON.stringify(actors) !== JSON.stringify(currentData[0].actors)
+    ) {
+      await db
+        .promise()
+        .query("DELETE FROM movie_actors WHERE movie_id = ?", [id]);
+      for (const actor of actors) {
+        const [actorResult] = await db
+          .promise()
+          .query("SELECT id FROM actors WHERE name = ?", [actor.name]);
+        if (actorResult.length > 0) {
+          await db
+            .promise()
+            .query(
+              "INSERT INTO movie_actors (movie_id, actor_id, role) VALUES (?, ?, ?)",
+              [id, actorResult[0].id, actor.role]
+            );
+        }
       }
     }
 
-    // Insert country
-    const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
-    const [countryResult] = await db.promise().query(countryQuery, [country]);
-    const countryId = countryResult.length > 0 ? countryResult[0].id : null;
-
-    if (countryId) {
-      const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
-      await db.promise().query(movieCountryQuery, [id, countryId]);
-    }
-
-    // Insert awards
-    for (const award of awards) {
-      const awardQuery = `SELECT id FROM awards WHERE awards_name = ?`;
-      const [awardResult] = await db.promise().query(awardQuery, [award]);
-      const awardId = awardResult.length > 0 ? awardResult[0].id : null;
-
-      if (awardId) {
-        const movieAwardQuery = `INSERT INTO movie_awards (movie_id, awards_id) VALUES (?, ?)`;
-        await db.promise().query(movieAwardQuery, [id, awardId]);
+    // Update countries
+    if (
+      country &&
+      JSON.stringify(country) !== JSON.stringify(currentData[0].country)
+    ) {
+      await db
+        .promise()
+        .query("DELETE FROM movie_countries WHERE movie_id = ?", [id]);
+      for (const countryName of country) {
+        const [countryResult] = await db
+          .promise()
+          .query("SELECT id FROM countries WHERE country_name = ?", [
+            countryName,
+          ]);
+        if (countryResult.length > 0) {
+          await db
+            .promise()
+            .query(
+              "INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)",
+              [id, countryResult[0].id]
+            );
+        }
       }
     }
 
-    res.status(200).json({ message: "Drama updated successfully", movieId: id });
+    // Update awards
+    if (
+      awards &&
+      JSON.stringify(awards) !== JSON.stringify(currentData[0].awards)
+    ) {
+      await db
+        .promise()
+        .query("DELETE FROM movie_awards WHERE movie_id = ?", [id]);
+      for (const award of awards) {
+        const [awardResult] = await db
+          .promise()
+          .query("SELECT id FROM awards WHERE awards_name = ?", [award]);
+        if (awardResult.length > 0) {
+          await db
+            .promise()
+            .query(
+              "INSERT INTO movie_awards (movie_id, awards_id) VALUES (?, ?)",
+              [id, awardResult[0].id]
+            );
+        }
+      }
+    }
+
+    res
+      .status(200)
+      .json({ message: "Drama updated successfully", movieId: id });
   } catch (err) {
     console.error("Error executing query:", err.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
-
 
 //SET TRASH
 app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
@@ -2043,7 +2178,7 @@ app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 //REJECTED MOVIES
-app.put("/movie-rejected/:id", isAuthenticated, hasAdminRole,(req, res) => {
+app.put("/movie-rejected/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
   const query = `UPDATE movies SET status = 2 WHERE id = ?`;
@@ -2060,20 +2195,27 @@ app.put("/movie-rejected/:id", isAuthenticated, hasAdminRole,(req, res) => {
 
 //PERMANENT DELETE
 // Endpoint untuk mengubah status menjadi 3 (permanen delete dari trash)
-app.put("/movie-permanent-delete/:id",isAuthenticated, hasAdminRole, (req, res) => {
-  const movieId = req.params.id;
+app.put(
+  "/movie-permanent-delete/:id",
+  isAuthenticated,
+  hasAdminRole,
+  (req, res) => {
+    const movieId = req.params.id;
 
-  const query = `UPDATE movies SET status = 4 WHERE id = ?`;
+    const query = `UPDATE movies SET status = 4 WHERE id = ?`;
 
-  db.query(query, [movieId], (err, result) => {
-    if (err) {
-      console.error("Error executing query:", err.message);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+    db.query(query, [movieId], (err, result) => {
+      if (err) {
+        console.error("Error executing query:", err.message);
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
 
-    res.status(200).json({ message: "Movie permanently deleted successfully" });
-  });
-});
+      res
+        .status(200)
+        .json({ message: "Movie permanently deleted successfully" });
+    });
+  }
+);
 
 //RESTORE
 app.put("/movie-restore/:id", isAuthenticated, hasAdminRole, (req, res) => {
@@ -2092,7 +2234,8 @@ app.put("/movie-restore/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
 //LOGIN
 app.post("/login", (req, res) => {
-  const query = "SELECT * FROM users WHERE Status_Account IN (1, 2) AND email = ?";
+  const query =
+    "SELECT * FROM users WHERE Status_Account IN (1, 2) AND email = ?";
 
   db.query(query, [req.body.email], (err, data) => {
     if (err) {
@@ -2103,7 +2246,10 @@ app.post("/login", (req, res) => {
       const user = data[0];
 
       if (user.Status_Account === 2) {
-        return res.json({ Status: "Account Suspended", Message: "Your email has been suspended" });
+        return res.json({
+          Status: "Account Suspended",
+          Message: "Your email has been suspended",
+        });
       }
 
       if (!user.isEmailConfirmed) {
@@ -2134,7 +2280,11 @@ app.post("/login", (req, res) => {
             );
 
             // Send token and user_id in cookies
-            res.cookie("token", token, { httpOnly: false, sameSite: "strict", secure: false });
+            res.cookie("token", token, {
+              httpOnly: false,
+              sameSite: "strict",
+              secure: false,
+            });
             res.cookie("user_id", user.id, {
               httpOnly: false,
               sameSite: "strict",
@@ -2224,7 +2374,6 @@ app.get(
     );
   }
 );
-
 
 app.post("/register", (req, res) => {
   const { username, email, password } = req.body;
@@ -2364,6 +2513,16 @@ app.post("/forgot-password", (req, res) => {
       });
     }
 
+
+    //only account with traditional login can forgot password
+    if (userData[0].googleId) {
+      return res.json({
+        message:
+          "It looks like you signed up with Google. Please log in using your Google account.",
+        success: false,
+      });
+    }
+
     const user = userData[0];
     const resetToken = jwt.sign(
       {
@@ -2445,6 +2604,7 @@ app.post("/reset-password/:token", (req, res) => {
 
       // Check if the password has changed since the token was issued
       if (passwordVersion !== currentPasswordVersion) {
+
         return res
           .status(400)
           .json({
@@ -2495,7 +2655,22 @@ app.get("/movies/:movieId/reviewed/:userId", isAuthenticated, (req, res) => {
   });
 });
 
+//movie check if reviewed or not
+app.get("/movies/:movieId/reviewed/:userId", isAuthenticated, (req, res) => {
+  const userId = req.params.userId;
+  const movieId = req.params.movieId;
 
+  const query = "SELECT * FROM reviews WHERE user_id = ? AND movie_id = ?";
+
+  db.query(query, [userId, movieId], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    res.json({ reviewed: results.length > 0 });
+  });
+});
 
 //Input Review
 app.post("/reviews", isAuthenticated, (req, res) => {
