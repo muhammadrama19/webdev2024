@@ -430,9 +430,9 @@ const AwardsManager = () => {
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Country</th>
-                                    <th>Year</th>
                                     <th>Award</th>
+                                    <th>Year</th>
+                                    <th>Country</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -440,9 +440,9 @@ const AwardsManager = () => {
                                 {currentAwards.map((award) => (
                                     <tr key={award.id}>
                                         <td>{award.id}</td>
-                                        <td>{award.country_name}</td>
-                                        <td>{award.awards_years}</td>
                                         <td>{award.awards_name}</td>
+                                        <td>{award.awards_years}</td>
+                                        <td>{award.country_name}</td>
                                         <td>
                                             <Container className="action-button">
                                                 <Button
