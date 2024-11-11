@@ -2254,6 +2254,14 @@ app.post("/login", (req, res) => {
         });
       }
 
+      //if account status = 3 it wont be able to login
+      if (user.Status_Account === 3) {
+        return res.json({
+          Status: "Account Banned",
+          Message: "Your email has been Banned. Please check your email for further information",
+        })
+      };
+
       if (!user.isEmailConfirmed) {
         return res.json({ Message: "Please confirm your email first." });
       }
@@ -2345,6 +2353,12 @@ app.get(
       return res.redirect(
         `http://localhost:3001/login?error=Account_Suspended`
       );
+    }
+
+    // Check if user banned or not
+    if (user.Status_Account === 3) {
+      // Redirect with a custom error message in query params
+      return res.redirect(`http://localhost:3001/login?error=Account_Banned`);
     }
 
     // Generate JWT token with user info, including role

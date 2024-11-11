@@ -46,7 +46,16 @@ const LoginForm = () => {
             text: res.data.Message,
           });
 
-        } else {
+        }
+        //check for banned user
+        else if(res.data.Status === "Account Banned") {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: res.data.Message,
+          });
+        } 
+        else {
             Swal.fire({
             icon: 'error',
             title: 'Oops...',
