@@ -21,6 +21,7 @@ const AwardsManager = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
+
         const fetchAwards = async () => {
             try {
                 const response = await fetch('http://localhost:8001/awards', {
