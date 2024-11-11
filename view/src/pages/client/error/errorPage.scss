@@ -1,0 +1,14 @@
+.error-container {
+    background-color: var(--main-color);
+    color: white;
+    padding: 2rem;
+
+    h1 {
+        color: var(--warning-color);
+    }
+
+    p {
+        color: var(--secondary-color);
+    }
+
+}
