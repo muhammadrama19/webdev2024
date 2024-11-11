@@ -571,7 +571,7 @@ app.get("/top-rated", (req, res) => {
 
 app.get("/featured", (req, res) => {
   const query =
-    "SELECT id, title, background, poster, imdb_score, synopsis FROM movies WHERE release_year=2024 ORDER BY imdb_score DESC LIMIT 10";
+    "SELECT id, title, background, poster, imdb_score, synopsis FROM movies WHERE release_year=2024 AND status = 1 ORDER BY imdb_score DESC LIMIT 10";
 
   db.query(query, (err, results) => {
     if (err) {
@@ -811,7 +811,7 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   try {
     // Update nilai Status_Account menjadi 3
 
-    const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW(), email = NULL WHERE id = ?`;
+    const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW() WHERE id = ?`;
     const result = await db.promise().query(query, [userId]);
 
     //check if any row affected
@@ -1340,7 +1340,7 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Get all countries
-app.get("/countries", isAuthenticated, hasAdminRole, (req, res) => {
+app.get("/countries", isAuthenticated, (req, res) => {
   const query =
     "SELECT id, country_name FROM countries WHERE deleted_at IS NULL ORDER BY id ASC ";
   db.query(query, (err, results) => {
@@ -1505,7 +1505,7 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 });
 
 // Get all awards
-app.get("/awards", isAuthenticated, hasAdminRole, (req, res) => {
+app.get("/awards", isAuthenticated, (req, res) => {
   const query = `
     SELECT 
       a.id, 
@@ -1950,13 +1950,15 @@ app.post("/add-drama", isAuthenticated, async (req, res) => {
     }
 
     // Insert into movie_countries
-    const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
-    const [countryResult] = await db.promise().query(countryQuery, [country]);
-    const countryId = countryResult.length > 0 ? countryResult[0].id : null;
-
-    if (countryId) {
-      const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
-      await db.promise().query(movieCountryQuery, [movieId, countryId]);
+    for (const countryName of country) {
+      const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
+      const [countryResult] = await db.promise().query(countryQuery, [countryName]);
+      const countryId = countryResult.length > 0 ? countryResult[0].id : null;
+  
+      if (countryId) {
+        const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
+        await db.promise().query(movieCountryQuery, [movieId, countryId]);
+      }
     }
 
     // Insert into movie_awards
@@ -2248,7 +2250,7 @@ app.post("/login", (req, res) => {
       if (user.Status_Account === 2) {
         return res.json({
           Status: "Account Suspended",
-          Message: "Your email has been suspended",
+          Message: "Your email has been suspended. Please check your email for further information",
         });
       }
 
@@ -2374,6 +2376,30 @@ app.get(
     );
   }
 );
+
+app.get('/confirm-email/:token', (req, res) => {
+  const { token } = req.params;
+
+  // Verify email confirmation token
+  jwt.verify(token, 'EMAIL_SECRET', (err, decoded) => {
+    if (err) {
+      return res.json({ message: 'Invalid or expired token' });
+    }
+
+    const email = decoded.email;
+
+    // Update the user to mark their email as confirmed
+    const updateSql = "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
+    
+    db.query(updateSql, [email], (err, result) => {
+      if (err) {
+        return res.json({ message: 'Error confirming email' });
+      }
+
+      res.json({ message: "Email confirmed successfully! You can now login." });
+    });
+  });
+});
 
 app.post("/register", (req, res) => {
   const { username, email, password } = req.body;

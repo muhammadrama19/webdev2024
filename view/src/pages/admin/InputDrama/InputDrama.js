@@ -13,6 +13,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "../InputDrama/InputDrama.css";
 import Select from "react-select"; // Import react-select
 import Rating from "react-rating-stars-component"; // Import star rating component
+import Cookies from 'js-cookie';
 
 const DramaInput = () => {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ const DramaInput = () => {
 
         const genresResponse = await fetch("http://localhost:8001/genres");
         const genresData = await genresResponse.json();
-        setGenresList(genresData);
+        setGenresList(genresData);  
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -312,8 +313,17 @@ const DramaInput = () => {
       });
       if (response.ok) {
         const result = await response.json();
-        console.log(result.message); // Tampilkan pesan sukses
-        navigate("/movie-list"); // Redirect ke halaman movie list jika berhasil
+        console.log(result.message); // Display success message
+  
+        // Cek peran pengguna dari cookie
+        const role = Cookies.get("role");
+        
+        // Redirect berdasarkan peran
+        if (role === "Admin") {
+          navigate("/movie-list"); // Jika admin, ke halaman movie list
+        } else {
+          navigate("/"); // Jika user biasa, ke halaman home
+        }
       } else {
         console.error("Error submitting form data:", response.statusText);
       }
@@ -369,7 +379,14 @@ const DramaInput = () => {
   };
 
   const handleBack = () => {
-    navigate("/movie-list"); // Redirect to movie-list on Back button click
+    const role = Cookies.get("role");
+        
+        // Redirect berdasarkan peran
+        if (role === "Admin") {
+          navigate("/movie-list"); // Jika admin, ke halaman movie list
+        } else {
+          navigate("/"); // Jika user biasa, ke halaman home
+        }
   };
 
   return (

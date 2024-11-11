@@ -23,7 +23,7 @@ const Detailmovie = () => {
   useEffect(() => {
     const fetchMovie = async () => {
       try {
-        const response = await fetch(`http://localhost:8001/movie/${id}`);
+        const response = await fetch(`http://localhost:8001/movies/detail/${id}`);
         if (!response.ok) {
           if (response.status === 404) {
             setError(true); // Set error state if movie is not found
