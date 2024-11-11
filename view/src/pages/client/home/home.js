@@ -269,7 +269,7 @@ useEffect(() => {
                 year={movie.year}
                 genres={movie.genres}
                 rating={movie.rating}
-                views={movie.views}
+                views={movie.view}
               />
             </Col>
           ))}

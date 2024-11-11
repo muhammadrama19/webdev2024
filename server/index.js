@@ -2401,6 +2401,7 @@ app.get('/confirm-email/:token', (req, res) => {
   });
 });
 
+
 app.post("/register", (req, res) => {
   const { username, email, password } = req.body;
 
