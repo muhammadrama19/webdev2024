@@ -114,12 +114,11 @@ This project built for Web Development Course at JTK POLBAN.
 
 ### Running the Application  
 5. Start your sql database server  
-6. Start the backend server on 'server' folder (assuming it is located in `index.js`):
+6. Start the backend server on 'server':
    ```bash
-   cd server
    node index.js
    ```
-7. Ooen new terminal start the frontend application on folder 'view':
+7. Open new terminal start the frontend application on folder 'view':
    ```bash
    npm start
    ```
