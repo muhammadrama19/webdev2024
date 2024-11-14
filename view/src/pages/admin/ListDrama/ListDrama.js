@@ -105,7 +105,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
       Swal.fire({
         icon: "success",
         title: "Success",
-        text: "Award deleted successfully",
+        text: "Movie has been moved to trash.",
         timer: 3000,
       });
       setSelectedMovie(null);

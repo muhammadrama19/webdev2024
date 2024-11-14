@@ -15,6 +15,7 @@ import "../InputDrama/InputDrama.css";
 import Select from "react-select"; // Import react-select
 import Rating from "react-rating-stars-component"; // Import star rating component
 import Cookies from 'js-cookie';
+import Swal from 'sweetalert2';
 
 const DramaInput = () => {
   const navigate = useNavigate();
@@ -359,6 +360,11 @@ const DramaInput = () => {
   
       if (response.ok) {
         const result = await response.json();
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: "Data has been added",
+        });
         console.log(result.message);
   
         const role = Cookies.get("role");
@@ -412,9 +418,15 @@ const DramaInput = () => {
   
       if (response.ok) {
         const result = await response.json();
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: "Data has been updated",
+        });
         console.log(result.message);
         navigate("/movie-list");
       } else {
+        
         console.error("Error updating form data:", response.statusText);
       }
     } catch (error) {
