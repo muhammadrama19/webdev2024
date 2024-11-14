@@ -8,6 +8,7 @@ import {
   Image,
   Badge,
   FormLabel,
+  Modal,
 } from "react-bootstrap";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../InputDrama/InputDrama.css";
@@ -48,6 +49,9 @@ const DramaInput = () => {
   const [actorsList, setActorsList] = useState([]);
   const [filteredActors, setFilteredActors] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [missingFields, setMissingFields] = useState([]);
+  const handleCloseModal = () => setShowModal(false);
 
   useEffect(() => {
     const fetchPlatformsAndCountries = async () => {
@@ -277,52 +281,91 @@ const DramaInput = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const isEmpty = (value) => !value || /^\s*$/.test(value);
   
-    // Extract values for country and awards
-    const countryValues = formData.country.map((option) => option.value);
-    const awardsValues = formData.awards.map((option) => option.value);
-  
-    // Prepare the data as a plain JSON object
-    const dataToSubmit = {
-      view: formData.view,
-      status: formData.status,
-      title: formData.title,
-      alt_title: formData.alternativeTitle,
-      director: formData.director,
-      release_year: formData.year,
-      country: countryValues, // Send array of country names
-      synopsis: formData.synopsis,
-      availability: formData.availability,
-      genres: formData.genres, // Array
-      actors: formData.actors, // Array
-      trailer: formData.trailer,
-      awards: awardsValues, // Send array of award names
-      imdb_score: formData.imdbScore,
-      posterUrl: formData.posterUrl,
-      backgroundUrl: formData.backgroundUrl,
+    // List field yang belum diisi
+    const fieldsToCheck = {
+      posterUrl: "Poster URL",
+      status: "Status",
+      view: "Total Views",
+      title: "Title",
+      director: "Director Name",
+      year: "Year",
+      country: "Country",
+      synopsis: "Synopsis",
+      availability: "Availability",
+      genres: "Genres",
+      actors: "Actors",
+      trailer: "Trailer",
+      backgroundUrl: "Background URL",
+      imdbScore: "IMDB Score"
     };
   
+    // Cek setiap field dan tambahkan ke daftar `missingFields` jika belum diisi
+    const newMissingFields = Object.keys(fieldsToCheck).filter((field) => {
+      if (field === "country" || field === "genres" || field === "actors") {
+        return formData[field].length === 0;
+      }
+      return isEmpty(formData[field]) || (field === "imdbScore" && formData.imdbScore === 0);
+    }).map((field) => fieldsToCheck[field]);
+  
+    // Tambahkan validasi untuk role dari setiap actor
+    formData.actors.forEach((actor, index) => {
+      if (isEmpty(actor.role)) {
+        newMissingFields.push(`Role for actor "${actor.name}"`);
+      }
+    });
+  
+    // Tampilkan modal jika ada field yang kosong atau role actor yang belum diisi
+    if (newMissingFields.length > 0) {
+      setMissingFields(newMissingFields);
+      setShowModal(true);
+      return;
+    }
+  
+    // Lanjutkan proses submit jika semua validasi terpenuhi
     try {
+      const countryValues = formData.country.map((option) => option.value);
+      const awardsValues = formData.awards.map((option) => option.value);
+  
+      const dataToSubmit = {
+        view: formData.view,
+        status: formData.status,
+        title: formData.title,
+        alt_title: formData.alternativeTitle,
+        director: formData.director,
+        release_year: formData.year,
+        country: countryValues,
+        synopsis: formData.synopsis,
+        availability: formData.availability,
+        genres: formData.genres,
+        actors: formData.actors,
+        trailer: formData.trailer,
+        awards: awardsValues,
+        imdb_score: formData.imdbScore,
+        posterUrl: formData.posterUrl,
+        backgroundUrl: formData.backgroundUrl,
+      };
+  
       const response = await fetch("http://localhost:8001/add-drama", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(dataToSubmit), // Send JSON data
+        body: JSON.stringify(dataToSubmit),
         credentials: "include"
       });
+  
       if (response.ok) {
         const result = await response.json();
-        console.log(result.message); // Display success message
+        console.log(result.message);
   
-        // Cek peran pengguna dari cookie
         const role = Cookies.get("role");
-        
-        // Redirect berdasarkan peran
         if (role === "Admin") {
-          navigate("/movie-list"); // Jika admin, ke halaman movie list
+          navigate("/movie-list");
         } else {
-          navigate("/"); // Jika user biasa, ke halaman home
+          navigate("/");
         }
       } else {
         console.error("Error submitting form data:", response.statusText);
@@ -330,7 +373,8 @@ const DramaInput = () => {
     } catch (error) {
       console.error("Error:", error);
     }
-  };
+  };  
+  
 
   const handleEdit = async (e) => {
     e.preventDefault();
@@ -391,7 +435,7 @@ const DramaInput = () => {
 
   return (
     <Container className="drama-input-container">
-      <h2 className="text-center mb-4">Input Drama</h2>
+      <h2 className="text-center mb-4">{isEdit ? "Edit Drama" : "Input Drama"}</h2>
       <Form className="drama-input-form" onSubmit={handleSubmit}>
         <Row className="gy-4 justify-content-center">
           {/* Kontainer kecil */}
@@ -683,6 +727,25 @@ const DramaInput = () => {
             </div>
           </Col>
         </Row>
+        {/* Modal untuk menampilkan field yang belum diisi */}
+        <Modal show={showModal} onHide={handleCloseModal} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Form Incomplete</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>Please fill in the following required fields:</p>
+            <ul>
+              {missingFields.map((field, index) => (
+                <li key={index}>{field}</li>
+              ))}
+            </ul>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCloseModal}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </Form>
     </Container>
   );

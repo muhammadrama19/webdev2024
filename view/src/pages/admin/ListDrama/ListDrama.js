@@ -28,6 +28,10 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   const [selectedMovie, setSelectedMovie] = useState(null); // Menyimpan data film yang dipilih
   const [showTrashModal, setShowTrashModal] = useState(false);
 
+  // State untuk modal yang menampilkan seluruh aktor
+  const [showActorsModal, setShowActorsModal] = useState(false);
+  const [currentActors, setCurrentActors] = useState([]); // Menyimpan daftar seluruh aktor
+
   // useEffect to fetch data from backend
   useEffect(() => {
     const fetchMovies = async () => {
@@ -61,6 +65,30 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   const handleShowDetail = (movie) => {
     setSelectedMovie(movie);
     setShowDetailModal(true);
+  };
+
+  const handleShowActors = (actors) => {
+    setCurrentActors(actors.split(", ")); // Membagi aktor dengan koma jika dikirim sebagai string
+    setShowActorsModal(true);
+  };
+
+  const renderActors = (actors) => {
+    const actorsList = actors.split(", ");
+    if (actorsList.length > 5) {
+      return (
+        <>
+          {actorsList.slice(0, 5).join(", ")}{" "}
+          <span
+            className="more-actors"
+            onClick={() => handleShowActors(actors)}
+            style={{ color: "grey", cursor: "pointer" }}
+          >
+            more
+          </span>
+        </>
+      );
+    }
+    return actors;
   };
 
   const handleDelete = async () => {
@@ -290,7 +318,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
                       {drama.title}
                     </td>
                     <td className="genres-column">{drama.Genres}</td>
-                    <td>{drama.Actors}</td>
+                    <td>{renderActors(drama.Actors)}</td>
                     <td className="action-column">
                       <Container className="action-button">
                         <Button
@@ -460,6 +488,29 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
           </Modal.Footer>
         </Modal>
       )}
+
+      {/* Modal untuk menampilkan seluruh aktor */}
+      <Modal
+        show={showActorsModal}
+        onHide={() => setShowActorsModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Actors List</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ul>
+            {currentActors.map((actor, index) => (
+              <li key={index}>{actor}</li>
+            ))}
+          </ul>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowActorsModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };
