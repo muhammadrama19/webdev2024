@@ -10,6 +10,8 @@ function ValidateDrama() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [actionType, setActionType] = useState(null); // "approve" or "reject"
   const [selectedDrama, setSelectedDrama] = useState(null);
+  const [showSynopsisModal, setShowSynopsisModal] = useState(false); // State untuk modal synopsis
+  const [fullSynopsis, setFullSynopsis] = useState(''); // Menyimpan synopsis lengkap
 
   // Fetch movie data with status 3
   useEffect(() => {
@@ -66,6 +68,32 @@ function ValidateDrama() {
       setSelectedDrama(null);
       setActionType(null);
     }
+  };
+
+  // Fungsi untuk memotong synopsis dan menampilkan "more" jika lebih dari 30 kata
+  const renderSynopsis = (synopsis) => {
+    const words = synopsis.split(" ");
+    if (words.length > 30) {
+      const truncatedSynopsis = words.slice(0, 30).join(" ") + "...";
+      return (
+        <>
+          {truncatedSynopsis}{" "}
+          <span
+            onClick={() => handleShowFullSynopsis(synopsis)}
+            style={{ color: "grey", cursor: "pointer" }}
+          >
+            more
+          </span>
+        </>
+      );
+    }
+    return synopsis;
+  };
+
+  // Fungsi untuk menampilkan modal synopsis lengkap
+  const handleShowFullSynopsis = (synopsis) => {
+    setFullSynopsis(synopsis);
+    setShowSynopsisModal(true);
   };
 
   return (
@@ -129,7 +157,7 @@ function ValidateDrama() {
                         <span>No Image</span>
                       )}</td>
                   <td>{drama.title}</td>
-                  <td>{drama.synopsis}</td>
+                  <td>{renderSynopsis(drama.synopsis)}</td>
                   <td>{drama.status === 3 ? "Unapproved" : drama.status === 1 ? "Approved" : "Rejected"}</td>
                   <td>
                     {drama.status === 3 && (
@@ -183,6 +211,23 @@ function ValidateDrama() {
             onClick={confirmAction}
           >
             {actionType === "approve" ? "Approve" : "Reject"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal untuk menampilkan synopsis lengkap */}
+      <Modal
+        show={showSynopsisModal}
+        onHide={() => setShowSynopsisModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Full Synopsis</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{fullSynopsis}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSynopsisModal(false)}>
+            Close
           </Button>
         </Modal.Footer>
       </Modal>
