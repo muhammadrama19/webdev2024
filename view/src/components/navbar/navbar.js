@@ -151,8 +151,44 @@ const Navbar = ({ loggedInUsername }) => {
                 </div>
               </Dropdown.Header>
               <Dropdown.Divider />
-              <Dropdown.Item className="dropdown-item-custom"  onClick={() => navigate("/profile")}>Profile</Dropdown.Item>
-              <Dropdown.Item className="dropdown-item-custom" onClick={handleLogout}>Sign out</Dropdown.Item>
+              <Dropdown.Item
+                className="dropdown-item-custom mt-5"
+                style={{
+                  padding: "0.5rem 1rem",
+                  color: "#333",
+                  transition: "background-color 0.3s ease, color 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "var(--primary-on-hover)";
+                  e.target.style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "";
+                  e.target.style.color = "#333";
+                }}
+                onClick={() => navigate("/profile")}
+              >
+                Profile
+              </Dropdown.Item>
+              <Dropdown.Item
+                className="dropdown-item-custom"
+                style={{
+                  padding: "0.5rem 1rem",
+                  color: "#333",
+                  transition: "background-color 0.3s ease, color 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "var(--primary-on-hover)";
+                  e.target.style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "";
+                  e.target.style.color = "#333";
+                }}
+                onClick={handleLogout}
+              >
+                Sign out
+              </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
 
