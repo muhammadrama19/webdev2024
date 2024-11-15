@@ -351,7 +351,7 @@ app.get("/movies/detail/:id", (req, res) => {
     LEFT JOIN
     status ON movies.status_id = status.id
     WHERE
-      movies.id = ? AND status = 1
+      movies.id = ? AND status = 1 AND movies.deleted_at IS NULL
   `;
 
   db.query(query, [id], (err, results) => {
