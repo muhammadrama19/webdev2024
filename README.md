@@ -83,14 +83,19 @@ This project built for Web Development Course at JTK POLBAN.
    ```
 2. Navigate to the project directory:
    ```bash
-   cd webdev2024/client
+   cd webdev2024
    ```
 
 ### Importing the Database
 3. Import the database from the repo into your MySQL instance using the appropriate `.sql` file. The database is located in repository on folder database.
 
 ### Install Dependencies
-4. Navigate to the project directory and install dependencies:
+4. Navigate to the project directory and install dependencies. Both for server and view:
+   Open new terminal on folder 'server', then type
+   ```bash
+   npm install
+   ```
+   Open new terminal on folder 'view', then type
    ```bash
    npm install
    ```
@@ -109,11 +114,11 @@ This project built for Web Development Course at JTK POLBAN.
 
 ### Running the Application  
 5. Start your sql database server  
-6. Start the backend server (assuming it is located in `index.js`):
+6. Start the backend server on 'server':
    ```bash
    node index.js
    ```
-7. Start the frontend application:
+7. Open new terminal start the frontend application on folder 'view':
    ```bash
    npm start
    ```

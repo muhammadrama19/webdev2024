@@ -672,12 +672,12 @@ app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
 
   let query = `
 
-    SELECT
+  SELECT
     m.status, 
     m.id, 
     m.title,
     m.imdb_score,
-    m.alt_title,
+    IFNULL(m.alt_title, '') AS alt_title,  -- Menggunakan IFNULL untuk alt_title
     m.director,
     m.poster, 
     m.background,
@@ -687,24 +687,24 @@ app.get("/movie-list", isAuthenticated, hasAdminRole, (req, res) => {
     GROUP_CONCAT(DISTINCT CONCAT(ac.name, ' (', mac.role, ')') SEPARATOR ', ') AS Actors,
     GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS Genres,
     GROUP_CONCAT(DISTINCT c.country_name SEPARATOR ', ') AS Countries,
-    GROUP_CONCAT(DISTINCT a.awards_name SEPARATOR ', ') AS Awards,
+    IFNULL(GROUP_CONCAT(DISTINCT a.awards_name SEPARATOR ', '), '') AS Awards,  -- Menggunakan IFNULL untuk Awards
     m.synopsis,
     m.availability_id,
     m.status_id
 
-FROM movies m
-JOIN movie_actors mac ON mac.movie_id = m.id
-JOIN actors ac ON ac.id = mac.actor_id
-JOIN movie_genres mg ON mg.movie_id = m.id
-JOIN genres g ON g.id = mg.genre_id
-JOIN status s ON s.id = m.status_id
-JOIN availability av ON av.id = m.availability_id
-JOIN movie_countries mc ON mc.movie_id = m.id
-JOIN countries c ON c.id = mc.country_id
-JOIN movie_awards ma ON ma.movie_id = m.id
-JOIN awards a ON a.id = ma.awards_id
-    `;
+  FROM movies m
+  JOIN movie_actors mac ON mac.movie_id = m.id
+  JOIN actors ac ON ac.id = mac.actor_id
+  JOIN movie_genres mg ON mg.movie_id = m.id
+  JOIN genres g ON g.id = mg.genre_id
+  JOIN status s ON s.id = m.status_id
+  JOIN availability av ON av.id = m.availability_id
+  JOIN movie_countries mc ON mc.movie_id = m.id
+  JOIN countries c ON c.id = mc.country_id
+  LEFT JOIN movie_awards ma ON ma.movie_id = m.id  -- LEFT JOIN agar tetap ambil movie meski tidak ada award
+  LEFT JOIN awards a ON a.id = ma.awards_id  -- LEFT JOIN agar tetap ambil data meski tidak ada awards
 
+  `;
 
   // Tambahkan filter berdasarkan status jika parameter status ada
   if (status) {
@@ -723,7 +723,6 @@ JOIN awards a ON a.id = ma.awards_id
     res.json(results);
   });
 });
-
 
 // app.get("/users",  isAuthenticated, hasAdminRole, (req, res) => {
 app.get("/users", isAuthenticated, hasAdminRole, (req, res) => {
@@ -792,7 +791,6 @@ app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   `;
 
   try {
-
     await db
       .promise()
       .query(query, [username, email, role, profile_picture, password, id]);
@@ -819,18 +817,15 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
       return res
         .status(404)
         .json({ message: "User not found", success: false });
-
     }
 
     //get user details
     const userQuery = `SELECT * FROM users WHERE id = ?`;
     const [userData] = await db.promise().query(userQuery, [userId]);
     if (userData.length === 0) {
-
       return res
         .status(404)
         .json({ message: "User not found", success: false });
-
     }
 
     const user = userData[0];
@@ -864,12 +859,10 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
             .json({ message: "Error sending banned email", success: false });
         }
 
-
         res.json({
           message: "User banned successfully and email sent",
           success: true,
         });
-
       });
     });
 
@@ -879,7 +872,6 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
     res.status(500).json({ error: "Failed to update user status" });
   }
 });
-
 
 app.put(
   "/users/suspend/:id",
@@ -1037,7 +1029,6 @@ app.put(
   }
 );
 
-
 // Route to fetch all actors
 app.get("/actors", (req, res) => {
   const query = `
@@ -1133,7 +1124,6 @@ app.post("/actors", isAuthenticated, hasAdminRole, (req, res) => {
     });
   });
 });
-
 
 // Route to update an existing actor with country existence check
 app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
@@ -1260,7 +1250,6 @@ app.post("/genres", isAuthenticated, hasAdminRole, (req, res) => {
   });
 });
 
-
 // Update an existing genre
 app.put("/genres/update/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
@@ -1312,7 +1301,6 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-
     const query = `
       UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
     `;
@@ -1349,7 +1337,6 @@ app.get("/countries", isAuthenticated, (req, res) => {
 
       res.status(500).json({ error: "Internal Server Error" });
       return;
-
     }
     res.json(results);
   });
@@ -1429,7 +1416,6 @@ app.put("/countries/:id", isAuthenticated, hasAdminRole, (req, res) => {
   // Start a transaction
   db.beginTransaction((err) => {
     if (err) {
-
       console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
@@ -1468,7 +1454,6 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
-
 
     const query = `
       UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
@@ -1529,7 +1514,6 @@ app.get("/awards", isAuthenticated, (req, res) => {
 
       res.status(500).json({ error: "Internal Server Error" });
       return;
-
     }
     res.json(results);
   });
@@ -1749,7 +1733,6 @@ app.get("/reviews", (req, res) => {
   });
 });
 
-
 // Route to approve a review
 app.put("/reviews/:id/approve", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
@@ -1848,7 +1831,6 @@ app.get("/status", (req, res) => {
     res.json(results); // Mengirimkan hasil dalam bentuk JSON
   });
 });
-
 
 //CRUD
 
@@ -1952,9 +1934,11 @@ app.post("/add-drama", isAuthenticated, async (req, res) => {
     // Insert into movie_countries
     for (const countryName of country) {
       const countryQuery = `SELECT id FROM countries WHERE country_name = ?`;
-      const [countryResult] = await db.promise().query(countryQuery, [countryName]);
+      const [countryResult] = await db
+        .promise()
+        .query(countryQuery, [countryName]);
       const countryId = countryResult.length > 0 ? countryResult[0].id : null;
-  
+
       if (countryId) {
         const movieCountryQuery = `INSERT INTO movie_countries (movie_id, country_id) VALUES (?, ?)`;
         await db.promise().query(movieCountryQuery, [movieId, countryId]);
@@ -2250,7 +2234,17 @@ app.post("/login", (req, res) => {
       if (user.Status_Account === 2) {
         return res.json({
           Status: "Account Suspended",
-          Message: "Your email has been suspended. Please check your email for further information",
+          Message:
+            "Your email has been suspended. Please check your email for further information",
+        });
+      }
+
+      //if account status = 3 it wont be able to login
+      if (user.Status_Account === 3) {
+        return res.json({
+          Status: "Account Banned",
+          Message:
+            "Your email has been Banned. Please check your email for further information",
         });
       }
 
@@ -2347,6 +2341,12 @@ app.get(
       );
     }
 
+    // Check if user banned or not
+    if (user.Status_Account === 3) {
+      // Redirect with a custom error message in query params
+      return res.redirect(`http://localhost:3001/login?error=Account_Banned`);
+    }
+
     // Generate JWT token with user info, including role
     const token = jwt.sign(
       {
@@ -2377,30 +2377,30 @@ app.get(
   }
 );
 
-app.get('/confirm-email/:token', (req, res) => {
+app.get("/confirm-email/:token", (req, res) => {
   const { token } = req.params;
 
   // Verify email confirmation token
-  jwt.verify(token, 'EMAIL_SECRET', (err, decoded) => {
+  jwt.verify(token, "EMAIL_SECRET", (err, decoded) => {
     if (err) {
-      return res.json({ message: 'Invalid or expired token' });
+      return res.json({ message: "Invalid or expired token" });
     }
 
     const email = decoded.email;
 
     // Update the user to mark their email as confirmed
-    const updateSql = "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
-    
+    const updateSql =
+      "UPDATE users SET isEmailConfirmed = true WHERE email = ?";
+
     db.query(updateSql, [email], (err, result) => {
       if (err) {
-        return res.json({ message: 'Error confirming email' });
+        return res.json({ message: "Error confirming email" });
       }
 
       res.json({ message: "Email confirmed successfully! You can now login." });
     });
   });
 });
-
 
 app.post("/register", (req, res) => {
   const { username, email, password } = req.body;
@@ -2510,7 +2510,6 @@ app.post("/register", (req, res) => {
   });
 });
 
-
 app.post("/forgot-password", (req, res) => {
   const { email } = req.body;
 
@@ -2535,11 +2534,11 @@ app.post("/forgot-password", (req, res) => {
     //only account with traditional login can forgot password
     if (userData[0].googleId) {
       return res.json({
-        message: "It looks like you signed up with Google. Please log in using your Google account.",
+        message:
+          "It looks like you signed up with Google. Please log in using your Google account.",
         success: false,
       });
     }
-
 
     //only account with traditional login can forgot password
     if (userData[0].googleId) {
@@ -2631,13 +2630,10 @@ app.post("/reset-password/:token", (req, res) => {
 
       // Check if the password has changed since the token was issued
       if (passwordVersion !== currentPasswordVersion) {
-
-        return res
-          .status(400)
-          .json({
-            message: "Invalid token due to password change",
-            success: false,
-          });
+        return res.status(400).json({
+          message: "Invalid token due to password change",
+          success: false,
+        });
       }
 
       // Proceed with password reset
