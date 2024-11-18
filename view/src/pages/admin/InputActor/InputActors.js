@@ -97,7 +97,7 @@ const ActorManager = () => {
 
     const handleDeleteActor = async () => {
         try {
-            const response = await axios.put(`http://localhost:8001/actors/delete/${actorData.id}`, {}, {
+            await axios.put(`http://localhost:8001/actors/delete/${actorData.id}`, {}, {
                 withCredentials: true
             });
             setActors(actors.filter(actor => actor.id !== actorData.id));

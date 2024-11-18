@@ -1337,7 +1337,7 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
     FROM movie_genres mg
     JOIN movies m ON mg.movie_id = m.id
     WHERE mg.genre_id = ? AND m.deleted_at IS NULL;
-  `;
+    `;
     db.query(checkMovieGenresQuery, [id], (err, movieGenres) => {
       if (err) {
         console.error("Error checking movie_genres:", err.message);
@@ -1767,8 +1767,9 @@ app.put("/awards/:id", isAuthenticated, hasAdminRole, (req, res) => {
     });
   });
 });
+
 // Route to delete an award
-app.delete("/awards/:id", isAuthenticated, hasAdminRole, (req, res) => {
+app.put("/awards/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
   // Start a transaction
@@ -1778,35 +1779,57 @@ app.delete("/awards/:id", isAuthenticated, hasAdminRole, (req, res) => {
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    const query = `
+    // Pengecekan relasi pada tabel movie_awards
+    const checkMovieAwardsQuery = `
+      SELECT mg.*, m.deleted_at 
+      FROM movie_awards mg
+      JOIN movies m ON mg.movie_id = m.id
+      WHERE mg.awards_id = ? AND m.deleted_at IS NULL;
+    `;
+    db.query(checkMovieAwardsQuery, [id], (err, movieAwards) => {
+      if (err) {
+        console.error("Error checking movie_awards:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to check movie_awards" });
+        });
+      }
+
+      if (movieAwards.length > 0) {
+        return db.rollback(() => {
+          return res.status(400).json({ error: "Cannot delete award, it is still referenced in movie_awards." });
+        });
+      }
+
+      const query = `
       UPDATE awards SET deleted_at = CURRENT_TIMESTAMP
       WHERE id = ?;
-    `;
+      `;
 
-    db.query(query, [id], (err, result) => {
-      if (err) {
-        console.error("Error deleting award:", err.message);
-        return db.rollback(() => {
-          res.status(500).json({ error: "Failed to delete award." });
-        });
-      }
-
-      if (result.affectedRows === 0) {
-        return db.rollback(() => {
-          res.status(404).json({ error: "Award not found." });
-        });
-      }
-
-      // Commit the transaction if the update succeeds
-      db.commit((err) => {
+      db.query(query, [id], (err, result) => {
         if (err) {
-          console.error("Error committing transaction:", err);
+          console.error("Error deleting award:", err.message);
           return db.rollback(() => {
-            res.status(500).json({ error: "Internal Server Error" });
+            res.status(500).json({ error: "Failed to delete award." });
           });
         }
 
-        res.json({ message: "Award deleted successfully." });
+        if (result.affectedRows === 0) {
+          return db.rollback(() => {
+            res.status(404).json({ error: "Award not found." });
+          });
+        }
+
+        // Commit the transaction if the update succeeds
+        db.commit((err) => {
+          if (err) {
+            console.error("Error committing transaction:", err);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Internal Server Error" });
+            });
+          }
+
+          res.json({ message: "Award deleted successfully." });
+        });
       });
     });
   });
