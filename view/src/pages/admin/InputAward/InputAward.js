@@ -272,7 +272,11 @@ const AwardsManager = () => {
         }
     };
 
-    // Function untuk filter award berdasarkan search term (sebelum pagination)
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value); 
+        setCurrentPage(1); // Reset halaman ke awal saat input pencarian berubah
+    };
+
     const filteredAwards = awards.filter((award) =>
         (award.awards_name && award.awards_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (award.country_name && award.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -323,7 +327,7 @@ const AwardsManager = () => {
             <Container className="d-flex justify-content-end">
                 <Row className="justify-content-end">
                     <Col xs="auto" className="d-flex mb-4">
-                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                    <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
                             <InputGroup.Text>
                                 <FaSearch />
                             </InputGroup.Text>
@@ -332,7 +336,7 @@ const AwardsManager = () => {
                                 placeholder="Search Award, Country, or Year..."
                                 aria-label="Search"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={handleSearchChange}
                             />
                         </InputGroup>
                     </Col>

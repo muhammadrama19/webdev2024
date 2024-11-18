@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Table, Button, Dropdown, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Table, Button, Dropdown, Modal } from "react-bootstrap";
 import "./ValidateDrama.scss";
 
 function ValidateDrama() {
   const [dramas, setDramas] = useState([]);
+  const [filteredDramas, setFilteredDramas] = useState([]); // Data yang sudah difilter
+  const [searchTerm, setSearchTerm] = useState(""); // State untuk input pencarian
   const [showCount, setShowCount] = useState(10);
   const [loading, setLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [actionType, setActionType] = useState(null); // "approve" or "reject"
   const [selectedDrama, setSelectedDrama] = useState(null);
   const [showSynopsisModal, setShowSynopsisModal] = useState(false); // State untuk modal synopsis
-  const [fullSynopsis, setFullSynopsis] = useState(''); // Menyimpan synopsis lengkap
+  const [fullSynopsis, setFullSynopsis] = useState(""); // Menyimpan synopsis lengkap
   const [showDetailModal, setShowDetailModal] = useState(false); // State untuk modal detail drama
 
   // Fetch movie data with status 3
@@ -23,8 +25,8 @@ function ValidateDrama() {
           headers: { "Content-Type": "application/json" },
         });
         const data = await response.json();
-        console.log("Data Validasi: ", data);
         setDramas(data);
+        setFilteredDramas(data); // Set data yang difilter sama dengan data awal
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -34,6 +36,19 @@ function ValidateDrama() {
 
     fetchMovies();
   }, []);
+
+  // Fungsi untuk menangani pencarian
+  const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+    const filtered = dramas.filter((drama) => {
+      return (
+        drama.title.toLowerCase().includes(term) || // Filter berdasarkan title
+        (drama.synopsis && drama.synopsis.toLowerCase().includes(term)) // Filter berdasarkan synopsis
+      );
+    });
+    setFilteredDramas(filtered); // Update data yang difilter
+  };
 
   // Handle approve or reject with confirmation
   const handleAction = (id, type) => {
@@ -46,20 +61,22 @@ function ValidateDrama() {
     try {
       if (actionType === "approve") {
         await fetch(`http://localhost:8001/movie-restore/${selectedDrama}`, {
-          method: 'PUT',
-          credentials: 'include',
+          method: "PUT",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: 1 }),
         });
-        setDramas(dramas.filter(drama => drama.id !== selectedDrama));
+        setDramas(dramas.filter((drama) => drama.id !== selectedDrama));
+        setFilteredDramas(filteredDramas.filter((drama) => drama.id !== selectedDrama));
       } else if (actionType === "reject") {
         await fetch(`http://localhost:8001/movie-rejected/${selectedDrama}`, {
-          method: 'PUT',
-          credentials: 'include',
+          method: "PUT",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: 4 }),
         });
-        setDramas(dramas.filter(drama => drama.id !== selectedDrama));
+        setDramas(dramas.filter((drama) => drama.id !== selectedDrama));
+        setFilteredDramas(filteredDramas.filter((drama) => drama.id !== selectedDrama));
       }
     } catch (error) {
       console.error(`Error ${actionType}ing drama:`, error);
@@ -125,7 +142,13 @@ function ValidateDrama() {
         </Col>
 
         <Col xs="auto" className="d-flex me-2 align-items-center">
-          <input type="text" className="search-input form-control" placeholder="Search" />
+          <input
+            type="text"
+            className="search-input form-control"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={handleSearch} // Tambahkan handler pencarian
+          />
         </Col>
       </Row>
 
@@ -145,32 +168,38 @@ function ValidateDrama() {
               </tr>
             </thead>
             <tbody>
-              {dramas.slice(0, showCount).map((drama) => (
+              {filteredDramas.slice(0, showCount).map((drama, index) => (
                 <tr key={drama.id}>
-                  <td>{dramas.indexOf(drama) + 1}</td>
-                  <td>{drama.poster ? (
-                        <img
-                          src={drama.poster}
-                          alt={drama.title}
-                          className="poster-image"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src =
-                              "https://via.placeholder.com/100x150?text=No+Image";
-                          }}
-                        />
-                      ) : (
-                        <span>No Image</span>
-                      )}</td>
+                  <td>{index + 1}</td>
+                  <td>
+                    {drama.poster ? (
+                      <img
+                        src={drama.poster}
+                        alt={drama.title}
+                        className="poster-image"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/100x150?text=No+Image";
+                        }}
+                      />
+                    ) : (
+                      <span>No Image</span>
+                    )}
+                  </td>
                   <td
                     className="title-column"
-                    // style={{ color: "white", cursor: "pointer" }}
                     onClick={() => handleShowDetail(drama)}
                   >
                     {drama.title}
                   </td>
                   <td>{renderSynopsis(drama.synopsis)}</td>
-                  <td>{drama.status === 3 ? "Unapproved" : drama.status === 1 ? "Approved" : "Rejected"}</td>
+                  <td>
+                    {drama.status === 3
+                      ? "Unapproved"
+                      : drama.status === 1
+                      ? "Approved"
+                      : "Rejected"}
+                  </td>
                   <td>
                     {drama.status === 3 && (
                       <>
@@ -196,7 +225,7 @@ function ValidateDrama() {
               ))}
             </tbody>
           </Table>
-          {dramas.length === 0 && (
+          {filteredDramas.length === 0 && (
             <p className="text-center mt-3">There's no movies to validate.</p>
           )}
         </>
@@ -209,7 +238,9 @@ function ValidateDrama() {
         centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>Confirm {actionType === "approve" ? "Approve" : "Reject"}</Modal.Title>
+          <Modal.Title>
+            Confirm {actionType === "approve" ? "Approve" : "Reject"}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           Are you sure you want to {actionType} this movie?
@@ -268,7 +299,8 @@ function ValidateDrama() {
               </div>
               <div className="detail-content">
                 <p>
-                  <strong>Director:</strong> {selectedDrama.director || "Unknown"}
+                  <strong>Director:</strong>{" "}
+                  {selectedDrama.director || "Unknown"}
                 </p>
                 <p>
                   <strong>Year:</strong>{" "}

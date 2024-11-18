@@ -175,8 +175,13 @@ const GenreManager = () => {
     };
 
     // Function untuk filter drama berdasarkan search term (sebelum pagination)
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1); // Reset ke halaman pertama saat pencarian berubah
+    };
+
     const filteredGenres = genres.filter((genre) =>
-        genre.name && genre.name.toLowerCase().includes(searchTerm.toLowerCase())
+        genre.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const indexOfLastGenre = currentPage * showCount;
@@ -223,16 +228,15 @@ const GenreManager = () => {
             <Container className="d-flex justify-content-end">
                 <Row className="justify-content-end">
                     <Col xs="auto" className="d-flex mb-4">
-                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                    <InputGroup className="mb-4" style={{ maxWidth: "400px", margin: "0 auto" }}>
                             <InputGroup.Text>
                                 <FaSearch />
                             </InputGroup.Text>
                             <FormControl
                                 type="text"
                                 placeholder="Search Genre..."
-                                aria-label="Search"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={handleSearchChange}
                             />
                         </InputGroup>
                     </Col>

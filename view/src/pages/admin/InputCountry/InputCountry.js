@@ -185,10 +185,15 @@ const CountryManager = () => {
         }
     };
 
-    // Function untuk filter drama berdasarkan search term (sebelum pagination)
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value); 
+        setCurrentPage(1); // Reset halaman ke 1 saat pencarian berubah
+    };
+
     const filteredCountries = countries.filter((country) =>
         country.country_name && country.country_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
 
     const indexOfLastCountry = currentPage * showCount;
     const indexOfFirstCountry = indexOfLastCountry - showCount;
@@ -235,7 +240,7 @@ const CountryManager = () => {
             <Container className="d-flex justify-content-end">
                 <Row className="justify-content-end">
                     <Col xs="auto" className="d-flex mb-4">
-                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                    <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
                             <InputGroup.Text>
                                 <FaSearch />
                             </InputGroup.Text>
@@ -244,7 +249,7 @@ const CountryManager = () => {
                                 placeholder="Search Country..."
                                 aria-label="Search"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={handleSearchChange}
                             />
                         </InputGroup>
                     </Col>
