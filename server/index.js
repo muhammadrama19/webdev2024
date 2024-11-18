@@ -2206,7 +2206,7 @@ app.put(
 //RESTORE
 app.put("/movie-restore/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
-  const query = `UPDATE movies SET status = 1 WHERE id = ?`;
+  const query = `UPDATE movies SET status = 1, deleted_at = NULL WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
