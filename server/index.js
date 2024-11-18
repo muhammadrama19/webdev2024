@@ -1180,20 +1180,50 @@ app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
 app.put("/actors/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
-  const query = `
-    UPDATE actors SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
-  `;
-  db.query(query, [id], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error deleting actor:", err.message);
-      return res.status(500).json({ error: "Failed to delete actor." });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Actor not found." });
-    }
+    // Pengecekan relasi pada tabel movie_actor
+    const checkMovieActorQuery = `
+    SELECT ma.*, m.deleted_at 
+    FROM movie_actors ma
+    JOIN movies m ON ma.movie_id = m.id
+    WHERE ma.actor_id = ? AND m.deleted_at IS NULL;
+    `;
+    db.query(checkMovieActorQuery, [id], (err, movieActors) => {
+      if (err) {
+        console.error("Error checking movie_actor:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to check movie_actor" });
+        });
+      }
 
-    res.json({ message: "Actor deleted successfully." });
+      if (movieActors.length > 0) {
+        return db.rollback(() => {
+          return res.status(400).json({ error: "Cannot delete actor, it is still referenced in movie_actor." });
+        });
+      }
+
+      const query = `
+      UPDATE actors SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+      `;
+      db.query(query, [id], (err, result) => {
+        if (err) {
+          console.error("Error deleting actor:", err.message);
+          return res.status(500).json({ error: "Failed to delete actor." });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ error: "Actor not found." });
+        }
+
+        res.json({ message: "Actor deleted successfully." });
+      });
+    });
   });
 });
 
@@ -1301,27 +1331,49 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    const query = `
-      UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
-    `;
-    db.query(query, [id], (err) => {
+    // Pengecekan relasi pada tabel movie_genres
+    const checkMovieGenresQuery = `
+    SELECT mg.*, m.deleted_at 
+    FROM movie_genres mg
+    JOIN movies m ON mg.movie_id = m.id
+    WHERE mg.genre_id = ? AND m.deleted_at IS NULL;
+  `;
+    db.query(checkMovieGenresQuery, [id], (err, movieGenres) => {
       if (err) {
-        console.error("Error deleting genre:", err.message);
+        console.error("Error checking movie_genres:", err.message);
         return db.rollback(() => {
-          res.status(500).json({ error: "Failed to delete genre" });
+          res.status(500).json({ error: "Failed to check movie_genres" });
         });
       }
 
-      // Commit the transaction if the update succeeds
-      db.commit((err) => {
+      if (movieGenres.length > 0) {
+        return db.rollback(() => {
+          return res.status(400).json({ error: "Cannot delete country, it is still referenced in movie_genres." });
+        });
+      }
+
+      const query = `
+      UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+    `;
+      db.query(query, [id], (err) => {
         if (err) {
-          console.error("Error committing transaction:", err);
+          console.error("Error deleting genre:", err.message);
           return db.rollback(() => {
-            res.status(500).json({ error: "Internal Server Error" });
+            res.status(500).json({ error: "Failed to delete genre" });
           });
         }
 
-        res.json({ message: "Genre deleted successfully" });
+        // Commit the transaction if the update succeeds
+        db.commit((err) => {
+          if (err) {
+            console.error("Error committing transaction:", err);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Internal Server Error" });
+            });
+          }
+
+          res.json({ message: "Genre deleted successfully" });
+        });
       });
     });
   });
@@ -1444,7 +1496,6 @@ app.put("/countries/:id", isAuthenticated, hasAdminRole, (req, res) => {
   });
 });
 
-// Delete a country
 app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
@@ -1455,39 +1506,100 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    const query = `
-      UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
-      WHERE id = ?;
+    // Pengecekan relasi pada tabel awards
+    const checkAwardsQuery = `
+      SELECT * FROM awards WHERE country_id = ? AND deleted_at IS NULL;
     `;
-
-    db.query(query, [id], (err, result) => {
+    db.query(checkAwardsQuery, [id], (err, awards) => {
       if (err) {
-        console.error("Error deleting country:", err.message);
+        console.error("Error checking awards:", err.message);
         return db.rollback(() => {
-          res.status(500).json({ error: "Failed to delete country" });
+          res.status(500).json({ error: "Failed to check awards" });
         });
       }
 
-      if (result.affectedRows === 0) {
+      if (awards.length > 0) {
         return db.rollback(() => {
-          res.status(404).json({ error: "Country not found" });
+          return res.status(400).json({ error: "Cannot delete country, it is still referenced in awards." });
         });
       }
 
-      // Commit the transaction if the update succeeds
-      db.commit((err) => {
+      // Pengecekan relasi pada tabel actors
+      const checkActorsQuery = `
+        SELECT * FROM actors WHERE country_birth_id = ? AND deleted_at IS NULL;
+      `;
+      db.query(checkActorsQuery, [id], (err, actors) => {
         if (err) {
-          console.error("Error committing transaction:", err);
+          console.error("Error checking actors:", err.message);
           return db.rollback(() => {
-            res.status(500).json({ error: "Internal Server Error" });
+            res.status(500).json({ error: "Failed to check actors" });
           });
         }
 
-        res.json({ message: "Country deleted successfully" });
+        if (actors.length > 0) {
+          return db.rollback(() => {
+            return res.status(400).json({ error: "Cannot delete country, it is still referenced in actors." });
+          });
+        }
+
+        // Pengecekan relasi pada tabel movie_countries
+        const checkMovieCountriesQuery = `
+          SELECT mc.*, m.deleted_at 
+          FROM movie_countries mc
+          JOIN movies m ON mc.movie_id = m.id
+          WHERE mc.country_id = ? AND m.deleted_at IS NULL;
+        `;
+        db.query(checkMovieCountriesQuery, [id], (err, movieCountries) => {
+          if (err) {
+            console.error("Error checking movie_countries:", err.message);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Failed to check movie_countries" });
+            });
+          }
+
+          if (movieCountries.length > 0) {
+            return db.rollback(() => {
+              return res.status(400).json({ error: "Cannot delete country, it is still referenced in movie_countries." });
+            });
+          }
+
+          // Jika tidak ada relasi, lanjutkan dengan menghapus negara
+          const query = `
+            UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
+            WHERE id = ?;
+          `;
+          db.query(query, [id], (err, result) => {
+            if (err) {
+              console.error("Error deleting country:", err.message);
+              return db.rollback(() => {
+                res.status(500).json({ error: "Failed to delete country" });
+              });
+            }
+
+            if (result.affectedRows === 0) {
+              return db.rollback(() => {
+                res.status(404).json({ error: "Country not found" });
+              });
+            }
+
+            // Commit the transaction if the update succeeds
+            db.commit((err) => {
+              if (err) {
+                console.error("Error committing transaction:", err);
+                return db.rollback(() => {
+                  res.status(500).json({ error: "Internal Server Error" });
+                });
+              }
+
+              res.json({ message: "Country deleted successfully" });
+            });
+          });
+        });
       });
     });
   });
 });
+
 
 // Get all awards
 app.get("/awards", isAuthenticated, (req, res) => {
@@ -2206,7 +2318,7 @@ app.put(
 //RESTORE
 app.put("/movie-restore/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
-  const query = `UPDATE movies SET status = 1, deleted_at = NULL WHERE id = ?`;
+  const query = `UPDATE movies SET status = 1 WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {

@@ -11,10 +11,10 @@ const CountryManager = () => {
     const [editName, setEditName] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(true); 
-    const [currentPage, setCurrentPage] = useState(1); 
-    const [searchTerm, setSearchTerm] = useState(""); 
-    const [showCount, setShowCount] = useState(10); 
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showCount, setShowCount] = useState(10);
     const [selectedCountry, setSelectedCountry] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -58,7 +58,7 @@ const CountryManager = () => {
                 Swal.fire({
                     icon: "error",
                     title: "Country already exists!",
-                    text: "The country you are trying to add already exists in the database.",      
+                    text: "The country you are trying to add already exists in the database.",
                 });
             } else {
                 try {
@@ -106,8 +106,6 @@ const CountryManager = () => {
             });
             if (response.ok) {
                 setCountries((prevCountries) => prevCountries.filter((country) => country.id !== selectedCountry.id));
-                setShowDeleteModal(false);
-                setSelectedCountry(null);
                 Swal.fire({
                     icon: "success",
                     title: "Country deleted!",
@@ -118,7 +116,7 @@ const CountryManager = () => {
                 Swal.fire({
                     icon: "error",
                     title: "Failed to delete country!",
-                    text: "An error occurred while deleting the country. Please try again later or contact support.",
+                    text: "An error occurred while deleting the country. Please try again later or check relations in the database.",
                 });
             }
         } catch (error) {
@@ -126,10 +124,12 @@ const CountryManager = () => {
             Swal.fire({
                 icon: "error",
                 title: "Failed to delete country!",
-                text: "An error occurred while deleting the country. Please try again later or contact support.",
+                text: "An error occurred while deleting the country. Please try again later or check relations in the database.",
             });
         }
-    };    
+        setShowDeleteModal(false);
+        setSelectedCountry(null);
+    };
 
     const handleEditCounry = (id) => {
         setEditing(id);
