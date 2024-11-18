@@ -12,13 +12,19 @@ import {
   BsJustify,
   BsChevronDown,
   BsChevronUp,
+  BsXCircle,
 } from "react-icons/bs";
-import { NavLink, useLocation } from "react-router-dom"; // Import useLocation untuk memeriksa rute saat ini
+import { NavLink, useLocation, useNavigate } from "react-router-dom"; // Import useLocation untuk memeriksa rute saat ini
+import Cookies from "js-cookie";
 
 function Sidebar({ openSidebarToggle, OpenSidebar }) {
   const location = useLocation(); // Mengambil rute saat ini
   const [isMoviesOpen, setIsMoviesOpen] = useState(false);
   const [isAttributesOpen, setIsAttributesOpen] = useState(false); // State untuk Attributes accordion
+  const [username, setUsername] = useState(null);
+  const [email, setEmail] = useState(null);
+  const [role, setRole] = useState(null);
+  const navigate = useNavigate();
 
   // Toggle untuk membuka/menutup accordion Movies
   const toggleMoviesMenu = () => {
@@ -44,6 +50,25 @@ function Sidebar({ openSidebarToggle, OpenSidebar }) {
       setIsAttributesOpen(false); // Tutup accordion jika tidak di rute Attributes
     }
   }, [location.pathname]); // Meng-update setiap kali rute berubah
+
+  const handleLogout = () => {
+    // Hapus semua cookie terkait sesi
+    Cookies.remove("username");
+    Cookies.remove("email");
+    Cookies.remove("role");
+    Cookies.remove("token");
+    Cookies.remove("user_id");
+    Cookies.remove("profilePicture");
+
+    // Reset state untuk pengguna
+    setUsername(null);
+    setEmail(null);
+    setRole(null);
+
+    // Navigasi ke halaman login
+    navigate("/login", { replace: true }); // Replace untuk mencegah kembali ke halaman sebelumnya
+  };
+
 
   return (
     <aside id="sidebar" className={openSidebarToggle ? "sidebar-open" : ""}>
@@ -165,13 +190,15 @@ function Sidebar({ openSidebarToggle, OpenSidebar }) {
           </NavLink>
         </li>
         <li className="sidebar-list-item">
-          <NavLink
-            to="/settings"
+          {/* Button khusus untuk Logout */}
+          <button
             className="sidebar-link"
+            onClick={handleLogout}
             activeClassName="active"
+            style={{ background: "none", border: "none", color: "inherit", textAlign: "left" }}
           >
-            <BsFillGearFill className="icon" /> <span>Settings</span>
-          </NavLink>
+            <BsXCircle className="icon" /> <span>Logout</span>
+          </button>
         </li>
         <br />
         <li className="sidebar-list-item">
