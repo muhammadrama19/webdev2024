@@ -16,6 +16,7 @@ const ActorManager = () => {
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [actors, setActors] = useState([]);
+    const [filteredActors, setFilteredActors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
@@ -23,18 +24,19 @@ const ActorManager = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
-        const fetchActors = async () => {
-            try {
-                const response = await axios.get('http://localhost:8001/actors');
-                setActors(response.data);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching actors:", error);
-                setLoading(false);
-            }
-        };
         fetchActors();
-    }, []);
+    }, [showCount]);
+
+    const fetchActors = async () => {
+        try {
+            const response = await axios.get('http://localhost:8001/actors');
+            setActors(response.data);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching actors:", error);
+            setLoading(false);
+        }
+    };
 
     const checkCountryExists = async (countryName) => {
         try {
@@ -100,21 +102,21 @@ const ActorManager = () => {
                 withCredentials: true
             });
             setActors(actors.filter(actor => actor.id !== actorData.id));
-            setShowDeleteModal(false);
-            setActorData({ name: '', birthdate: '', country_name: '', actor_picture: '' });
             Swal.fire({
                 icon: 'success',
                 title: 'Success',
                 text: 'Actor deleted successfully!',
             });
+            fetchActors();
         } catch (error) {
-            console.error("Error deleting actor:", error);
             Swal.fire({
                 icon: 'error',
-                title: 'Oops...',
-                text: 'An error occurred while deleting the actor!',
+                title: 'Failed to delete actor!',
+                text: 'An error occurred while deleting the actor. Please try again later or check relations in the database.',
             });
         }
+        setShowDeleteModal(false);
+        setActorData({ name: '', birthdate: '', country_name: '', actor_picture: '' });
     };
 
     const handleEditActor = (actor) => {
@@ -170,11 +172,19 @@ const ActorManager = () => {
         setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
     };
 
-    const filteredActors = actors.filter((actor) =>
-        (actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (actor.birthdate && actor.birthdate.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    useEffect(() => {
+        const filtered = actors.filter((actor) =>
+            (actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (actor.birthdate && actor.birthdate.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        setFilteredActors(filtered);
+        setCurrentPage(1); // Reset halaman ke 1 saat pencarian berubah
+    }, [searchTerm, actors]);
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
 
     const indexOfLastActor = currentPage * showCount;
     const indexOfFirstActor = indexOfLastActor - showCount;
@@ -227,7 +237,7 @@ const ActorManager = () => {
             <Container className="d-flex justify-content-end">
                 <Row className="justify-content-end">
                     <Col xs="auto" className="d-flex mb-4">
-                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                    <InputGroup className="mb-4" style={{ maxWidth: "400px", margin: "0 auto" }}>
                             <InputGroup.Text>
                                 <FaSearch />
                             </InputGroup.Text>
@@ -236,7 +246,7 @@ const ActorManager = () => {
                                 placeholder="Search Actor, Country, or Birth Date..."
                                 aria-label="Search"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={handleSearchChange} // Tangani perubahan pencarian
                             />
                         </InputGroup>
                     </Col>

@@ -21,22 +21,21 @@ const AwardsManager = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
-
-        const fetchAwards = async () => {
-            try {
-                const response = await fetch('http://localhost:8001/awards', {
-                    credentials: 'include'
-                });
-                const data = await response.json();
-                setAwards(data);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching actors:", error);
-                setLoading(false);
-            }
-        };
         fetchAwards();
-    }, []);
+    }, [showCount]);
+    const fetchAwards = async () => {
+        try {
+            const response = await fetch('http://localhost:8001/awards', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            setAwards(data);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching actors:", error);
+            setLoading(false);
+        }
+    };
 
     const handleShowModal = () => {
         setIsEditing(false);
@@ -135,6 +134,7 @@ const AwardsManager = () => {
 
                 const data = await response.json();
                 setAwards((prevAwards) => [...prevAwards, data]);
+                fetchAwards();
                 Swal.fire({
                     icon: 'success',
                     title: 'Success',
@@ -215,6 +215,7 @@ const AwardsManager = () => {
                 setIsEditing(false);
                 setEditing(null);
                 handleCloseModal();
+                fetchAwards();
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
@@ -233,35 +234,49 @@ const AwardsManager = () => {
         }
     };
 
-
     const handleDeleteAward = async () => {
         if (awardData) {
             try {
-                await fetch(`http://localhost:8001/awards/${awardData.id}`, {
-                    method: 'DELETE',
+                const response = await fetch(`http://localhost:8001/awards/delete/${awardData.id}`, {
+                    method: 'PUT',
                     credentials: 'include'
                 });
-                setAwards((prevAwards) => prevAwards.filter((award) => award.id !== awardData.id));
-                setShowDeleteModal(false);
-                setAwardData({ country_name: '', awards_years: '', awards_name: '' });
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Award deleted successfully',
-                    timer: 3000,
-                });
+                if (response.ok) {
+
+                    setAwards((prevAwards) => prevAwards.filter((award) => award.id !== awardData.id));
+                    fetchAwards();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Award deleted successfully',
+                        timer: 3000,
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to delete award!',
+                        text: 'An error occurred while deleting the award. Please try again later or check relations in the database.',
+                        timer: 3000,
+                    });
+                }
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error',
-                    text: 'An error occurred while deleting the award. Please try again later.',
+                    title: 'Failed to delete award!',
+                    text: 'An error occurred while deleting the award. Please try again later or check relations in the database.',
                     timer: 3000,
                 });
             }
+            setShowDeleteModal(false);
+            setAwardData({ country_name: '', awards_years: '', awards_name: '' });
         }
     };
 
-    // Function untuk filter award berdasarkan search term (sebelum pagination)
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value); 
+        setCurrentPage(1); // Reset halaman ke awal saat input pencarian berubah
+    };
+
     const filteredAwards = awards.filter((award) =>
         (award.awards_name && award.awards_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (award.country_name && award.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -312,7 +327,7 @@ const AwardsManager = () => {
             <Container className="d-flex justify-content-end">
                 <Row className="justify-content-end">
                     <Col xs="auto" className="d-flex mb-4">
-                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                    <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
                             <InputGroup.Text>
                                 <FaSearch />
                             </InputGroup.Text>
@@ -321,7 +336,7 @@ const AwardsManager = () => {
                                 placeholder="Search Award, Country, or Year..."
                                 aria-label="Search"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={handleSearchChange}
                             />
                         </InputGroup>
                     </Col>
