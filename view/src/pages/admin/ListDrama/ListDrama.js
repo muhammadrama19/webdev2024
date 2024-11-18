@@ -12,7 +12,7 @@ import {
 } from "react-bootstrap";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import "../ListDrama/ListDrama.scss";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   const [showCount, setShowCount] = useState(10); // Items per page
@@ -55,7 +55,6 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
 
     fetchMovies();
   }, [viewTrash]); // Menjalankan ulang useEffect jika viewTrash berubah
-
 
   const handleEdit = (drama) => {
     console.info("Editing movie:", drama);
@@ -113,11 +112,11 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
     } catch (error) {
       console.error("Error deleting movie:", error);
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'An error occurred while moving movie to trash. Please try again later.',
+        icon: "error",
+        title: "Error",
+        text: "An error occurred while moving movie to trash. Please try again later.",
         timer: 3000,
-    });
+      });
     }
   };
 
@@ -168,6 +167,12 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
     setCurrentPage(pageNumber);
   };
 
+  const handleSearchTermChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setCurrentPage(1); // Set halaman ke 1 saat pencarian diubah
+  };
+
   const renderPagination = () => {
     let items = [];
     const startPage = Math.max(1, currentPage - 1);
@@ -184,6 +189,8 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
         </Pagination.Item>
       );
     }
+
+    
 
     return (
       <div className="d-flex justify-content-end">
@@ -256,7 +263,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
             className="search-input"
             placeholder="Search"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchTermChange} 
           />
         </div>
 
@@ -462,7 +469,8 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
               </div>
               <div className="detail-content">
                 <p>
-                  <strong>Director:</strong> {selectedMovie.director || "Unknown"}
+                  <strong>Director:</strong>{" "}
+                  {selectedMovie.director || "Unknown"}
                 </p>
                 <p>
                   <strong>Year:</strong>{" "}

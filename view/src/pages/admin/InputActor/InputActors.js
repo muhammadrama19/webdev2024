@@ -16,6 +16,7 @@ const ActorManager = () => {
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [actors, setActors] = useState([]);
+    const [filteredActors, setFilteredActors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
@@ -170,11 +171,19 @@ const ActorManager = () => {
         setActorData({ country_name: "", name: "", birthdate: "", actor_picture: "" });
     };
 
-    const filteredActors = actors.filter((actor) =>
-        (actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (actor.birthdate && actor.birthdate.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    useEffect(() => {
+        const filtered = actors.filter((actor) =>
+            (actor.name && actor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (actor.country_name && actor.country_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (actor.birthdate && actor.birthdate.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        setFilteredActors(filtered);
+        setCurrentPage(1); // Reset halaman ke 1 saat pencarian berubah
+    }, [searchTerm, actors]);
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
 
     const indexOfLastActor = currentPage * showCount;
     const indexOfFirstActor = indexOfLastActor - showCount;
@@ -227,7 +236,7 @@ const ActorManager = () => {
             <Container className="d-flex justify-content-end">
                 <Row className="justify-content-end">
                     <Col xs="auto" className="d-flex mb-4">
-                        <InputGroup className="mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                    <InputGroup className="mb-4" style={{ maxWidth: "400px", margin: "0 auto" }}>
                             <InputGroup.Text>
                                 <FaSearch />
                             </InputGroup.Text>
@@ -236,7 +245,7 @@ const ActorManager = () => {
                                 placeholder="Search Actor, Country, or Birth Date..."
                                 aria-label="Search"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={handleSearchChange} // Tangani perubahan pencarian
                             />
                         </InputGroup>
                     </Col>
