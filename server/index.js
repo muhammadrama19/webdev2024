@@ -1444,7 +1444,6 @@ app.put("/countries/:id", isAuthenticated, hasAdminRole, (req, res) => {
   });
 });
 
-// Delete a country
 app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
@@ -1455,39 +1454,97 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    const query = `
-      UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
-      WHERE id = ?;
+    // Pengecekan relasi pada tabel awards
+    const checkAwardsQuery = `
+      SELECT * FROM awards WHERE country_id = ?;
     `;
-
-    db.query(query, [id], (err, result) => {
+    db.query(checkAwardsQuery, [id], (err, awards) => {
       if (err) {
-        console.error("Error deleting country:", err.message);
+        console.error("Error checking awards:", err.message);
         return db.rollback(() => {
-          res.status(500).json({ error: "Failed to delete country" });
+          res.status(500).json({ error: "Failed to check awards" });
         });
       }
 
-      if (result.affectedRows === 0) {
+      if (awards.length > 0) {
         return db.rollback(() => {
-          res.status(404).json({ error: "Country not found" });
+          return res.status(400).json({ error: "Cannot delete country, it is still referenced in awards." });
         });
       }
 
-      // Commit the transaction if the update succeeds
-      db.commit((err) => {
+      // Pengecekan relasi pada tabel actors
+      const checkActorsQuery = `
+        SELECT * FROM actors WHERE country_birth_id = ?;
+      `;
+      db.query(checkActorsQuery, [id], (err, actors) => {
         if (err) {
-          console.error("Error committing transaction:", err);
+          console.error("Error checking actors:", err.message);
           return db.rollback(() => {
-            res.status(500).json({ error: "Internal Server Error" });
+            res.status(500).json({ error: "Failed to check actors" });
           });
         }
 
-        res.json({ message: "Country deleted successfully" });
+        if (actors.length > 0) {
+          return db.rollback(() => {
+            return res.status(400).json({ error: "Cannot delete country, it is still referenced in actors." });
+          });
+        }
+
+        // Pengecekan relasi pada tabel movie_countries
+        const checkMovieCountriesQuery = `
+          SELECT * FROM movie_countries WHERE country_id = ?;
+        `;
+        db.query(checkMovieCountriesQuery, [id], (err, movieCountries) => {
+          if (err) {
+            console.error("Error checking movie_countries:", err.message);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Failed to check movie_countries" });
+            });
+          }
+
+          if (movieCountries.length > 0) {
+            return db.rollback(() => {
+              return res.status(400).json({ error: "Cannot delete country, it is still referenced in movie_countries." });
+            });
+          }
+
+          // Jika tidak ada relasi, lanjutkan dengan menghapus negara
+          const query = `
+            UPDATE countries SET deleted_at = CURRENT_TIMESTAMP
+            WHERE id = ?;
+          `;
+          db.query(query, [id], (err, result) => {
+            if (err) {
+              console.error("Error deleting country:", err.message);
+              return db.rollback(() => {
+                res.status(500).json({ error: "Failed to delete country" });
+              });
+            }
+
+            if (result.affectedRows === 0) {
+              return db.rollback(() => {
+                res.status(404).json({ error: "Country not found" });
+              });
+            }
+
+            // Commit the transaction if the update succeeds
+            db.commit((err) => {
+              if (err) {
+                console.error("Error committing transaction:", err);
+                return db.rollback(() => {
+                  res.status(500).json({ error: "Internal Server Error" });
+                });
+              }
+
+              res.json({ message: "Country deleted successfully" });
+            });
+          });
+        });
       });
     });
   });
 });
+
 
 // Get all awards
 app.get("/awards", isAuthenticated, (req, res) => {
