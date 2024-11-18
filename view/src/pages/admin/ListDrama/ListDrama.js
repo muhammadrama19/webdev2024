@@ -462,6 +462,9 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
               </div>
               <div className="detail-content">
                 <p>
+                  <strong>Director:</strong> {selectedMovie.director || "Unknown"}
+                </p>
+                <p>
                   <strong>Year:</strong>{" "}
                   {selectedMovie.release_year || "Unknown"}
                 </p>
