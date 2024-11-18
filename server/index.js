@@ -1456,7 +1456,7 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
     // Pengecekan relasi pada tabel awards
     const checkAwardsQuery = `
-      SELECT * FROM awards WHERE country_id = ?;
+      SELECT * FROM awards WHERE country_id = ? AND deleted_at IS NULL;
     `;
     db.query(checkAwardsQuery, [id], (err, awards) => {
       if (err) {
@@ -1474,7 +1474,7 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
       // Pengecekan relasi pada tabel actors
       const checkActorsQuery = `
-        SELECT * FROM actors WHERE country_birth_id = ?;
+        SELECT * FROM actors WHERE country_birth_id = ? AND deleted_at IS NULL;
       `;
       db.query(checkActorsQuery, [id], (err, actors) => {
         if (err) {
@@ -1492,7 +1492,10 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
         // Pengecekan relasi pada tabel movie_countries
         const checkMovieCountriesQuery = `
-          SELECT * FROM movie_countries WHERE country_id = ?;
+          SELECT mc.*, m.deleted_at 
+          FROM movie_countries mc
+          JOIN movies m ON mc.movie_id = m.id
+          WHERE mc.country_id = ? AND m.deleted_at IS NULL;
         `;
         db.query(checkMovieCountriesQuery, [id], (err, movieCountries) => {
           if (err) {
@@ -2263,7 +2266,7 @@ app.put(
 //RESTORE
 app.put("/movie-restore/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
-  const query = `UPDATE movies SET status = 1, deleted_at = NULL WHERE id = ?`;
+  const query = `UPDATE movies SET status = 1 WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
