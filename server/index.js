@@ -1180,20 +1180,50 @@ app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
 app.put("/actors/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const { id } = req.params;
 
-  const query = `
-    UPDATE actors SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
-  `;
-  db.query(query, [id], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error deleting actor:", err.message);
-      return res.status(500).json({ error: "Failed to delete actor." });
+      console.error("Error starting transaction:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Actor not found." });
-    }
+    // Pengecekan relasi pada tabel movie_actor
+    const checkMovieActorQuery = `
+    SELECT ma.*, m.deleted_at 
+    FROM movie_actors ma
+    JOIN movies m ON ma.movie_id = m.id
+    WHERE ma.actor_id = ? AND m.deleted_at IS NULL;
+    `;
+    db.query(checkMovieActorQuery, [id], (err, movieActors) => {
+      if (err) {
+        console.error("Error checking movie_actor:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to check movie_actor" });
+        });
+      }
 
-    res.json({ message: "Actor deleted successfully." });
+      if (movieActors.length > 0) {
+        return db.rollback(() => {
+          return res.status(400).json({ error: "Cannot delete actor, it is still referenced in movie_actor." });
+        });
+      }
+
+      const query = `
+      UPDATE actors SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+      `;
+      db.query(query, [id], (err, result) => {
+        if (err) {
+          console.error("Error deleting actor:", err.message);
+          return res.status(500).json({ error: "Failed to delete actor." });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ error: "Actor not found." });
+        }
+
+        res.json({ message: "Actor deleted successfully." });
+      });
+    });
   });
 });
 

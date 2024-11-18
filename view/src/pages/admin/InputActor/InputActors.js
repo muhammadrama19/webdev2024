@@ -23,18 +23,19 @@ const ActorManager = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
-        const fetchActors = async () => {
-            try {
-                const response = await axios.get('http://localhost:8001/actors');
-                setActors(response.data);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching actors:", error);
-                setLoading(false);
-            }
-        };
         fetchActors();
-    }, []);
+    }, [showCount]);
+
+    const fetchActors = async () => {
+        try {
+            const response = await axios.get('http://localhost:8001/actors');
+            setActors(response.data);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching actors:", error);
+            setLoading(false);
+        }
+    };
 
     const checkCountryExists = async (countryName) => {
         try {
@@ -96,25 +97,25 @@ const ActorManager = () => {
 
     const handleDeleteActor = async () => {
         try {
-            await axios.put(`http://localhost:8001/actors/delete/${actorData.id}`, {}, {
+            const response = await axios.put(`http://localhost:8001/actors/delete/${actorData.id}`, {}, {
                 withCredentials: true
             });
             setActors(actors.filter(actor => actor.id !== actorData.id));
-            setShowDeleteModal(false);
-            setActorData({ name: '', birthdate: '', country_name: '', actor_picture: '' });
             Swal.fire({
                 icon: 'success',
                 title: 'Success',
                 text: 'Actor deleted successfully!',
             });
+            fetchActors();
         } catch (error) {
-            console.error("Error deleting actor:", error);
             Swal.fire({
                 icon: 'error',
-                title: 'Oops...',
-                text: 'An error occurred while deleting the actor!',
+                title: 'Failed to delete actor!',
+                text: 'An error occurred while deleting the actor. Please try again later or check relations in the database.',
             });
         }
+        setShowDeleteModal(false);
+        setActorData({ name: '', birthdate: '', country_name: '', actor_picture: '' });
     };
 
     const handleEditActor = (actor) => {
