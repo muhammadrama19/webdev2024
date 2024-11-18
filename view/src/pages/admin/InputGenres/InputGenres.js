@@ -12,10 +12,10 @@ const GenreManager = () => {
     const [editName, setEditName] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(true); 
-    const [currentPage, setCurrentPage] = useState(1); 
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
-    const [showCount, setShowCount] = useState(10); 
+    const [showCount, setShowCount] = useState(10);
     const [selectedGenre, setSelectedGenre] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -98,19 +98,26 @@ const GenreManager = () => {
                 headers: { "Content-Type": "application/json" },
                 credentials: "include", // Ensure cookies are sent with the request
             });
-            Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: "Genre deleted successfully!",
-            })
 
-            if (!response.ok) throw new Error("Failed to soft delete genre");
-            fetchGenres(); // Refresh genres list after deletion
-            setShowDeleteModal(false); // Close delete modal
-            setSelectedGenre(null); // Reset selected genre
+            if (response.ok) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Success",
+                    text: "Genre deleted successfully!",
+                })
+                fetchGenres(); // Refresh genres list after deletion
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "An error occurred while deleting the genre. Please try again later or check relations in the database.",
+                });
+            }
         } catch (error) {
             console.error("Error soft deleting genre:", error);
         }
+        setShowDeleteModal(false);
+        setSelectedGenre(null);
     };
 
     const handleEditGenre = (id) => {
@@ -131,7 +138,7 @@ const GenreManager = () => {
                     title: "Error",
                     text: "Genre already exists!",
                 });
-        
+
             } else {
                 try {
                     await fetch(`http://localhost:8001/genres/update/${editing}`, {

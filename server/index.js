@@ -1301,27 +1301,49 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    const query = `
-      UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
-    `;
-    db.query(query, [id], (err) => {
+    // Pengecekan relasi pada tabel movie_genres
+    const checkMovieGenresQuery = `
+    SELECT mg.*, m.deleted_at 
+    FROM movie_genres mg
+    JOIN movies m ON mg.movie_id = m.id
+    WHERE mg.genre_id = ? AND m.deleted_at IS NULL;
+  `;
+    db.query(checkMovieGenresQuery, [id], (err, movieGenres) => {
       if (err) {
-        console.error("Error deleting genre:", err.message);
+        console.error("Error checking movie_genres:", err.message);
         return db.rollback(() => {
-          res.status(500).json({ error: "Failed to delete genre" });
+          res.status(500).json({ error: "Failed to check movie_genres" });
         });
       }
 
-      // Commit the transaction if the update succeeds
-      db.commit((err) => {
+      if (movieGenres.length > 0) {
+        return db.rollback(() => {
+          return res.status(400).json({ error: "Cannot delete country, it is still referenced in movie_genres." });
+        });
+      }
+
+      const query = `
+      UPDATE genres SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+    `;
+      db.query(query, [id], (err) => {
         if (err) {
-          console.error("Error committing transaction:", err);
+          console.error("Error deleting genre:", err.message);
           return db.rollback(() => {
-            res.status(500).json({ error: "Internal Server Error" });
+            res.status(500).json({ error: "Failed to delete genre" });
           });
         }
 
-        res.json({ message: "Genre deleted successfully" });
+        // Commit the transaction if the update succeeds
+        db.commit((err) => {
+          if (err) {
+            console.error("Error committing transaction:", err);
+            return db.rollback(() => {
+              res.status(500).json({ error: "Internal Server Error" });
+            });
+          }
+
+          res.json({ message: "Genre deleted successfully" });
+        });
       });
     });
   });
