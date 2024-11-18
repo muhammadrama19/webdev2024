@@ -1,3 +1,15 @@
+/* Custom styles for the dropdown item hover */
+.dropdown-item-custom {
+  padding: 0.5rem 1rem;
+  color: #333; /* Default text color */
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+
+  &:hover {
+    background-color: var(--primary-on-hover); /* Change this to your preferred hover background color */
+    color: #fff; /* Change this to your preferred hover text color */
+  }
+}
+
 .navbar {
   color: white;
   font-size: 14px;
@@ -10,6 +22,7 @@
   &.scrolled {
     background-color: var(--main-color);
   }
+
 
   .container {
     padding: 0px 10px;
@@ -63,10 +76,17 @@
         margin-left: 10px; /* Margin between search icon and user */
         color: white;
         font-size: 16px;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 
         .profile-name {
           margin-right: 10px;
           font-weight: bold;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .profile-icon {

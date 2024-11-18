@@ -7,6 +7,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PersonIcon from '@mui/icons-material/Person';
 import "./navbar.scss";
 import Cookies from 'js-cookie';
+import { Dropdown } from "react-bootstrap";
 
 
 const Navbar = ({ loggedInUsername }) => {
@@ -19,9 +20,6 @@ const Navbar = ({ loggedInUsername }) => {
   const [username, setUsername] = useState(loggedInUsername || Cookies.get("username"));
   const [email, setEmail] = useState(Cookies.get("email"));
   const [role, setRole] = useState(Cookies.get("role"));
-
-
-
 
   const navigate = useNavigate();
 
@@ -137,26 +135,62 @@ const Navbar = ({ loggedInUsername }) => {
           </div>
         </div>
         <div className="right">
-          {/* <SearchBar /> */}
+        <Dropdown>
+            <Dropdown.Toggle variant="link" id="dropdown-basic" className="d-flex align-items-center text-white text-decoration-none">
+              <BsPersonCircle className="icon me-2" />
+              <span className="user-name">{username || "Guest"}</span>
+            </Dropdown.Toggle>
 
-          <BsPersonCircle className="icon" onClick={toggleDropdown} />
-          <span className="user-name" onClick={toggleDropdown}>
-          {username || "Guest"}
-        </span>
-          {showDropdown && (
-            <div className="profile-dropdown">
-              <div className="profile-header">
-                <PersonIcon />
-                <h4>{username || "Guest"}</h4> 
-                <span className="profile-email">{email || "Unknown ID"}</span>
-                
-              </div>
-              <div className="profile-actions">
-                <button className="btn-profile">Profile</button>
-                <button className="btn-signout" onClick={handleLogout}>Sign out</button>
-              </div>
-            </div>
-          )}
+            <Dropdown.Menu align="end">
+              <Dropdown.Header>
+                <div className="d-flex flex-column align-items-center">
+                  <BsPersonCircle size={40} />
+                  <h6 className="mt-2">{username || "Guest"}</h6>
+                  <small>{email || "Unknown ID"}</small>
+                  <small>{role || "Unknown Role"}</small>
+                </div>
+              </Dropdown.Header>
+              <Dropdown.Divider />
+              <Dropdown.Item
+                className="dropdown-item-custom mt-5"
+                style={{
+                  padding: "0.5rem 1rem",
+                  color: "#333",
+                  transition: "background-color 0.3s ease, color 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "var(--primary-on-hover)";
+                  e.target.style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "";
+                  e.target.style.color = "#333";
+                }}
+                onClick={() => navigate("/profile")}
+              >
+                Profile
+              </Dropdown.Item>
+              <Dropdown.Item
+                className="dropdown-item-custom"
+                style={{
+                  padding: "0.5rem 1rem",
+                  color: "#333",
+                  transition: "background-color 0.3s ease, color 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "var(--primary-on-hover)";
+                  e.target.style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "";
+                  e.target.style.color = "#333";
+                }}
+                onClick={handleLogout}
+              >
+                Sign out
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
 
           <MenuIcon className="hamburger" onClick={toggleSidebar} />
         </div>

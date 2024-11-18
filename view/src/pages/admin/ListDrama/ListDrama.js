@@ -105,7 +105,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
       Swal.fire({
         icon: "success",
         title: "Success",
-        text: "Award deleted successfully",
+        text: "Movie has been moved to trash.",
         timer: 3000,
       });
       setSelectedMovie(null);
@@ -461,6 +461,9 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
                 </Button>
               </div>
               <div className="detail-content">
+                <p>
+                  <strong>Director:</strong> {selectedMovie.director || "Unknown"}
+                </p>
                 <p>
                   <strong>Year:</strong>{" "}
                   {selectedMovie.release_year || "Unknown"}

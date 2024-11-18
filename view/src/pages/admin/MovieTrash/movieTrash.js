@@ -1,6 +1,7 @@
 // MovieTrash.js
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Modal } from "react-bootstrap";
+import Swal from "sweetalert2";
 
 const MovieTrash = () => {
   const [trashDramas, setTrashDramas] = useState([]);
@@ -40,7 +41,7 @@ const MovieTrash = () => {
   const confirmAction = async () => {
     try {
       if (actionType === "restore") {
-        await fetch(`http://localhost:8001/movie-restore/${selectedDrama}`, {
+        const response = await fetch(`http://localhost:8001/movie-restore/${selectedDrama}`, {
           method: 'PUT',
           credentials: 'include',
           headers: {
@@ -48,9 +49,22 @@ const MovieTrash = () => {
           },
           body: JSON.stringify({ status: 1 }) // Mengubah status menjadi 1
         });
-        setTrashDramas(trashDramas.filter((drama) => drama.id !== selectedDrama));
+        if(response.status === 200) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "Movie restored successfully.",
+          });
+        setTrashDramas(trashDramas.filter((drama) => drama.id !== selectedDrama));}
+        else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to restore movie.",
+          });
+        } 
       } else if (actionType === "delete") {
-        await fetch(`http://localhost:8001/movie-permanent-delete/${selectedDrama}`, {
+        const response = await fetch(`http://localhost:8001/movie-permanent-delete/${selectedDrama}`, {
           method: 'PUT',
           credentials: 'include',
           headers: {
@@ -58,10 +72,29 @@ const MovieTrash = () => {
           },
           body: JSON.stringify({ status: 4 }) // Mengubah status menjadi 4
         });
-        setTrashDramas(trashDramas.filter((drama) => drama.id !== selectedDrama));
+        if (response.status === 200) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "Movie deleted successfully.",
+          });
+          setTrashDramas(trashDramas.filter((drama) => drama.id !== selectedDrama));
+        }
+        else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to delete movie.",
+          });
+        }
       }
     } catch (error) {
       console.error(`Error ${actionType === "restore" ? "restoring" : "deleting"} movie:`, error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: `Failed to ${actionType === "restore" ? "restore" : "delete"} movie.`,
+      });
     } finally {
       setShowConfirmModal(false);
       setSelectedDrama(null);

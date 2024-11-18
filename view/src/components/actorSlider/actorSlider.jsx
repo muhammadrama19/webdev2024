@@ -1,102 +1,81 @@
-import React, { useRef, useState, useEffect } from "react";
-import { Row, Col, Container } from "react-bootstrap";
-import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import "./actorSlider.scss";
-import ActorCard from "../actorcard/actorCard";
+import React from 'react';
+import Slider from 'react-slick';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import ActorCard from '../actorcard/actorCard'; // Import ActorCard component
+import './actorSlider.scss';
 
-const ActorSlider = ({ actors }) => {
-  const [isMoved, setIsMoved] = useState(false);
-  const [slideNumber, setSlideNumber] = useState(0);
-  const [maxSlideNumber, setMaxSlideNumber] = useState(0);
-
-  const listRef = useRef();
-  const containerRef = useRef();
-
-  
-
-  // Calculate the number of slides that can fit based on container and actor card width
-  useEffect(() => {
-    const handleResize = () => {
-      if (listRef.current && containerRef.current) {
-        const actorCardWidth =
-          listRef.current.firstChild.getBoundingClientRect().width;
-        const containerWidth =
-          containerRef.current.getBoundingClientRect().width;
-        const visibleCards = Math.floor(containerWidth / actorCardWidth);
-        setMaxSlideNumber(Math.ceil(actors.length - visibleCards)); // Total slides minus visible actors
-      }
-    };
-
-    handleResize(); // Initial calculation
-    window.addEventListener("resize", handleResize); // Recalculate on window resize
-
-    return () => window.removeEventListener("resize", handleResize); // Cleanup listener
-  }, [actors.length]);
-
-  const handleClick = (direction) => {
-    const actorCardWidth =
-      listRef.current.firstChild.getBoundingClientRect().width;
-    const distance = actorCardWidth * 3; // Move by 3 cards width
-    setIsMoved(true);
-
-    if (direction === "left" && slideNumber > 0) {
-      setSlideNumber(slideNumber - 1);
-      listRef.current.style.transform = `translateX(${
-        actorCardWidth * (slideNumber - 1) * -1
-      }px)`;
-    }
-
-    if (direction === "right" && slideNumber < maxSlideNumber) {
-      setSlideNumber(slideNumber + 1);
-      listRef.current.style.transform = `translateX(${
-        actorCardWidth * (slideNumber + 1) * -1
-      }px)`;
-    }
-  };
-
+// Custom Arrow Components
+const NextArrow = (props) => {
+  const { onClick } = props;
   return (
-    <Container fluid className="list">
-      <Row>
-        <Col xs={12} className="listTitle">
-          Actors
-        </Col>
-      </Row>
-      <Row className="wrapper">
-        <Col
-          xs={1}
-          className="d-flex align-items-center justify-content-center"
-        >
-          <ArrowBackIosIcon
-            className="sliderArrow back"
-            onClick={() => handleClick("left")}
-            style={{ display: !isMoved && "none" }}
-          />
-        </Col>
-        <Col xs={10} ref={containerRef}>
-          <div ref={listRef} className="customContainer d-flex flex-nowrap">
-            {actors.map((actor) => (
-              <ActorCard
-                key={actor.id}
-                imageSrc={actor.actor_picture}
-                name={actor.name}
-                role={actor.role}
-              />
-            ))}
-          </div>
-        </Col>
-        <Col
-          xs={1}
-          className="d-flex align-items-center justify-content-center"
-        >
-          <ArrowForwardIosIcon
-            className="sliderArrow forward"
-            onClick={() => handleClick("right")}
-          />
-        </Col>
-      </Row>
-    </Container>
+    <div className="sliderArrow forward" onClick={onClick}>
+      <ArrowForwardIosIcon />
+    </div>
   );
 };
 
-export default ActorSlider;
+const PrevArrow = (props) => {
+  const { onClick } = props;
+  return (
+    <div className="sliderArrow back" onClick={onClick}>
+      <ArrowBackIosIcon />
+    </div>
+  );
+};
+
+const List = ({ title, actors }) => {
+  const settings = {
+    dots: false,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 4, // Adjust number of slides visible
+    slidesToScroll: 1,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 2,
+        },
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+    ],
+  };
+
+  return (
+    <div className="lists">
+      <h2>{title}</h2> {/* Optional title for the carousel */}
+      <div className="wrapperList">
+        <Slider {...settings}>
+          {actors.length > 0 ? (
+            actors.map((actor, index) => (
+              <ActorCard
+                key={index}
+                imageSrc={actor.actor_picture} // Assuming actor object contains image property
+                name={actor.name}
+                role={actor.role} // Assuming actor object contains role property
+              />
+            ))
+          ) : (
+            <p>No actors available</p>
+          )}
+        </Slider>
+      </div>
+    </div>
+  );
+};
+
+export default List;

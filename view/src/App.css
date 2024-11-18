@@ -13,6 +13,10 @@
   }
 }
 
+@import "~slick-carousel/slick/slick.css";
+@import "~slick-carousel/slick/slick-theme.css";
+
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;

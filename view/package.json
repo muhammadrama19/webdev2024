@@ -29,8 +29,10 @@
     "react-router-dom": "^6.26.1",
     "react-scripts": "5.0.1",
     "react-select": "^5.8.2",
+    "react-slick": "^0.30.2",
     "recharts": "^2.13.0",
     "sass": "^1.77.8",
+    "slick-carousel": "^1.8.1",
     "sweetalert2": "^11.14.4",
     "web-vitals": "^2.1.4"
   },

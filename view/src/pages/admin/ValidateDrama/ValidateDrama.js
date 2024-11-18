@@ -1,4 +1,3 @@
-// ValidateDrama.js
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Table, Button, Dropdown, Modal } from 'react-bootstrap';
 import "./ValidateDrama.scss";
@@ -12,6 +11,7 @@ function ValidateDrama() {
   const [selectedDrama, setSelectedDrama] = useState(null);
   const [showSynopsisModal, setShowSynopsisModal] = useState(false); // State untuk modal synopsis
   const [fullSynopsis, setFullSynopsis] = useState(''); // Menyimpan synopsis lengkap
+  const [showDetailModal, setShowDetailModal] = useState(false); // State untuk modal detail drama
 
   // Fetch movie data with status 3
   useEffect(() => {
@@ -96,6 +96,12 @@ function ValidateDrama() {
     setShowSynopsisModal(true);
   };
 
+  // Fungsi untuk menampilkan modal detail drama
+  const handleShowDetail = (drama) => {
+    setSelectedDrama(drama);
+    setShowDetailModal(true);
+  };
+
   return (
     <Container>
       <Container className="App">
@@ -156,7 +162,13 @@ function ValidateDrama() {
                       ) : (
                         <span>No Image</span>
                       )}</td>
-                  <td>{drama.title}</td>
+                  <td
+                    className="title-column"
+                    // style={{ color: "white", cursor: "pointer" }}
+                    onClick={() => handleShowDetail(drama)}
+                  >
+                    {drama.title}
+                  </td>
                   <td>{renderSynopsis(drama.synopsis)}</td>
                   <td>{drama.status === 3 ? "Unapproved" : drama.status === 1 ? "Approved" : "Rejected"}</td>
                   <td>
@@ -231,6 +243,60 @@ function ValidateDrama() {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Modal untuk menampilkan detail drama */}
+      {selectedDrama && (
+        <Modal
+          show={showDetailModal}
+          onHide={() => setShowDetailModal(false)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>{selectedDrama.title}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="detail-modal">
+              <div className="poster-detail-container">
+                <img
+                  src={
+                    selectedDrama.poster ||
+                    "https://via.placeholder.com/100x150?text=No+Image"
+                  }
+                  alt={selectedDrama.title}
+                  className="poster-detail"
+                />
+              </div>
+              <div className="detail-content">
+                <p>
+                  <strong>Director:</strong> {selectedDrama.director || "Unknown"}
+                </p>
+                <p>
+                  <strong>Year:</strong>{" "}
+                  {selectedDrama.release_year || "Unknown"}
+                </p>
+                <p>
+                  <strong>Genres:</strong> {selectedDrama.Genres}
+                </p>
+                <p>
+                  <strong>Actors:</strong> {selectedDrama.Actors}
+                </p>
+                <p>
+                  <strong>Synopsis:</strong>
+                </p>
+                <p>{selectedDrama.synopsis}</p>
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDetailModal(false)}
+            >
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
     </Container>
   );
 }

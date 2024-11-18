@@ -171,7 +171,7 @@ app.get("/movies/movie", (req, res) => {
     JOIN awards a ON ma.awards_id = a.id
     JOIN status s ON m.status_id = s.id
     JOIN availability av ON m.availability_id = av.id
-    WHERE status = 1
+    WHERE m.deleted_at IS NULL AND status = 1
   `;
 
   // Apply filters
@@ -351,7 +351,7 @@ app.get("/movies/detail/:id", (req, res) => {
     LEFT JOIN
     status ON movies.status_id = status.id
     WHERE
-      movies.id = ? AND status = 1
+      movies.id = ? AND status = 1 AND movies.deleted_at IS NULL
   `;
 
   db.query(query, [id], (err, results) => {
@@ -557,7 +557,7 @@ app.get("/filters", async (req, res) => {
 // Fetch top 10 highest-rated movies
 app.get("/top-rated", (req, res) => {
   const query =
-    "SELECT title, background, imdb_score FROM movies WHERE id BETWEEN 1 AND 500 ORDER BY imdb_score DESC LIMIT 15";
+    "SELECT title, background, imdb_score, synopsis FROM movies WHERE id BETWEEN 1 AND 500 ORDER BY imdb_score DESC LIMIT 15";
 
   db.query(query, (err, results) => {
     if (err) {
@@ -2151,7 +2151,7 @@ app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
 app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
-  const query = `UPDATE movies SET status = 0 WHERE id = ?`;
+  const query = `UPDATE movies SET status = 0, deleted_at = CURRENT_TIMESTAMP WHERE id = ?`;
 
   db.query(query, [movieId], (err, result) => {
     if (err) {
