@@ -112,7 +112,7 @@ const UserSetting = () => {
     if (!validateForm()) {
       return;
     }
-
+  
     fetch(`http://localhost:8001/users/${editing.id}`, {
       method: 'PUT',
       credentials: 'include', // Add credentials include
@@ -124,19 +124,21 @@ const UserSetting = () => {
       .then((response) => response.json())
       .then(() => {
         const updatedUsers = users.map(user =>
-          user.id === editing.id ? newUser : user
+          user.id === editing.id
+            ? { ...user, ...newUser, Status_Account: user.Status_Account } // Tambahkan Status_Account
+            : user
         );
         setUsers(updatedUsers);
         Swal.fire({
           icon: "success",
-          title: "User succesfully edited",
-          text: "The user is succesfully updated",
-      });
+          title: "User successfully edited",
+          text: "The user has been successfully updated",
+        });
         handleCloseModal();
-       
       })
       .catch((error) => console.error('Error updating user:', error));
   };
+  
 
   const handleCloseModal = () => {
     setShowModal(false);
