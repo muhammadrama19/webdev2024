@@ -803,29 +803,33 @@ app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
 });
 
 // DELETE endpoint untuk menghapus user
-app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
+app.put("/users/delete/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
   try {
-    // Update nilai Status_Account menjadi 3
+    // Pengecekan relasi user dengan tabel lain
+    const checkQuery = `SELECT * FROM reviews WHERE user_id = ? AND deleted_at IS NULL`;
+    const [userReview] = await db.promise().query(checkQuery, [userId]);
 
-    const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW() WHERE id = ?`;
-    const result = await db.promise().query(query, [userId]);
-
-    //check if any row affected
-    if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ message: "User not found", success: false });
+    if (userReview.length > 0) {
+      return res.status(400).json({ error: "Cannot delete award, it is still referenced in Review." });
     }
 
-    //get user details
+    // Update nilai Status_Account menjadi 3
+    const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW() WHERE id = ?`;
+    const [result] = await db.promise().query(query, [userId]);
+
+    // Check if any row affected
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    // Get user details
     const userQuery = `SELECT * FROM users WHERE id = ?`;
     const [userData] = await db.promise().query(userQuery, [userId]);
+
     if (userData.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "User not found", success: false });
+      return res.status(404).json({ message: "User not found", success: false });
     }
 
     const user = userData[0];
@@ -835,9 +839,7 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
     fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
       if (err) {
         console.error("Error reading email template:", err);
-        return res
-          .status(500)
-          .json({ message: "Error reading email template", success: false });
+        return res.status(500).json({ message: "Error reading email template", success: false });
       }
 
       // Replace placeholders in the template with actual data
@@ -854,9 +856,7 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
       // Send email
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          return res
-            .status(500)
-            .json({ message: "Error sending banned email", success: false });
+          return res.status(500).json({ message: "Error sending banned email", success: false });
         }
 
         res.json({
@@ -866,12 +866,14 @@ app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
       });
     });
 
+    // Final success response
     res.status(200).json({ message: "User suspended successfully" });
   } catch (err) {
     console.error("Error executing query:", err.message);
     res.status(500).json({ error: "Failed to update user status" });
   }
 });
+
 
 app.put(
   "/users/suspend/:id",
@@ -2286,15 +2288,42 @@ app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
 app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
-  const query = `UPDATE movies SET status = 0, deleted_at = CURRENT_TIMESTAMP WHERE id = ?`;
-
-  db.query(query, [movieId], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error executing query:", err.message);
+      console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    res.status(200).json({ message: "Movie moved to trash successfully" });
+    // Pengecekan relasi pada tabel reviews
+    const checkReviewsQuery = `
+      SELECT * FROM reviews WHERE movie_id = ? AND deleted_at IS NULL;
+    `;
+    db.query(checkReviewsQuery, [movieId], (err, reviews) => {
+      if (err) {
+        console.error("Error checking awards:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to check awards" });
+        });
+      }
+
+      if (reviews.length > 0) {
+        return db.rollback(() => {
+          return res.status(400).json({ error: "Cannot delete movie, it is still referenced in review." });
+        });
+      }
+
+      const query = `UPDATE movies SET status = 0, deleted_at = CURRENT_TIMESTAMP WHERE id = ?`;
+
+      db.query(query, [movieId], (err, result) => {
+        if (err) {
+          console.error("Error executing query:", err.message);
+          return res.status(500).json({ error: "Internal Server Error" });
+        }
+
+        res.status(200).json({ message: "Movie moved to trash successfully" });
+      });
+    });
   });
 });
 

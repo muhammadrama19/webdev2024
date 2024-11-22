@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Container, Table, Form, Button, Modal, Pagination, Dropdown, Col } from "react-bootstrap";
-import { FaPlus, FaEnvelope } from "react-icons/fa";
+import { Container, Table, Form, Button, Modal, Pagination, Dropdown, Col, Spinner } from "react-bootstrap";
+import { FaPlus } from "react-icons/fa";
 import "./UserSetting.css";
 import Swal from "sweetalert2";
 
 const UserSetting = () => {
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({ username: "", email: "", password: "", role: "User" });
-  const [editing, setEditing] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCount, setShowCount] = useState(10);
-  const [errorMessage, setErrorMessage] = useState(""); 
+  const [errorMessage, setErrorMessage] = useState("");
   const [isEditMode, setIsEditMode] = useState(false); // Tambahkan state untuk mode edit
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [typeConfirm, setTypeConfirm] = useState("");
 
 
   useEffect(() => {
@@ -32,7 +34,7 @@ const UserSetting = () => {
         }
       })
       .catch((error) => console.error('Error fetching users:', error));
-  
+
     setLoading(false);  // Assuming you are setting the loading state here
   }, []);
 
@@ -112,8 +114,8 @@ const UserSetting = () => {
     if (!validateForm()) {
       return;
     }
-  
-    fetch(`http://localhost:8001/users/${editing.id}`, {
+
+    fetch(`http://localhost:8001/users/${selectedUser.id}`, {
       method: 'PUT',
       credentials: 'include', // Add credentials include
       headers: {
@@ -124,7 +126,7 @@ const UserSetting = () => {
       .then((response) => response.json())
       .then(() => {
         const updatedUsers = users.map(user =>
-          user.id === editing.id
+          user.id === selectedUser.id
             ? { ...user, ...newUser, Status_Account: user.Status_Account } // Tambahkan Status_Account
             : user
         );
@@ -134,11 +136,98 @@ const UserSetting = () => {
           title: "User successfully edited",
           text: "The user has been successfully updated",
         });
-        handleCloseModal();
       })
       .catch((error) => console.error('Error updating user:', error));
+    Swal.fire({
+      icon: "error",
+      title: "Failed to delete User",
+      text: "An error occurred while deleting the award. Please try again later or check relations in the database.",
+    });
+    handleCloseModal();
   };
-  
+
+  const handleDeleteUser = async () => {
+    try {
+      const response = await fetch(`http://localhost:8001/users/delete/${selectedUser.id}`, {
+        method: 'PUT',
+        credentials: 'include', // Add credentials include
+      });
+      if (response.ok) {
+        const updatedUsers = users.map(user =>
+          user.id === selectedUser.id ? { ...user, Status_Account: 3 } : user
+        );
+        setUsers(updatedUsers);
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'User deleted successfully',
+          timer: 3000,
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to delete user!',
+          text: 'An error occurred while deleting the user. Please try again later or check relations in the database.',
+          timer: 3000,
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed to delete award!',
+        text: 'An error occurred while deleting the award. Please try again later or check relations in the database.',
+        timer: 3000,
+      });
+    }
+    setShowConfirmModal(false);
+    setSelectedUser(null);
+  };
+
+  const handleSuspendUser = () => {
+    fetch(`http://localhost:8001/users/suspend/${selectedUser.id}`, {
+      method: 'PUT',
+      credentials: 'include', // Add credentials include
+    })
+      .then((response) => response.json())
+      .then(() => {
+        const updatedUsers = users.map(user =>
+          user.id === selectedUser.id ? { ...user, Status_Account: 2 } : user
+        );
+        setUsers(updatedUsers);
+        setShowConfirmModal(false);
+        setSelectedUser(null);
+        Swal.fire({
+          icon: "success",
+          title: "Users Suspended",
+          text: "Users Suspended succesfully!",
+          timer: 2000
+        })
+      })
+      .catch((error) => console.error('Error suspending user:', error));
+  };
+
+  const handleUnlockUser = () => {
+    fetch(`http://localhost:8001/users/unlock/${selectedUser.id}`, {
+      method: 'PUT',
+      credentials: 'include', // Add credentials include
+    })
+      .then((response) => response.json())
+      .then(() => {
+        const updatedUsers = users.map(user =>
+          user.id === selectedUser.id ? { ...user, Status_Account: 1 } : user
+        );
+        setUsers(updatedUsers);
+        setShowConfirmModal(false);
+        setSelectedUser(null);
+        Swal.fire({
+          icon: "success",
+          title: "Users unsuspended",
+          text: "Users unsuspended succesfully!",
+          timer: 2000
+        })
+      })
+      .catch((error) => console.error('Error unlocking user:', error));
+  };
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -150,67 +239,13 @@ const UserSetting = () => {
   const handleEditUser = (user) => {
     setIsEditMode(true); // Set ke mode edit
     setNewUser({ username: user.username, email: user.email, password: "", role: user.role });
-    setEditing(user);
+    setSelectedUser(user);
     setShowModal(true);
   };
 
-  const handleDeleteUser = (id) => {
-    fetch(`http://localhost:8001/users/${id}`, {
-      method: 'DELETE',
-      credentials: 'include', // Add credentials include
-    })
-      .then(() => {
-        const updatedUsers = users.map(user =>
-          user.id === id ? { ...user, Status_Account: 3 } : user
-        );
-        setUsers(updatedUsers);
-        window.location.reload();
-      })
-      .catch((error) => console.error('Error suspending user:', error));
-  };
-
-  const handleSuspend = (id) => {
-    fetch(`http://localhost:8001/users/suspend/${id}`, {
-      method: 'PUT',
-      credentials: 'include', // Add credentials include
-    })
-      .then((response) => response.json())
-      .then(() => {
-        const updatedUsers = users.map(user =>
-          user.id === id ? { ...user, Status_Account: 2 } : user
-        );
-        setUsers(updatedUsers);
-        Swal.fire({
-          icon: "success",
-          title: "Users Suspended",
-          text: "Users Suspended succesfully!",
-          timer: 2000
-
-        })
-      })
-      .catch((error) => console.error('Error suspending user:', error));
-  };
-
-  const handleUnlockUser = (id) => {
-    fetch(`http://localhost:8001/users/unlock/${id}`, {
-      method: 'PUT',
-      credentials: 'include', // Add credentials include
-    })
-      .then((response) => response.json())
-      .then(() => {
-        const updatedUsers = users.map(user =>
-          user.id === id ? { ...user, Status_Account: 1 } : user
-        );
-        setUsers(updatedUsers);
-        Swal.fire({
-          icon: "success",
-          title: "Users unsuspended",
-          text: "Users unsuspended succesfully!",
-          timer: 2000
-
-        })
-      })
-      .catch((error) => console.error('Error unlocking user:', error));
+  const handleConfirmation = (user) => {
+    setShowConfirmModal(true);
+    setSelectedUser(user);
   };
 
   const filteredUsers = users.filter((user) =>
@@ -341,7 +376,6 @@ const UserSetting = () => {
               >
                 <option>User</option>
                 <option>Admin</option>
-                <option>Editor</option>
               </Form.Control>
             </Form.Group>
           </Form>
@@ -354,8 +388,46 @@ const UserSetting = () => {
         </Modal.Footer>
       </Modal>
 
+      {/* Confirmation Modal */}
+      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {typeConfirm === "delete" && "Confirm Delete"}
+            {typeConfirm === "suspend" && "Confirm Suspend"}
+            {typeConfirm === "unlock" && "Confirm Unlock"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {typeConfirm === "delete" && "Are you sure you want to delete the user?"}
+          {typeConfirm === "suspend" && "Are you sure you want to suspend this user?"}
+          {typeConfirm === "unlock" && "Are you sure you want to unlock this user?"}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
+            Cancel
+          </Button>
+          {typeConfirm === "delete" && (
+            <Button variant="danger" onClick={handleDeleteUser}>
+              Delete
+            </Button>
+          )}
+          {typeConfirm === "suspend" && (
+            <Button variant="warning" onClick={handleSuspendUser}>
+              Suspend
+            </Button>
+          )}
+          {typeConfirm === "unlock" && (
+            <Button variant="success" onClick={handleUnlockUser}>
+              Unlock
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
+
+
       {loading ? (
-        <p>Loading data...</p>
+        <Spinner animation="border" variant="primary" style={{ display: 'block', margin: '0 auto' }} />
+
       ) : (
         <>
           <Table striped bordered hover className="user-table">
@@ -372,36 +444,66 @@ const UserSetting = () => {
             <tbody>
               {currentUsers.map((user, index) => (
                 <tr key={user.id}>
-                <td>{(currentPage - 1) * showCount + index + 1}</td> {/* Hitung nomor urut berdasarkan halaman */}
-                <td>{user.username}</td>
-                <td>{user.role}</td>
-                <td>{user.email}</td>
-                <td>{user.Status_Account === 1 ? "Active" : user.Status_Account === 2 ? "Suspended" : "Deleted"}</td>
-                <td>
-                  {user.Status_Account === 2 ? (
-                    <>
-                      <Button variant="success" size="sm" className="me-2" onClick={() => handleUnlockUser(user.id)}>
-                        Unlock
-                      </Button>
-                      <Button variant="danger" size="sm" className="me-2" onClick={() => handleDeleteUser(user.id)}>
+                  <td>{(currentPage - 1) * showCount + index + 1}</td> {/* Hitung nomor urut berdasarkan halaman */}
+                  <td>{user.username}</td>
+                  <td>{user.role}</td>
+                  <td>{user.email}</td>
+                  <td>{user.Status_Account === 1 ? "Active" : user.Status_Account === 2 ? "Suspended" : "Deleted"}</td>
+                  <td>
+                    <Container className="action-button">
+                      {user.Status_Account === 2 ? (
+                        <>
+                          <Button
+                            variant="success"
+                            size="sm"
+                            className="me-2"
+                            onClick={() => {
+                              handleConfirmation(user);
+                              setTypeConfirm("unlock");
+                            }}
+                          >
+                            Unlock
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="me-2"
+                            onClick={() => {
+                              handleEditUser(user);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="warning"
+                            size="sm"
+                            className="me-2"
+                            onClick={() => {
+                              handleConfirmation(user);
+                              setTypeConfirm("suspend");
+                            }}
+                          >
+                            Suspend
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => {
+                          handleConfirmation(user);
+                          setTypeConfirm("delete");
+                        }}
+                      >
                         Delete
                       </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button variant="primary" size="sm" className="me-2" onClick={() => handleEditUser(user)}>
-                        Edit
-                      </Button>
-                      <Button variant="warning" size="sm" className="me-2" onClick={() => handleSuspend(user.id)}>
-                        Suspend
-                      </Button>
-                      <Button variant="danger" size="sm" className="me-2" onClick={() => handleDeleteUser(user.id)}>
-                        Delete
-                      </Button>
-                    </>
-                  )}
-                </td>
-              </tr>
+                    </Container>
+                  </td>
+                </tr>
               ))}
             </tbody>
           </Table>
