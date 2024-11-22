@@ -803,8 +803,26 @@ app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
 });
 
 // DELETE endpoint untuk menghapus user
-app.delete("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
+app.put("/users/delete/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
+
+  // Pengecekan relasi user dengan tabel lain
+  const checkQuery = `SELECT * FROM reviews WHERE user_id = ?`;
+
+  db.query(checkQuery, [userId], (err, userReview) => {
+    if (err) {
+      console.error("Error checking Review:", err.message);
+      return db.rollback(() => {
+        res.status(500).json({ error: "Failed to check Review" });
+      });
+    }
+
+    if (userReview.length > 0) {
+      return db.rollback(() => {
+        return res.status(400).json({ error: "Cannot delete award, it is still referenced in Review." });
+      });
+    }
+  });
 
   try {
     // Update nilai Status_Account menjadi 3
