@@ -92,7 +92,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
 
   const handleDelete = async () => {
     try {
-      await fetch(`http://localhost:8001/movie-delete/${selectedMovie.id}`, {
+      const response = await fetch(`http://localhost:8001/movie-delete/${selectedMovie.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -100,15 +100,22 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
         body: JSON.stringify({ status: 0 }),
         credentials: "include",
       });
-      setDramas(dramas.filter((drama) => drama.id !== selectedMovie.id));
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "Movie has been moved to trash.",
-        timer: 3000,
-      });
-      setSelectedMovie(null);
-      setShowTrashModal(false);
+      if (response.ok) {
+
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Movie has been moved to trash.",
+          timer: 3000,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "An error occurred while moving movie to trash. Please try again lateror check relations in the database.",
+          timer: 3000,
+        });
+      }
     } catch (error) {
       console.error("Error deleting movie:", error);
       Swal.fire({
@@ -118,6 +125,8 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
         timer: 3000,
       });
     }
+    setSelectedMovie(null);
+    setShowTrashModal(false);
   };
 
   const handleSave = () => {
@@ -190,7 +199,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
       );
     }
 
-    
+
 
     return (
       <div className="d-flex justify-content-end">
@@ -263,7 +272,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
             className="search-input"
             placeholder="Search"
             value={searchTerm}
-            onChange={handleSearchTermChange} 
+            onChange={handleSearchTermChange}
           />
         </div>
 

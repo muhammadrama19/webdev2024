@@ -2288,15 +2288,42 @@ app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
 app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
-  const query = `UPDATE movies SET status = 0, deleted_at = CURRENT_TIMESTAMP WHERE id = ?`;
-
-  db.query(query, [movieId], (err, result) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("Error executing query:", err.message);
+      console.error("Error starting transaction:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    res.status(200).json({ message: "Movie moved to trash successfully" });
+    // Pengecekan relasi pada tabel reviews
+    const checkReviewsQuery = `
+      SELECT * FROM reviews WHERE movie_id = ? AND deleted_at IS NULL;
+    `;
+    db.query(checkReviewsQuery, [movieId], (err, reviews) => {
+      if (err) {
+        console.error("Error checking awards:", err.message);
+        return db.rollback(() => {
+          res.status(500).json({ error: "Failed to check awards" });
+        });
+      }
+
+      if (reviews.length > 0) {
+        return db.rollback(() => {
+          return res.status(400).json({ error: "Cannot delete movie, it is still referenced in review." });
+        });
+      }
+
+      const query = `UPDATE movies SET status = 0, deleted_at = CURRENT_TIMESTAMP WHERE id = ?`;
+
+      db.query(query, [movieId], (err, result) => {
+        if (err) {
+          console.error("Error executing query:", err.message);
+          return res.status(500).json({ error: "Internal Server Error" });
+        }
+
+        res.status(200).json({ message: "Movie moved to trash successfully" });
+      });
+    });
   });
 });
 
