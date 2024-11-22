@@ -806,44 +806,30 @@ app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
 app.put("/users/delete/:id", isAuthenticated, hasAdminRole, async (req, res) => {
   const userId = req.params.id;
 
-  // Pengecekan relasi user dengan tabel lain
-  const checkQuery = `SELECT * FROM reviews WHERE user_id = ?`;
-
-  db.query(checkQuery, [userId], (err, userReview) => {
-    if (err) {
-      console.error("Error checking Review:", err.message);
-      return db.rollback(() => {
-        res.status(500).json({ error: "Failed to check Review" });
-      });
-    }
+  try {
+    // Pengecekan relasi user dengan tabel lain
+    const checkQuery = `SELECT * FROM reviews WHERE user_id = ? AND deleted_at IS NULL`;
+    const [userReview] = await db.promise().query(checkQuery, [userId]);
 
     if (userReview.length > 0) {
-      return db.rollback(() => {
-        return res.status(400).json({ error: "Cannot delete award, it is still referenced in Review." });
-      });
+      return res.status(400).json({ error: "Cannot delete award, it is still referenced in Review." });
     }
-  });
 
-  try {
     // Update nilai Status_Account menjadi 3
-
     const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW() WHERE id = ?`;
-    const result = await db.promise().query(query, [userId]);
+    const [result] = await db.promise().query(query, [userId]);
 
-    //check if any row affected
+    // Check if any row affected
     if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ message: "User not found", success: false });
+      return res.status(404).json({ message: "User not found", success: false });
     }
 
-    //get user details
+    // Get user details
     const userQuery = `SELECT * FROM users WHERE id = ?`;
     const [userData] = await db.promise().query(userQuery, [userId]);
+
     if (userData.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "User not found", success: false });
+      return res.status(404).json({ message: "User not found", success: false });
     }
 
     const user = userData[0];
@@ -853,9 +839,7 @@ app.put("/users/delete/:id", isAuthenticated, hasAdminRole, async (req, res) => 
     fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
       if (err) {
         console.error("Error reading email template:", err);
-        return res
-          .status(500)
-          .json({ message: "Error reading email template", success: false });
+        return res.status(500).json({ message: "Error reading email template", success: false });
       }
 
       // Replace placeholders in the template with actual data
@@ -872,9 +856,7 @@ app.put("/users/delete/:id", isAuthenticated, hasAdminRole, async (req, res) => 
       // Send email
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          return res
-            .status(500)
-            .json({ message: "Error sending banned email", success: false });
+          return res.status(500).json({ message: "Error sending banned email", success: false });
         }
 
         res.json({
@@ -884,12 +866,14 @@ app.put("/users/delete/:id", isAuthenticated, hasAdminRole, async (req, res) => 
       });
     });
 
+    // Final success response
     res.status(200).json({ message: "User suspended successfully" });
   } catch (err) {
     console.error("Error executing query:", err.message);
     res.status(500).json({ error: "Failed to update user status" });
   }
 });
+
 
 app.put(
   "/users/suspend/:id",

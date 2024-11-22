@@ -146,20 +146,41 @@ const UserSetting = () => {
     handleCloseModal();
   };
 
-  const handleDeleteUser = () => {
-    fetch(`http://localhost:8001/users/delete/${selectedUser.id}`, {
-      method: 'DELETE',
-      credentials: 'include', // Add credentials include
-    })
-      .then(() => {
+  const handleDeleteUser = async () => {
+    try {
+      const response = await fetch(`http://localhost:8001/users/delete/${selectedUser.id}`, {
+        method: 'PUT',
+        credentials: 'include', // Add credentials include
+      });
+      if (response.ok) {
         const updatedUsers = users.map(user =>
           user.id === selectedUser.id ? { ...user, Status_Account: 3 } : user
         );
         setUsers(updatedUsers);
-        setShowConfirmModal(false);
-        setSelectedUser(null);
-      })
-      .catch((error) => console.error('Error deleting user:', error));
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'User deleted successfully',
+          timer: 3000,
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to delete user!',
+          text: 'An error occurred while deleting the user. Please try again later or check relations in the database.',
+          timer: 3000,
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed to delete award!',
+        text: 'An error occurred while deleting the award. Please try again later or check relations in the database.',
+        timer: 3000,
+      });
+    }
+    setShowConfirmModal(false);
+    setSelectedUser(null);
   };
 
   const handleSuspendUser = () => {
