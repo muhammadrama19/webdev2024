@@ -105,22 +105,45 @@ const RegisterForm = () => {
 
     if (!values.password) {
       errors.password = "Password is required";
+      Swal.fire("Error", "Password is required", "error");
     } else if (values.password.length < 8) {
       errors.password = "Password must be at least 8 characters";
+      Swal.fire("Error", "Password must be at least 8 characters", "error");
     } else if (!/[A-Z]/.test(values.password)) {
       errors.password = "Password must contain at least one uppercase letter";
+      Swal.fire(
+        "Error",
+        "Password must contain at least one uppercase letter",
+        "error"
+      );
     } else if (!/[a-z]/.test(values.password)) {
       errors.password = "Password must contain at least one lowercase letter";
+      Swal.fire(
+        "Error",
+        "Password must contain at least one lowercase letter",
+        "error"
+      );  
     } else if (!/[0-9]/.test(values.password)) {
       errors.password = "Password must contain at least one number";
+      Swal.fire(
+        "Error",
+        "Password must contain at least one number",
+        "error"
+      );
     } else if (!/[!@#$%^&*]/.test(values.password)) {
       errors.password = "Password must contain at least one special character";
+      Swal.fire(
+        "Error",
+        "Password must contain at least one special character",
+        "error"
+      );
     }
 
     if (!values.confirmPassword) {
       errors.confirmPassword = "Confirm Password is required";
     } else if (values.confirmPassword !== values.password) {
       errors.confirmPassword = "Passwords do not match";
+      Swal.fire("Error", "Passwords do not match", "error");
     }
 
     return errors;

@@ -9,11 +9,57 @@ import "./reset.scss";
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const { token } = useParams();
   const navigate = useNavigate();
 
+  const validatePassword = (password) => {
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!/[A-Z]/.test(password)) {
+      Swal.fire(
+        "Error",
+        "Password must contain at least one uppercase letter",
+        "error"
+      )
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!/[a-z]/.test(password)) {
+      Swal.fire(
+        "Error",
+        "Password must contain at least one lowercase letter",
+        "error"
+      )
+      return "Password must contain at least one lowercase letter";
+    }
+    if (!/[0-9]/.test(password)) {
+      Swal.fire(
+        "Error",
+        "Password must contain at least one number",
+        "error"
+      )
+      return "Password must contain at least one number";
+    }
+    if (!/[!@#$%^&*]/.test(password)) {
+      Swal.fire(
+        "Error",
+        "Password must contain at least one special character",
+        "error"
+      )
+      return "Password must contain at least one special character";
+    }
+    return "";
+  };
+
   const handleResetPassword = (e) => {
     e.preventDefault();
+
+    const validationError = validatePassword(newPassword);
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
 
     axios
       .post(`http://localhost:8001/reset-password/${token}`, { newPassword })
@@ -57,6 +103,7 @@ const ResetPassword = () => {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
           <Button className="loginButton" type="submit">
             Reset Password
           </Button>
