@@ -10,7 +10,6 @@
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
     "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.7",
     "client": "file:",
@@ -63,6 +62,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
+    "@testing-library/react": "^16.0.1",
     "babel-jest": "^29.7.0",
     "cross-env": "^7.0.3",
     "jest": "^27.5.1",
