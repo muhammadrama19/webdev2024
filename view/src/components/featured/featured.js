@@ -77,8 +77,8 @@ const Featured = () => {
       {/* Background Image */}
       <div className="background">
         <img
-          src={currentMovie.background}
-          alt={currentMovie.title}
+          src={currentMovie.background | ""}
+          alt={currentMovie.title || "No Title"}
           className="background-image"
         />
       </div>
