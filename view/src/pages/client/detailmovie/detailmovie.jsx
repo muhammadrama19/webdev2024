@@ -73,7 +73,7 @@ const Detailmovie = () => {
       <CoverDetail srcBackground={movieData.background}/>
       <Container fluid>
         <Row className="justify-content-center">
-          <Col md={6}>
+          <Col xs={12} sm={12} md={6} lg={8} >
             {/* Populate MovieDetailCard with fetched data */}
             <MovieDetailCard
               title={movieData.title}
@@ -87,7 +87,7 @@ const Detailmovie = () => {
               status={movieData.status}
             />
           </Col>
-          <Col md={4}>
+          <Col md={4} xs={12} sm={12} lg={3}>
             <ReviewBar 
               srcImg={movieData.poster} 
               title={movieData.title} 
@@ -98,17 +98,17 @@ const Detailmovie = () => {
           </Col>
         </Row>
         <Row className="justify-content-center mt-4">
-          <Col md={8}>
+          <Col md={8} lg={8} sm={12} xs={12}>
             <ActorSlider actors={movieData.actors} />
           </Col>
         </Row>
         <Row className="justify-content-center mt-4">
-          <Col md={8}>
+          <Col md={8}  lg={8} sm={12} xs={12}>
            <MediaPlayer link={movieData.trailer || ""}/>
           </Col>
         </Row>
         <Row className="justify-content-center mt-2">
-          <Col md={8}>
+          <Col md={8}  lg={8} sm={12} xs={12}>
             <MovieReview id={movieData.id} />
           </Col>
         </Row>

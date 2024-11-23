@@ -1,19 +1,21 @@
 import React from 'react';
+import { Row, Col, Container } from 'react-bootstrap';
 import './coverDetail.scss';
-// import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-// import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import Button from '../button/button';
 
 const CoverDetail = ({ type, srcBackground }) => {
   return (
-    <div className='coverDetail'>
-
-      <img 
-        src={srcBackground} 
-        alt="coverDetail"
-      />
-   
-    </div>
+    <Container fluid className='coverDetail'>
+      <Row>
+        <Col xs={12} sm={12} md={6} lg={4}>
+          <img 
+            src={srcBackground} 
+            alt="coverDetail"
+            className="img-fluid"
+          />
+        </Col>
+      </Row>
+    </Container>
   );
 };
 
