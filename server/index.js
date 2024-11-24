@@ -23,9 +23,17 @@ const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 
 app.use(
   cors({
-    origin: '*', // Allow all origins (CORS will accept requests from any domain)
-    credentials: true, // Allow credentials (cookies)
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Ensure all methods are allowed
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      // Check if the request origin is in the allowedOrigins array
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true // Untuk mengizinkan penggunaan cookie
   })
 );
 
@@ -2852,7 +2860,8 @@ app.get("/movies/:movieId/reviewed/:userId", isAuthenticated, (req, res) => {
 });
 
 //Input Review
-app.post("/reviews", isAuthenticated, (req, res) => {
+app.post("/add-reviews", isAuthenticated, (req, res) => {
+  console.log(req.body);
   const { movie_id, user_id, content, rating } = req.body;
 
   const query = `

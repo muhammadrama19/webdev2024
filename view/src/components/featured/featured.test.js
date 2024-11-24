@@ -1,75 +1,135 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import { BrowserRouter as Router } from 'react-router-dom';
-import Featured from './featured'; // Adjust the path as needed
+import { render, screen, act, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useNavigate } from 'react-router-dom';
+import Featured from './Featured';
 
-// Mocking the Button component
-jest.mock('../button/button', () => ({ children, onClick }) => (
-  <button onClick={onClick}>{children}</button>
-));
+jest.mock('react-router-dom', () => ({
+  useNavigate: jest.fn()
+}));
 
-// Mocking global fetch for the movie data
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    json: () => Promise.resolve([
-      {
-        id: 1,
-        background: 'background.jpg',
-        poster: 'poster.jpg',
-        title: 'Featured Movie',
-        synopsis: 'This is a great movie!',
-      },
-      {
-        id: 2,
-        background: 'background2.jpg',
-        poster: 'poster2.jpg',
-        title: 'Another Movie',
-        synopsis: 'This is another great movie!',
-      },
-    ]),
-  })
-);
+jest.mock('react-bootstrap', () => ({
+  Row: ({ children }) => <div data-testid="row">{children}</div>,
+  Col: ({ children }) => <div data-testid="col">{children}</div>
+}));
+
+const mockMovies = [
+  {
+    id: 1,
+    title: "Test Movie 1",
+    background: "background1.jpg",
+    poster: "poster1.jpg",
+    synopsis: "Test synopsis 1",
+    imdb_score: 8.5
+  },
+  {
+    id: 2,
+    title: "Test Movie 2",
+    background: "background2.jpg",
+    poster: "poster2.jpg",
+    synopsis: "Test synopsis 2",
+    imdb_score: 8.3
+  }
+];
+
+global.fetch = jest.fn();
+global.Image = class {
+  constructor() {
+    setTimeout(() => {
+      this.onload();
+    }, 100);
+  }
+};
 
 describe('Featured Component', () => {
-  it('renders the component and displays the first movie', async () => {
-    // Render the component inside Router (necessary for useNavigate)
-    const { container } = render(
-      <Router>
-        <Featured />
-      </Router>
-    );
+  let navigateMock;
 
-    // Wait for the movies data to be fetched and rendered
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
-
-    // Wait for the first movie title to appear
-    const movieTitle = await screen.findByText((content, element) => {
-      return element.textContent.includes('Featured Movie');
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+    
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve(mockMovies)
     });
-    const moviePoster = await screen.findByAltText('Featured Movie');
 
-    expect(movieTitle).toBeInTheDocument();
-    expect(moviePoster).toBeInTheDocument();
-
-    // Find an element by class
-    const movieContainer = container.querySelector('.featured-container');
-    expect(movieContainer).toBeInTheDocument();
-
-    // Create a snapshot of the rendered component
-    expect(container.firstChild).toMatchSnapshot();
+    navigateMock = jest.fn();
+    useNavigate.mockReturnValue(navigateMock);
   });
 
-  it('should display loading message while data is being fetched', () => {
-    // Render the component before the async fetch is resolved
-    render(
-      <Router>
-        <Featured />
-      </Router>
-    );
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
-    // Check if the loading message is displayed initially
-    const loadingMessage = screen.getByText('Loading...');
-    expect(loadingMessage).toBeInTheDocument();
+  test('renders loading state initially', () => {
+    render(<Featured />);
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  test('fetches and displays movie data correctly', async () => {
+    render(<Featured />);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText(mockMovies[0].title)).toBeInTheDocument();
+    expect(screen.getByText(mockMovies[0].synopsis)).toBeInTheDocument();
+    
+    const backgroundImage = screen.getAllByAltText(mockMovies[0].title)[0];
+    expect(backgroundImage).toHaveAttribute('src', mockMovies[0].background);
+    
+    const posterImage = screen.getAllByAltText(mockMovies[0].title)[1];
+    expect(posterImage).toHaveAttribute('src', mockMovies[0].poster);
+  });
+
+  test('handles API error gracefully', async () => {
+    global.fetch.mockRejectedValueOnce(new Error('API Error'));
+    
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    
+    render(<Featured />);
+    
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalled();
+    });
+    
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    
+    consoleSpy.mockRestore();
+  });
+
+  test('navigates to movie details when See More button is clicked', async () => {
+    render(<Featured />);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
+
+    const seeMoreButton = screen.getByText('See More');
+    userEvent.click(seeMoreButton);
+
+    expect(navigateMock).toHaveBeenCalledWith(`/movies/${mockMovies[0].id}`);
+  });
+
+  test('cycles through movies automatically', async () => {
+    render(<Featured />);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText(mockMovies[0].title)).toBeInTheDocument();
+
+    act(() => {
+      jest.advanceTimersByTime(10000);
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(mockMovies[1].title)).toBeInTheDocument();
+    });
   });
 });

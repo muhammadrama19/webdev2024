@@ -31,7 +31,7 @@ const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // T
     };
 
     try {
-      const response = await fetch("http://localhost:8001/reviews", {
+      const response = await fetch("http://localhost:8001/add-reviews", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -59,7 +59,7 @@ const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // T
       console.error("Error:", error);
       Swal.fire({
         icon: "error",
-        title: "Failed to save review",
+        title: "Failed to save review s",
         text: "An error occurred while saving your review. Please try again later.",
       });
     }

@@ -65,10 +65,10 @@ const List = ({ title, movies }) => {
             movies.map((movie, index) => (
               <ListItem
                 key={index}
-                imageUrl={movie.background}
-                rating={movie.imdb_score}
-                title={movie.title}
-                description={movie.synopsis}
+                imageUrl={movie.background || "https://via.placeholder.com/196x294?text=No+Image+Available"}
+                rating={movie.imdb_score || "N/A"}
+                title={movie.title || "No Title Available"}
+                description={movie.synopsis || "No Description Available"}
               />
             ))
           ) : (
