@@ -1,10 +1,9 @@
-// actorSlider.test.js
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ActorSlider from './actorSlider';
 
-// Mock react-slick
+
 jest.mock('react-slick', () => {
   return function MockSlider({ children, nextArrow, prevArrow }) {
     return (
@@ -17,7 +16,6 @@ jest.mock('react-slick', () => {
   };
 });
 
-// Mock the MUI icons
 jest.mock('@mui/icons-material/ArrowBackIos', () => {
   return function MockArrowBackIos() {
     return <span>←</span>;
@@ -30,7 +28,6 @@ jest.mock('@mui/icons-material/ArrowForwardIos', () => {
   };
 });
 
-// Mock ActorCard component
 jest.mock('../actorcard/actorCard', () => {
   return function MockActorCard({ imageSrc, name, role }) {
     return (
@@ -59,37 +56,37 @@ describe('ActorSlider Component', () => {
     }
   ];
 
-  // Test 1: Component renders with actors
+ 
   it('renders actor cards when actors are provided', () => {
     render(<ActorSlider actors={mockActors} title="Cast" />);
 
-    // Check if slider is rendered
+  
     expect(screen.getByTestId('mock-slider')).toBeInTheDocument();
 
-    // Check if title is rendered
+   
     expect(screen.getByText('Cast')).toBeInTheDocument();
 
-    // Check if actor cards are rendered
+    
     mockActors.forEach(actor => {
       expect(screen.getByText(actor.name)).toBeInTheDocument();
       expect(screen.getByText(actor.role)).toBeInTheDocument();
     });
   });
 
-  // Test 2: Component handles empty actors array
+  
   it('displays "No actors available" when actors array is empty', () => {
     render(<ActorSlider actors={[]} />);
     expect(screen.getByText('No actors available')).toBeInTheDocument();
   });
 
-  // Test 3: Navigation arrows are rendered
+  
   it('renders navigation arrows', () => {
     render(<ActorSlider actors={mockActors} />);
     expect(screen.getByText('←')).toBeInTheDocument();
     expect(screen.getByText('→')).toBeInTheDocument();
   });
 
-  // Test 4: Actor cards render with correct props
+  
   it('passes correct props to ActorCard components', () => {
     render(<ActorSlider actors={mockActors} />);
     
@@ -102,39 +99,37 @@ describe('ActorSlider Component', () => {
     });
   });
 
-  // Test 5: Component handles actors with missing data
+  
   it('handles actors with missing data', () => {
     const incompleteActors = [
-      { id: 1 }, // Missing name, role, and picture
-      { id: 2, name: "John Doe" }, // Missing role and picture
+      { id: 1 }, 
+      { id: 2, name: "John Doe" },
     ];
 
     render(<ActorSlider actors={incompleteActors} />);
 
-    // Check for default values
+
     expect(screen.getAllByText('No Name')).toHaveLength(1);
     expect(screen.getAllByText('No Role')).toHaveLength(2);
   });
 
-  // Test 6: Slider settings are correct
   it('contains correct slider settings', () => {
     const { container } = render(<ActorSlider actors={mockActors} />);
     
-    // Check if wrapper class exists
+
     expect(container.getElementsByClassName('wrapperList')).toHaveLength(1);
     
-    // Check if lists class exists
+
     expect(container.getElementsByClassName('lists')).toHaveLength(1);
   });
 
-  // Test 7: Optional title handling
   it('renders without title when not provided', () => {
     const { container } = render(<ActorSlider actors={mockActors} />);
     const headers = container.querySelectorAll('h2');
     expect(headers).toHaveLength(0);
   });
 
-  // Test 8: Component with null actors prop
+ 
   it('handles null actors prop gracefully', () => {
     render(<ActorSlider actors={null} />);
     expect(screen.getByText('No actors available')).toBeInTheDocument();
