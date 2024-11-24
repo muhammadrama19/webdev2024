@@ -34,12 +34,11 @@ const UserReview = ({ userName, userImage, rating, reviewText, createdAt }) => {
             <Card.Text className="review-text">
               {isExpanded ? reviewText : truncatedText}
               {reviewText.length > 150 && (
-                <span onClick={toggleExpand} className="see-more">
+                <button onClick={toggleExpand} className="see-more btn btn-link p-0">
                   {isExpanded ? ' See less' : ' See more'}
-                </span>
+                </button>
               )}
             </Card.Text>
-
           </Col>
         </Row>
       </Card.Body>
