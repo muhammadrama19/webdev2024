@@ -1,10 +1,9 @@
-// List.js
-import React from 'react';
-import Slider from 'react-slick';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import ListItem from '../listitem/listitem';
-import './list.scss';
+import React, { useState, useEffect } from "react";
+import Slider from "react-slick";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import ListItem from "../listitem/listitem";
+import "./list.scss";
 
 // Custom Arrow Components
 const NextArrow = (props) => {
@@ -25,35 +24,35 @@ const PrevArrow = (props) => {
   );
 };
 
-const List = ({ title, movies }) => {
+const List = () => {
+  const [movies, setMovies] = useState([]);
+
+  useEffect(() => {
+    const fetchTopRated = async () => {
+      try {
+        const response = await fetch("http://localhost:8001/top-rated");
+        const data = await response.json();
+        setMovies(data);
+      } catch (error) {
+        console.error("Error fetching top-rated movies:", error);
+      }
+    };
+
+    fetchTopRated();
+  }, []);
+
   const settings = {
     dots: false,
     infinite: false,
-    centerFading: '20px',
     speed: 500,
-    slidesToShow: 4, // Adjust number of slides visible
+    slidesToShow: 4,
     slidesToScroll: 1,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
     responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 3,
-        },
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
-        },
-      },
+      { breakpoint: 1024, settings: { slidesToShow: 3 } },
+      { breakpoint: 768, settings: { slidesToShow: 2 } },
+      { breakpoint: 480, settings: { slidesToShow: 1 } },
     ],
   };
 

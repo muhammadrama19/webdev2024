@@ -19,7 +19,6 @@ const Detailmovie = () => {
   const [userId, setUserId] = useState(null); // Tambahkan userId
   const [error, setError] = useState(null);
 
-  // Fetch movie details
   useEffect(() => {
     const fetchMovie = async () => {
       try {
@@ -41,7 +40,6 @@ const Detailmovie = () => {
     fetchMovie();
   }, [id]);
 
-  // Check if user is logged in
   useEffect(() => {
     const token = Cookies.get("token");
     const user_id = Cookies.get("user_id");
@@ -74,7 +72,7 @@ const Detailmovie = () => {
       <Container fluid>
         <Row className="justify-content-center">
           <Col xs={12} sm={12} md={6} lg={8} >
-            {/* Populate MovieDetailCard with fetched data */}
+           
             <MovieDetailCard
               title={movieData.title}
               rating={movieData.imdb_score}

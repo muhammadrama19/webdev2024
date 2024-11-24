@@ -175,7 +175,7 @@ useEffect(() => {
           <Col xs={12} className="listTitle pt-5 font-weight-500" >
             Top Rated Movies
           </Col>
-          <List title="Top Rated Movies" movies={topRated} />
+          <List/>
         </Row>
       </Container>
 

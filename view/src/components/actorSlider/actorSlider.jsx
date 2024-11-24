@@ -24,57 +24,57 @@ const PrevArrow = (props) => {
   );
 };
 
-const List = ({ title, actors }) => {
+const List = ({ title, actors=[] }) => {
   const settings = {
-    dots: false,
-    infinite: false,
-    speed: 500,
-    slidesToShow: 4, // Adjust number of slides visible
-    slidesToScroll: 1,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 3,
-        },
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
-        },
-      },
-    ],
+  dots: false,
+  infinite: false,
+  speed: 500,
+  slidesToShow: 4, // Adjust number of slides visible
+  slidesToScroll: 1,
+  nextArrow: <NextArrow />,
+  prevArrow: <PrevArrow />,
+  responsive: [
+    {
+    breakpoint: 1024,
+    settings: {
+      slidesToShow: 3,
+    },
+    },
+    {
+    breakpoint: 768,
+    settings: {
+      slidesToShow: 2,
+    },
+    },
+    {
+    breakpoint: 480,
+    settings: {
+      slidesToShow: 1,
+    },
+    },
+  ],
   };
 
   return (
-    <div className="lists">
-      <h2>{title}</h2> {/* Optional title for the carousel */}
-      <div className="wrapperList">
-        <Slider {...settings}>
-          {actors.length > 0 ? (
-            actors.map((actor, index) => (
-              <ActorCard
-                key={index}
-                imageSrc={actor.actor_picture} // Assuming actor object contains image property
-                name={actor.name}
-                role={actor.role} // Assuming actor object contains role property
-              />
-            ))
-          ) : (
-            <p>No actors available</p>
-          )}
-        </Slider>
-      </div>
+  <div className="lists">
+    {title && <h2>{title}</h2>} {/* Render title only if provided */}
+    <div className="wrapperList">
+    <Slider {...settings}>
+      {actors && actors.length > 0 ? (
+      actors.map((actor, index) => (
+        <ActorCard
+        key={index}
+        imageSrc={actor.actor_picture} // Assuming actor object contains image property
+        name={actor.name || 'No Name'} // Default to 'No Name' if name is missing
+        role={actor.role || 'No Role'} // Assuming actor object contains role property
+        />
+      ))
+      ) : (
+      <p>No actors available</p>
+      )}
+    </Slider>
     </div>
+  </div>
   );
 };
 
