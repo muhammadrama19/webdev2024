@@ -27,6 +27,10 @@ afterAll(async () => {
   }
 }, 60000); // Perpanjang timeout untuk afterAll menjadi 60 detik
 
+async function wait(ms) {
+    return await new Promise((resolve) => setTimeout(resolve, ms * 1000));
+  }
+
 describe('Drama Input Form Tests with Admin Role', () => {
   const baseUrl = 'http://localhost:3001'; // Ganti dengan URL aplikasi Anda
 
@@ -80,6 +84,8 @@ describe('Drama Input Form Tests with Admin Role', () => {
       // Isi Poster URL
       const posterUrlInput = await driver.findElement(By.name('posterUrl'));
       await posterUrlInput.sendKeys('https://image.tmdb.org/t/p/w500/iEe9RODlNgobupiksZ2vE4TZwUg.jpg');
+
+        await wait(2); // Tunggu 1 detik
 
       // Pilih Status
       const statusDropdown = await driver.findElement(By.name('status'));
