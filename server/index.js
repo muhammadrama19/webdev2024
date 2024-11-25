@@ -18,6 +18,10 @@ const fs = require("fs");
 const { isAuthenticated, hasAdminRole } = require("./middleware/auth");
 const multer = require("multer");
 const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cookieParser());
 const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 
@@ -33,7 +37,7 @@ app.use(
         return callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true // Untuk mengizinkan penggunaan cookie
+    credentials: true, // Untuk mengizinkan penggunaan cookie
   })
 );
 
@@ -803,77 +807,93 @@ app.put("/users/:id", isAuthenticated, hasAdminRole, async (req, res) => {
 });
 
 // DELETE endpoint untuk menghapus user
-app.put("/users/delete/:id", isAuthenticated, hasAdminRole, async (req, res) => {
-  const userId = req.params.id;
+app.put(
+  "/users/delete/:id",
+  isAuthenticated,
+  hasAdminRole,
+  async (req, res) => {
+    const userId = req.params.id;
 
-  try {
-    // Pengecekan relasi user dengan tabel lain
-    const checkQuery = `SELECT * FROM reviews WHERE user_id = ? AND deleted_at IS NULL`;
-    const [userReview] = await db.promise().query(checkQuery, [userId]);
+    try {
+      // Pengecekan relasi user dengan tabel lain
+      const checkQuery = `SELECT * FROM reviews WHERE user_id = ? AND deleted_at IS NULL`;
+      const [userReview] = await db.promise().query(checkQuery, [userId]);
 
-    if (userReview.length > 0) {
-      return res.status(400).json({ error: "Cannot delete award, it is still referenced in Review." });
-    }
-
-    // Update nilai Status_Account menjadi 3
-    const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW() WHERE id = ?`;
-    const [result] = await db.promise().query(query, [userId]);
-
-    // Check if any row affected
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "User not found", success: false });
-    }
-
-    // Get user details
-    const userQuery = `SELECT * FROM users WHERE id = ?`;
-    const [userData] = await db.promise().query(userQuery, [userId]);
-
-    if (userData.length === 0) {
-      return res.status(404).json({ message: "User not found", success: false });
-    }
-
-    const user = userData[0];
-    const templatePath = path.join(__dirname, "template", "banned.html");
-
-    // Read the email template file
-    fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
-      if (err) {
-        console.error("Error reading email template:", err);
-        return res.status(500).json({ message: "Error reading email template", success: false });
+      if (userReview.length > 0) {
+        return res
+          .status(400)
+          .json({
+            error: "Cannot delete award, it is still referenced in Review.",
+          });
       }
 
-      // Replace placeholders in the template with actual data
-      const bannedHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+      // Update nilai Status_Account menjadi 3
+      const query = `UPDATE users SET Status_Account = 3, deleted_at = NOW() WHERE id = ?`;
+      const [result] = await db.promise().query(query, [userId]);
 
-      // Mail options
-      const mailOptions = {
-        from: process.env.EMAIL,
-        to: user.email,
-        subject: "Account Banned Notification",
-        html: bannedHTML, // Use the customized HTML content
-      };
+      // Check if any row affected
+      if (result.affectedRows === 0) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
 
-      // Send email
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          return res.status(500).json({ message: "Error sending banned email", success: false });
+      // Get user details
+      const userQuery = `SELECT * FROM users WHERE id = ?`;
+      const [userData] = await db.promise().query(userQuery, [userId]);
+
+      if (userData.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
+
+      const user = userData[0];
+      const templatePath = path.join(__dirname, "template", "banned.html");
+
+      // Read the email template file
+      fs.readFile(templatePath, "utf8", (err, htmlTemplate) => {
+        if (err) {
+          console.error("Error reading email template:", err);
+          return res
+            .status(500)
+            .json({ message: "Error reading email template", success: false });
         }
 
-        res.json({
-          message: "User banned successfully and email sent",
-          success: true,
+        // Replace placeholders in the template with actual data
+        const bannedHTML = htmlTemplate.replace(/{{username}}/g, user.username);
+
+        // Mail options
+        const mailOptions = {
+          from: process.env.EMAIL,
+          to: user.email,
+          subject: "Account Banned Notification",
+          html: bannedHTML, // Use the customized HTML content
+        };
+
+        // Send email
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            return res
+              .status(500)
+              .json({ message: "Error sending banned email", success: false });
+          }
+
+          res.json({
+            message: "User banned successfully and email sent",
+            success: true,
+          });
         });
       });
-    });
 
-    // Final success response
-    res.status(200).json({ message: "User suspended successfully" });
-  } catch (err) {
-    console.error("Error executing query:", err.message);
-    res.status(500).json({ error: "Failed to update user status" });
+      // Final success response
+      res.status(200).json({ message: "User suspended successfully" });
+    } catch (err) {
+      console.error("Error executing query:", err.message);
+      res.status(500).json({ error: "Failed to update user status" });
+    }
   }
-});
-
+);
 
 app.put(
   "/users/suspend/:id",
@@ -1206,7 +1226,12 @@ app.put("/actors/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
       if (movieActors.length > 0) {
         return db.rollback(() => {
-          return res.status(400).json({ error: "Cannot delete actor, it is still referenced in movie_actor." });
+          return res
+            .status(400)
+            .json({
+              error:
+                "Cannot delete actor, it is still referenced in movie_actor.",
+            });
         });
       }
 
@@ -1350,7 +1375,12 @@ app.put("/genres/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
       if (movieGenres.length > 0) {
         return db.rollback(() => {
-          return res.status(400).json({ error: "Cannot delete country, it is still referenced in movie_genres." });
+          return res
+            .status(400)
+            .json({
+              error:
+                "Cannot delete country, it is still referenced in movie_genres.",
+            });
         });
       }
 
@@ -1522,7 +1552,11 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
       if (awards.length > 0) {
         return db.rollback(() => {
-          return res.status(400).json({ error: "Cannot delete country, it is still referenced in awards." });
+          return res
+            .status(400)
+            .json({
+              error: "Cannot delete country, it is still referenced in awards.",
+            });
         });
       }
 
@@ -1540,7 +1574,12 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
         if (actors.length > 0) {
           return db.rollback(() => {
-            return res.status(400).json({ error: "Cannot delete country, it is still referenced in actors." });
+            return res
+              .status(400)
+              .json({
+                error:
+                  "Cannot delete country, it is still referenced in actors.",
+              });
           });
         }
 
@@ -1555,13 +1594,20 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
           if (err) {
             console.error("Error checking movie_countries:", err.message);
             return db.rollback(() => {
-              res.status(500).json({ error: "Failed to check movie_countries" });
+              res
+                .status(500)
+                .json({ error: "Failed to check movie_countries" });
             });
           }
 
           if (movieCountries.length > 0) {
             return db.rollback(() => {
-              return res.status(400).json({ error: "Cannot delete country, it is still referenced in movie_countries." });
+              return res
+                .status(400)
+                .json({
+                  error:
+                    "Cannot delete country, it is still referenced in movie_countries.",
+                });
             });
           }
 
@@ -1601,7 +1647,6 @@ app.put("/countries/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
     });
   });
 });
-
 
 // Get all awards
 app.get("/awards", isAuthenticated, (req, res) => {
@@ -1798,7 +1843,12 @@ app.put("/awards/delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
 
       if (movieAwards.length > 0) {
         return db.rollback(() => {
-          return res.status(400).json({ error: "Cannot delete award, it is still referenced in movie_awards." });
+          return res
+            .status(400)
+            .json({
+              error:
+                "Cannot delete award, it is still referenced in movie_awards.",
+            });
         });
       }
 
@@ -2174,6 +2224,10 @@ app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
       id,
     ];
 
+    if (!title) {
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
     await db
       .promise()
       .query(
@@ -2288,44 +2342,36 @@ app.put("/update-drama", isAuthenticated, hasAdminRole, async (req, res) => {
 app.put("/movie-delete/:id", isAuthenticated, hasAdminRole, (req, res) => {
   const movieId = req.params.id;
 
-  // Start a transaction
-  db.beginTransaction((err) => {
+  // Validasi jika movieId bukan angka
+  if (isNaN(movieId)) {
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+
+  // Cek keberadaan film
+  const checkMovieQuery = "SELECT * FROM movies WHERE id = ?";
+  db.query(checkMovieQuery, [movieId], (err, result) => {
     if (err) {
-      console.error("Error starting transaction:", err);
+      console.error("Error checking movie existence:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    // Pengecekan relasi pada tabel reviews
-    const checkReviewsQuery = `
-      SELECT * FROM reviews WHERE movie_id = ? AND deleted_at IS NULL;
-    `;
-    db.query(checkReviewsQuery, [movieId], (err, reviews) => {
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
+
+    // Update status dan set deleted_at
+    const query = `UPDATE movies SET status = 0, deleted_at = CURRENT_TIMESTAMP WHERE id = ?`;
+    db.query(query, [movieId], (err) => {
       if (err) {
-        console.error("Error checking awards:", err.message);
-        return db.rollback(() => {
-          res.status(500).json({ error: "Failed to check awards" });
-        });
+        console.error("Error executing query:", err.message);
+        return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      if (reviews.length > 0) {
-        return db.rollback(() => {
-          return res.status(400).json({ error: "Cannot delete movie, it is still referenced in review." });
-        });
-      }
-
-      const query = `UPDATE movies SET status = 0, deleted_at = CURRENT_TIMESTAMP WHERE id = ?`;
-
-      db.query(query, [movieId], (err, result) => {
-        if (err) {
-          console.error("Error executing query:", err.message);
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-
-        res.status(200).json({ message: "Movie moved to trash successfully" });
-      });
+      res.status(200).json({ message: "Movie moved to trash successfully" });
     });
   });
 });
+
 
 //REJECTED MOVIES
 app.put("/movie-rejected/:id", isAuthenticated, hasAdminRole, (req, res) => {
@@ -2880,7 +2926,12 @@ app.post("/add-reviews", isAuthenticated, (req, res) => {
 });
 
 // Starting the server
-const PORT = 8001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+let server;
+if (process.env.NODE_ENV !== "test") {
+  const PORT = process.env.PORT || 8001;
+  server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = { app, server, db };
