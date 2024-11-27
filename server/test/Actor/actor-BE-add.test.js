@@ -1,9 +1,9 @@
-const { app, server, db } = require("../index");
+const { app, server, db } = require("../../index");
 const supertest = require("supertest");
 const request = supertest(app);
 
 // Mock middleware
-jest.mock("../middleware/auth.js", () => ({
+jest.mock("../../middleware/auth.js", () => ({
     isAuthenticated: (req, res, next) => {
         req.user = { id: 1, role: "Admin" }; // Mock user valid
         next();
