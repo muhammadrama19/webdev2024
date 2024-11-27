@@ -1193,7 +1193,7 @@ app.put("/actors/:id", isAuthenticated, hasAdminRole, (req, res) => {
         return res.status(404).json({ error: "Actor not found." });
       }
 
-      res.json({ message: "Actor updated successfully." });
+      res.json({ message: "Actor updated successfully." , actorID: id});
     });
   });
 });
