@@ -31,7 +31,7 @@ async function wait(ms) {
     return await new Promise((resolve) => setTimeout(resolve, ms * 1000));
 }
 
-describe('Actor Input Form Tests with Admin Role', () => {
+describe('Actor Edit Form Tests with Admin Role', () => {
     const baseUrl = 'http://localhost:3001'; // Ganti dengan URL aplikasi Anda
 
     // Fungsi login sebelum tes dijalankan
@@ -62,28 +62,24 @@ describe('Actor Input Form Tests with Admin Role', () => {
     };
 
     test(
-        'Should load input actor page and display title',
-        async () => {
-            await loginAsAdmin(); // Login sebagai Admin sebelum mengakses halaman
-
-            await driver.get(`${baseUrl}/manage-actor`); // Buka halaman input drama
-
-            const pageTitle = await driver.wait(until.elementLocated(By.css('h1')), 10000).getText();
-            expect(pageTitle).toBe('Actors Manager');
-        },
-        60000 // Timeout per test
-    );
-
-    test(
-        'Should fill input actor form and submit',
+        'Should fill edit actor form and submit',
         async () => {
             await loginAsAdmin(); // Replace with your login function
 
             await driver.get(`${baseUrl}/manage-actor`); // Navigate to the page
 
-            // Click the "Add New Actor" button
-            const addButton = await driver.findElement(By.css('button.btn-success')); // Update with your actual button class
-            await addButton.click();
+            // Tunggu elemen daftar actor dimuat
+            await driver.wait(until.elementLocated(By.css('table tbody tr')), 10000);
+
+            // Temukan baris pertama tabel
+            const actorRow = await driver.findElement(By.css('table tbody tr:first-child'));
+            const actorName = await actorRow.findElement(By.css('td:nth-child(2)')).getText();
+
+            // Temukan tombol Edit
+            const editButton = await actorRow.findElement(By.css('button.btn-primary'));
+
+            // Klik tombol Delete
+            await editButton.click();
 
             // Wait for the modal to appear
             const modal = await driver.wait(
@@ -94,19 +90,23 @@ describe('Actor Input Form Tests with Admin Role', () => {
 
             // Locate and fill the "Actor Name" input field
             const actorNameInput = await driver.findElement(By.css('input[name="name"]'));
+            await actorNameInput.clear();
             await actorNameInput.sendKeys('Azhar');
 
             // Locate and fill the "Birth Date" input field
             const birthDateInput = await driver.findElement(By.css('input[name="birthdate"]'));
-            await birthDateInput.sendKeys('2000-01-01'); // Date format should match the input type
+            await birthDateInput.clear();
+            await birthDateInput.sendKeys('27/09/2003'); // Date format should match the input type
 
             // Locate and fill the "Country" input field
             const countryInput = await driver.findElement(By.css('input[name="country_name"]'));
+            await countryInput.clear();
             await countryInput.sendKeys('Indonesia');
 
             // Locate and fill the "Upload Picture" input field
             const pictureInput = await driver.findElement(By.css('input[name="actor_picture"]'));
-            await pictureInput.sendKeys('https://example.com/actor.jpg');
+            await pictureInput.clear();
+            await pictureInput.sendKeys('https://akademik.polban.ac.id/fotomhsrekap/221524018.jpg');
 
             // Submit the form
             const submitButton = await driver.findElement(By.css('.modal-footer .btn-primary')); // Update selector if needed
@@ -125,7 +125,7 @@ describe('Actor Input Form Tests with Admin Role', () => {
             // Verifikasi deskripsi pesan
             const alertDescription = await driver.findElement(By.css('.swal2-html-container'));
             const alertDescriptionText = await alertDescription.getText();
-            expect(alertDescriptionText).toBe('Actor added successfully!');
+            expect(alertDescriptionText).toBe('Changes saved successfully!');
 
             // Klik tombol OK untuk menutup alert
             const alertButton = await driver.findElement(By.css('.swal2-confirm'));
@@ -135,75 +135,24 @@ describe('Actor Input Form Tests with Admin Role', () => {
     );
 
     test(
-        'Should fill input actor form and submit with all fields empty',
+        'Should fill edit actor form and submit with invalid country',
         async () => {
             await loginAsAdmin(); // Replace with your login function
 
             await driver.get(`${baseUrl}/manage-actor`); // Navigate to the page
 
-            // Click the "Add New Actor" button
-            const addButton = await driver.findElement(By.css('button.btn-success')); // Update with your actual button class
-            await addButton.click();
+            // Tunggu elemen daftar actor dimuat
+            await driver.wait(until.elementLocated(By.css('table tbody tr')), 10000);
 
-            // Wait for the modal to appear
-            const modal = await driver.wait(
-                until.elementLocated(By.css('.modal-dialog')),
-                10000
-            );
-            await driver.wait(until.elementIsVisible(modal), 5000);
+            // Temukan baris pertama tabel
+            const actorRow = await driver.findElement(By.css('table tbody tr:first-child'));
+            const actorName = await actorRow.findElement(By.css('td:nth-child(2)')).getText();
 
-            // Locate and fill the "Actor Name" input field
-            const actorNameInput = await driver.findElement(By.css('input[name="name"]'));
-            await actorNameInput.sendKeys('');
+            // Temukan tombol Edit
+            const editButton = await actorRow.findElement(By.css('button.btn-primary'));
 
-            // Locate and fill the "Birth Date" input field
-            const birthDateInput = await driver.findElement(By.css('input[name="birthdate"]'));
-            await birthDateInput.sendKeys(''); // Date format should match the input type
-
-            // Locate and fill the "Country" input field
-            const countryInput = await driver.findElement(By.css('input[name="country_name"]'));
-            await countryInput.sendKeys('');
-
-            // Locate and fill the "Upload Picture" input field
-            const pictureInput = await driver.findElement(By.css('input[name="actor_picture"]'));
-            await pictureInput.sendKeys('');
-
-            // Submit the form
-            const submitButton = await driver.findElement(By.css('.modal-footer .btn-primary')); // Update selector if needed
-            await submitButton.click();
-
-            // Tunggu alert SweetAlert2 muncul
-            const alertTitle = await driver.wait(
-                until.elementLocated(By.css('.swal2-title')),
-                10000
-            );
-
-            // Verifikasi judul alert
-            const alertTitleText = await alertTitle.getText();
-            expect(alertTitleText).toBe('Oops...');
-
-            // Verifikasi deskripsi pesan
-            const alertDescription = await driver.findElement(By.css('.swal2-html-container'));
-            const alertDescriptionText = await alertDescription.getText();
-            expect(alertDescriptionText).toBe('All fields must be filled!');
-
-            // Klik tombol OK untuk menutup alert
-            const alertButton = await driver.findElement(By.css('.swal2-confirm'));
-            await alertButton.click();
-        },
-        60000
-    );
-
-    test(
-        'Should fill input actor form and submit with invalid country',
-        async () => {
-            await loginAsAdmin(); // Replace with your login function
-
-            await driver.get(`${baseUrl}/manage-actor`); // Navigate to the page
-
-            // Click the "Add New Actor" button
-            const addButton = await driver.findElement(By.css('button.btn-success')); // Update with your actual button class
-            await addButton.click();
+            // Klik tombol Delete
+            await editButton.click();
 
             // Wait for the modal to appear
             const modal = await driver.wait(
@@ -218,15 +167,16 @@ describe('Actor Input Form Tests with Admin Role', () => {
 
             // Locate and fill the "Birth Date" input field
             const birthDateInput = await driver.findElement(By.css('input[name="birthdate"]'));
-            await birthDateInput.sendKeys('2000-01-01'); // Date format should match the input type
+            await birthDateInput.sendKeys('27/09/2003'); // Date format should match the input type
 
             // Locate and fill the "Country" input field
             const countryInput = await driver.findElement(By.css('input[name="country_name"]'));
+            await countryInput.clear();
             await countryInput.sendKeys('Jakarta');
 
             // Locate and fill the "Upload Picture" input field
             const pictureInput = await driver.findElement(By.css('input[name="actor_picture"]'));
-            await pictureInput.sendKeys('https://example.com/actor.jpg');
+            await pictureInput.sendKeys('https://akademik.polban.ac.id/fotomhsrekap/221524018.jpg');
 
             // Submit the form
             const submitButton = await driver.findElement(By.css('.modal-footer .btn-primary')); // Update selector if needed
