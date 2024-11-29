@@ -562,9 +562,10 @@
                 <Form.Group className="mb-3">
                   <Select
                     isMulti
+                    id="country-select" // Tambahkan id unik
                     name="country"
                     options={countryOptions}
-                    className="basic-multi-select"
+                    className="basic-multi-select country-dropdown"
                     classNamePrefix="select"
                     value={formData.country}
                     onChange={handleCountryChange}
@@ -693,8 +694,9 @@
                   <Select
                     isMulti
                     name="awards"
+                    id="award-select" // Tambahkan id unik
                     options={awardsOptions}
-                    className="basic-multi-select"
+                    className="basic-multi-select award-dropdown"
                     classNamePrefix="select"
                     placeholder="Select Awards"
                     value={formData.awards}
