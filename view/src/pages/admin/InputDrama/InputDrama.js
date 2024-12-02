@@ -11,7 +11,7 @@
     Modal,
   } from "react-bootstrap";
   import { useNavigate, useLocation } from "react-router-dom";
-  import "../InputDrama/InputDrama.css";
+  import "../InputDrama/InputDrama.scss";
   import Select from "react-select"; // Import react-select
   import Rating from "react-rating-stars-component"; // Import star rating component
   import Cookies from 'js-cookie';
@@ -562,9 +562,10 @@
                 <Form.Group className="mb-3">
                   <Select
                     isMulti
+                    id="country-select" // Tambahkan id unik
                     name="country"
                     options={countryOptions}
-                    className="basic-multi-select"
+                    className="basic-multi-select country-dropdown"
                     classNamePrefix="select"
                     value={formData.country}
                     onChange={handleCountryChange}
@@ -693,8 +694,9 @@
                   <Select
                     isMulti
                     name="awards"
+                    id="award-select" // Tambahkan id unik
                     options={awardsOptions}
-                    className="basic-multi-select"
+                    className="basic-multi-select award-dropdown"
                     classNamePrefix="select"
                     placeholder="Select Awards"
                     value={formData.awards}

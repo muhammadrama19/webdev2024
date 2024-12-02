@@ -13,7 +13,7 @@ import {
   Form,
 } from "react-bootstrap";
 import { FaSearch } from "react-icons/fa";
-import "./ReviewManager.css";
+import "./ReviewManager.scss";
 import Swal from "sweetalert2";
 
 const ReviewManager = () => {

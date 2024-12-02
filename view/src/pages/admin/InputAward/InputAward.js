@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Form, Button, Modal, Pagination, Row, Col, InputGroup, FormControl, Spinner } from 'react-bootstrap';
 import { FaPlus, FaSearch } from "react-icons/fa";
-import './InputAward.css';
+import './InputAward.scss';
 import Swal from 'sweetalert2';
 
 const AwardsManager = () => {

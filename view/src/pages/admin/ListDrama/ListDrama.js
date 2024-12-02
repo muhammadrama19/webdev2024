@@ -92,27 +92,34 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:8001/movie-delete/${selectedMovie.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: 0 }),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `http://localhost:8001/movie-delete/${selectedMovie.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: 0 }),
+          credentials: "include",
+        }
+      );
       if (response.ok) {
-
         Swal.fire({
           icon: "success",
           title: "Success",
           text: "Movie has been moved to trash.",
           timer: 3000,
         });
+  
+        // Hapus movie dari state dramas tanpa reload
+        setDramas((prevDramas) =>
+          prevDramas.filter((drama) => drama.id !== selectedMovie.id)
+        );
       } else {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "An error occurred while moving movie to trash. Please try again lateror check relations in the database.",
+          text: "An error occurred while moving movie to trash. Please try again later or check relations in the database.",
           timer: 3000,
         });
       }
@@ -128,6 +135,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
     setSelectedMovie(null);
     setShowTrashModal(false);
   };
+  
 
   const handleSave = () => {
     setDramas(

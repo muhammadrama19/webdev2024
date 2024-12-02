@@ -60,12 +60,16 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
     "@testing-library/react": "^16.0.1",
     "babel-jest": "^29.7.0",
     "cross-env": "^7.0.3",
+    "css-minimizer-webpack-plugin": "^7.0.0",
     "jest": "^27.5.1",
-    "react-test-renderer": "^18.3.1"
+    "postcss": "^8.4.49",
+    "react-test-renderer": "^18.3.1",
+    "supertest": "^7.0.0"
   }
 }
