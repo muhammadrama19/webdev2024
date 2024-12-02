@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8
+    container_name: container_mysql
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: lalajoeuydb
+      MYSQL_ROOT_HOST: "%"
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile-client
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile-server
+    ports:
+      - "8001:8001"
+    networks:
+      - app-network
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: lalajoeuydb    
+    env_file:
+      - server/.env
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:

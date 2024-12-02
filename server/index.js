@@ -43,20 +43,29 @@ app.use(bodyParser.json());
 app.use(express.static("public"));
 
 // MySQL connection setup
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "lalajoeuydb",
-});
+const dbConfig = {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+};
 
-db.connect((err) => {
-  if (err) {
-    console.error("Error connecting to MySQL:", err);
-    return;
-  }
-  console.log("Connected to MySQL!");
-});
+const db = mysql.createConnection(dbConfig);
+
+const connectWithRetry = () => {
+  db.connect((err) => {
+    if (err) {
+      console.error("Error connecting to MySQL:", err);
+      console.log("Retrying in 5 seconds...");
+      setTimeout(connectWithRetry, 5000); // Retry after 5 seconds
+    } else {
+      console.log("Connected to MySQL!");
+    }
+  });
+};
+
+connectWithRetry();
+
 
 app.use(
   session({
