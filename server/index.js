@@ -73,15 +73,14 @@ connectWithRetry();
 
 app.use(
   session({
-    secret: process.env.JWT_SECRET,
+    cookie: { maxAge: 86400000 },
+    store: new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    }),
     resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: "Strict", // or "Lax" or "None" based on your requirements
-      secure: process.env.NODE_ENV === "production", // Set to true if using HTTPS
-    },
-  })
+    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET,
+ })
 );
 app.use(passport.initialize());
 app.use(passport.session());
