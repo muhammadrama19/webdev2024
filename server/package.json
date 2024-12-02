@@ -5,7 +5,8 @@
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --detectOpenHandles",
     "test-selenium": "jest",
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "vercel-build": "echo 'vercel-build'"
   },
   "keywords": [],
   "author": "",
