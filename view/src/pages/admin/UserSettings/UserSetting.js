@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal, Pagination, Dropdown, Col, Spinner } from "react-bootstrap";
 import { FaPlus } from "react-icons/fa";
-import "./UserSetting.css";
+import "./UserSetting.scss";
 import Swal from "sweetalert2";
 
 const UserSetting = () => {

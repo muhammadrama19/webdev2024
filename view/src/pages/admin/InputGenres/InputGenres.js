@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal, Pagination, Col, Row, InputGroup, FormControl, Spinner } from 'react-bootstrap';
 import { FaPlus, FaSearch } from "react-icons/fa";
 import axios from "axios";
-import "./InputGenres.css";
+import "./InputGenres.scss";
 import Swal from "sweetalert2";
 
 const GenreManager = () => {

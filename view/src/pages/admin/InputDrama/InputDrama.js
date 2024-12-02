@@ -11,7 +11,7 @@
     Modal,
   } from "react-bootstrap";
   import { useNavigate, useLocation } from "react-router-dom";
-  import "../InputDrama/InputDrama.css";
+  import "../InputDrama/InputDrama.scss";
   import Select from "react-select"; // Import react-select
   import Rating from "react-rating-stars-component"; // Import star rating component
   import Cookies from 'js-cookie';
