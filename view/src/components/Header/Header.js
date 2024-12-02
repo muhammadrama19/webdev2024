@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  BsFillBellFill,
-  BsFillEnvelopeFill,
   BsPersonCircle,
   BsJustify,
 } from "react-icons/bs";

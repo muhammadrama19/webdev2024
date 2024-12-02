@@ -1,7 +1,6 @@
 import React from 'react';
 import { Row, Col, Container } from 'react-bootstrap';
 import './coverDetail.scss';
-import Button from '../button/button';
 
 const CoverDetail = ({ srcBackground = "https://via.assets.so/img.jpg?w=1024&h=307&tc=WHITE&bg=&t=no background available" }) => {
   return (

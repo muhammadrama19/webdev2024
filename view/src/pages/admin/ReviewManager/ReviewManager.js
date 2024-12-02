@@ -16,6 +16,8 @@ import { FaSearch } from "react-icons/fa";
 import "./ReviewManager.scss";
 import Swal from "sweetalert2";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const ReviewManager = () => {
   const [reviews, setReviews] = useState([]);
   const [showCount, setShowCount] = useState(10);
@@ -31,7 +33,7 @@ const ReviewManager = () => {
   useEffect(() => {
     const Reviews = async () => {
       try {
-        const response = await fetch("http://localhost:8001/reviews");
+        const response = await fetch(`${apiUrl}/reviews`);
         const data = await response.json();
         setReviews(data);
         setLoading(false);
@@ -46,7 +48,7 @@ const ReviewManager = () => {
   const approveReview = async (id) => {
     try {
       const response = await fetch(
-        `http://localhost:8001/reviews/${id}/approve`,
+        `${apiUrl}/reviews/${id}/approve`,
         {
           method: "PUT", // or you could change it to PATCH if preferred
           credentials: "include",
@@ -85,7 +87,7 @@ const ReviewManager = () => {
   const softDeleteReview = async (id) => {
     try {
       const response = await fetch(
-        `http://localhost:8001/reviews/${id}/soft-delete`,
+        `${apiUrl}/reviews/${id}/soft-delete`,
         {
           method: "PUT", // or change to PATCH
           credentials: "include",

@@ -7,6 +7,8 @@ import "./forgotPassowrd.scss"
 import Swal from "sweetalert2";
 //import scss of login
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -14,7 +16,7 @@ const ForgotPassword = () => {
 
   const handleForgotPassword = (e) => {
     e.preventDefault();
-    axios.post("http://localhost:8001/forgot-password", { email })
+    axios.post(`${apiUrl}/forgot-password`, { email })
       .then((res) => {
         setMessage(res.data.message);
         if (res.data.success) {

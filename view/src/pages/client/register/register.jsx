@@ -8,6 +8,8 @@ import axios from "axios";
 import "./register.scss";
 import Swal from "sweetalert2";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const RegisterForm = () => {
   const [values, setValues] = useState({
     username: "",
@@ -54,7 +56,7 @@ const RegisterForm = () => {
 
       // Kirim data ke backend jika validasi berhasil
       axios
-        .post("http://localhost:8001/register", values)
+        .post(`${apiUrl}/register`, values)
         .then((res) => {
           console.log("Response from server:", res.data);
           if (res.data.success) {

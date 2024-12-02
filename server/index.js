@@ -2545,7 +2545,7 @@ app.get(
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:3001/login?error=google-auth-failed",
+    failureRedirect: "http://localhost:3000/login?error=google-auth-failed",
     failureMessage: true,
   }),
   (req, res) => {
@@ -2555,14 +2555,14 @@ app.get(
     if (user.Status_Account === 2) {
       // Redirect with a custom error message in query params
       return res.redirect(
-        `http://localhost:3001/login?error=Account_Suspended`
+        `http://localhost:3000/login?error=Account_Suspended`
       );
     }
 
     // Check if user banned or not
     if (user.Status_Account === 3) {
       // Redirect with a custom error message in query params
-      return res.redirect(`http://localhost:3001/login?error=Account_Banned`);
+      return res.redirect(`http://localhost:3000/login?error=Account_Banned`);
     }
 
     // Generate JWT token with user info, including role
@@ -2590,7 +2590,7 @@ app.get(
 
     // Redirect to frontend after successful login
     res.redirect(
-      `http://localhost:3001/?username=${user.username}&email=${user.email}&role=${user.role}`
+      `http://localhost:3000/?username=${user.username}&email=${user.email}&role=${user.role}`
     );
   }
 );
@@ -2720,7 +2720,7 @@ app.post("/register", (req, res) => {
               success: true,
             });
             //redirect into login
-            res.redirect("http://localhost:3001/login");
+            res.redirect("http://localhost:3000/login");
           });
         });
       });
@@ -2778,7 +2778,7 @@ app.post("/forgot-password", (req, res) => {
     );
 
     // Create reset link
-    const resetLink = `http://localhost:3001/reset-password/${resetToken}`;
+    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
     const templatePathReset = path.join(
       __dirname,
       "template",

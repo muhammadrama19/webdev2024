@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { BsPersonCircle } from "react-icons/bs"; 
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
-import PersonIcon from '@mui/icons-material/Person';
 import "./navbar.scss";
 import Cookies from 'js-cookie';
 import { Dropdown } from "react-bootstrap";

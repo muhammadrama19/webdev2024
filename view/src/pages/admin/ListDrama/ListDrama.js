@@ -14,6 +14,8 @@ import { FaPlus, FaTrash } from "react-icons/fa";
 import "../ListDrama/ListDrama.scss";
 import Swal from "sweetalert2";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   const [showCount, setShowCount] = useState(10); // Items per page
   const [currentPage, setCurrentPage] = useState(1); // State for current page
@@ -38,7 +40,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
       try {
         // Jika di halaman trash, ambil movie dengan status 0
         const response = await fetch(
-          `http://localhost:8001/movie-list?status=${viewTrash ? 0 : 1}`,
+          `${apiUrl}/movie-list?status=${viewTrash ? 0 : 1}`,
           {
             credentials: "include",
           }
@@ -93,7 +95,7 @@ const ListDrama = ({ trashDramas, setTrashDramas, viewTrash = false }) => {
   const handleDelete = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8001/movie-delete/${selectedMovie.id}`,
+        `${apiUrl}/movie-delete/${selectedMovie.id}`,
         {
           method: "PUT",
           headers: {
