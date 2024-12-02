@@ -14,6 +14,7 @@ const crypto = require("crypto");
 const router = express.Router();
 const path = require("path");
 const fs = require("fs");
+const MemoryStore = require("memorystore")(session);
 
 const { isAuthenticated, hasAdminRole } = require("./middleware/auth");
 const multer = require("multer");
