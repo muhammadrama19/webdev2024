@@ -4,6 +4,8 @@ import { FaPlus, FaSearch } from "react-icons/fa";
 import "./InputCountry.scss";
 import Swal from "sweetalert2";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const CountryManager = () => {
     const [countries, setCountries] = useState([]);
     const [newCountry, setNewCountry] = useState("");
@@ -23,7 +25,7 @@ const CountryManager = () => {
     useEffect(() => {
         const fetchCountries = async () => {
             try {
-                const response = await fetch('http://localhost:8001/countries', {
+                const response = await fetch(`${apiUrl}/countries`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
@@ -62,7 +64,7 @@ const CountryManager = () => {
                 });
             } else {
                 try {
-                    const response = await fetch('http://localhost:8001/countries', {
+                    const response = await fetch(`${apiUrl}/countries`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
@@ -99,7 +101,7 @@ const CountryManager = () => {
     };
     const handleDeleteCountry = async () => {
         try {
-            const response = await fetch(`http://localhost:8001/countries/delete/${selectedCountry.id}`, {
+            const response = await fetch(`${apiUrl}/countries/delete/${selectedCountry.id}`, {
                 method: 'PUT', // Use PUT method for soft delete
                 headers: { "Content-Type": "application/json" },
                 credentials: 'include', // Include credentials (cookies)
@@ -151,7 +153,7 @@ const CountryManager = () => {
                 })
             } else {
                 try {
-                    await fetch(`http://localhost:8001/countries/${editing}`, {
+                    await fetch(`${apiUrl}/countries/${editing}`, {
                         method: 'PUT',
                         credentials: 'include',
                         headers: {

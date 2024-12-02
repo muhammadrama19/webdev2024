@@ -2,8 +2,10 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { refreshAccessToken } from './authService'; // Import refresh token service
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8001',
+  baseURL: `${apiUrl}`,
   withCredentials: true,
 });
 

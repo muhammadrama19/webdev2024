@@ -7,6 +7,8 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import "./reset.scss";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -62,7 +64,7 @@ const ResetPassword = () => {
     }
 
     axios
-      .post(`http://localhost:8001/reset-password/${token}`, { newPassword })
+      .post(`${apiUrl}/reset-password/${token}`, { newPassword })
       .then((res) => {
         Swal.fire({
           title: "Success",

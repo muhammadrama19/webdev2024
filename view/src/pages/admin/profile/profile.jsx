@@ -4,6 +4,8 @@ import "./profile.scss";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const Profile = () => {
   const [user, setUser] = useState(null); // State untuk menyimpan data pengguna
   const navigate = useNavigate();
@@ -11,7 +13,7 @@ const Profile = () => {
   // Mengambil data pengguna yang sedang login dari backend
   useEffect(() => {
     axios
-      .get("http://localhost:8001/profile", { withCredentials: true })
+      .get(`${apiUrl}/profile`, { withCredentials: true })
       .then((res) => {
         setUser(res.data); // Menyimpan data pengguna ke state
       })

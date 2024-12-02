@@ -11,6 +11,8 @@ import GoogleLogin from "../../../components/googleButton/googleButton";
 
 import "./login.scss";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const LoginForm = () => {
   const [values, setValues] = useState({
     email: '',
@@ -26,7 +28,7 @@ const LoginForm = () => {
     e.preventDefault(); 
   
     // Post login data
-    axios.post('http://localhost:8001/login', values)
+    axios.post(`${apiUrl}/login`, values)
       .then(res => {
         if (res.data.Status === "Login Success") {
           // Simpan data ke dalam cookie dengan js-cookie

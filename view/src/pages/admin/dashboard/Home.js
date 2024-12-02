@@ -29,9 +29,11 @@ function Home() {
 
   const [data, setData] = useState([]);
 
+  const  apiUrl = process.env.REACT_APP_API_URL;
+
   // Fetch jumlah movie, genre, country, award
   useEffect(() => {
-    fetch('http://localhost:8001/dashboard') // Ganti sesuai URL backend kamu
+    fetch(`${apiUrl}/dashboard`) // Ganti sesuai URL backend kamu
       .then(response => response.json())
       .then(data => setCounts(data))
       .catch(err => console.error("Error fetching data:", err));
@@ -39,7 +41,7 @@ function Home() {
 
   // Fetch jumlah movie dan genre berdasarkan dekade dari backend
   useEffect(() => {
-    fetch('http://localhost:8001/movie-genre-count-by-decade') // Ganti dengan URL endpoint backend kamu
+    fetch(`${apiUrl}/movie-genre-count-by-decade`) // Ganti dengan URL endpoint backend kamu
       .then(response => response.json())
       .then(data => setData(data)) // Set data yang diambil dari backend ke state
       .catch(err => console.error("Error fetching data:", err));

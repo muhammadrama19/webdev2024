@@ -4,6 +4,8 @@ import { FaPlus, FaSearch } from "react-icons/fa";
 import './InputAward.scss';
 import Swal from 'sweetalert2';
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const AwardsManager = () => {
     const [awards, setAwards] = useState([]);
     const [awardData, setAwardData] = useState({
@@ -25,7 +27,7 @@ const AwardsManager = () => {
     }, [showCount]);
     const fetchAwards = async () => {
         try {
-            const response = await fetch('http://localhost:8001/awards', {
+            const response = await fetch(`${apiUrl}/awards`, {
                 credentials: 'include'
             });
             const data = await response.json();
@@ -69,7 +71,7 @@ const AwardsManager = () => {
 
     const checkCountryExists = async (countryName) => {
         try {
-            const response = await fetch(`http://localhost:8001/countries/${countryName}`);
+            const response = await fetch(`${apiUrl}/countries/${countryName}`);
             if (!response.ok) {
                 return false; // Return false if country is not found (404)
             }
@@ -123,7 +125,7 @@ const AwardsManager = () => {
             };
 
             try {
-                const response = await fetch('http://localhost:8001/awards', {
+                const response = await fetch(`${apiUrl}/awards`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -193,7 +195,7 @@ const AwardsManager = () => {
             }
 
             try {
-                const response = await fetch(`http://localhost:8001/awards/${editing}`, {
+                const response = await fetch(`${apiUrl}/awards/${editing}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -237,7 +239,7 @@ const AwardsManager = () => {
     const handleDeleteAward = async () => {
         if (awardData) {
             try {
-                const response = await fetch(`http://localhost:8001/awards/delete/${awardData.id}`, {
+                const response = await fetch(`${apiUrl}/awards/delete/${awardData.id}`, {
                     method: 'PUT',
                     credentials: 'include'
                 });

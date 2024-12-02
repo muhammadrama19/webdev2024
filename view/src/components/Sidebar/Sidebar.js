@@ -8,7 +8,6 @@ import {
   BsBook,
   BsPeopleFill,
   BsArrowLeftRight,
-  BsFillGearFill,
   BsJustify,
   BsChevronDown,
   BsChevronUp,

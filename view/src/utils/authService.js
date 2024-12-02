@@ -1,6 +1,8 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 export const refreshAccessToken = async () => {
   const refreshToken = Cookies.get('refreshToken');
   if (!refreshToken) {
@@ -8,7 +10,7 @@ export const refreshAccessToken = async () => {
   }
 
   try {
-    const response = await axios.post('http://localhost:8001/refresh-token', { token: refreshToken });
+    const response = await axios.post(`${apiUrl}/refresh-token`, { token: refreshToken });
     return response.data.accessToken;
   } catch (error) {
     console.error('Failed to refresh access token:', error);

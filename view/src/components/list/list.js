@@ -5,6 +5,8 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import ListItem from "../listitem/listitem";
 import "./list.scss";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 // Custom Arrow Components
 const NextArrow = (props) => {
   const { onClick } = props;
@@ -30,7 +32,7 @@ const List = () => {
   useEffect(() => {
     const fetchTopRated = async () => {
       try {
-        const response = await fetch("http://localhost:8001/top-rated");
+        const response = await fetch(`${apiUrl}/top-rated`);
         const data = await response.json();
         setMovies(data);
       } catch (error) {
