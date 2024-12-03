@@ -46,6 +46,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
+const FRONT_END_URL = process.env.FRONT_END_URL;
+
 // MySQL connection setup
 const dbConfig = {
   host: process.env.DB_HOST,
@@ -2545,7 +2547,7 @@ app.get(
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:3000/login?error=google-auth-failed",
+    failureRedirect: "/login?error=google-auth-failed",
     failureMessage: true,
   }),
   (req, res) => {
@@ -2555,14 +2557,14 @@ app.get(
     if (user.Status_Account === 2) {
       // Redirect with a custom error message in query params
       return res.redirect(
-        `http://localhost:3000/login?error=Account_Suspended`
+        `${FRONT_END_URL}/login?error=Account_Suspended`
       );
     }
 
     // Check if user banned or not
     if (user.Status_Account === 3) {
       // Redirect with a custom error message in query params
-      return res.redirect(`http://localhost:3000/login?error=Account_Banned`);
+      return res.redirect(`${FRONT_END_URL}/login?error=Account_Banned`);
     }
 
     // Generate JWT token with user info, including role
@@ -2590,7 +2592,7 @@ app.get(
 
     // Redirect to frontend after successful login
     res.redirect(
-      `http://localhost:3000/?username=${user.username}&email=${user.email}&role=${user.role}`
+      `${FRONT_END_URL}/?username=${user.username}&email=${user.email}&role=${user.role}`
     );
   }
 );
@@ -2679,7 +2681,7 @@ app.post("/register", (req, res) => {
         });
 
         // Send confirmation email
-        const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
+        const confirmationUrl = `${process.env.BACKEND_URL}/confirm-email/${emailToken}`;
         const templatePath = path.join(
           __dirname,
           "template",
@@ -2720,7 +2722,7 @@ app.post("/register", (req, res) => {
               success: true,
             });
             //redirect into login
-            res.redirect("http://localhost:3000/login");
+            res.redirect(`${FRONT_END_URL}/login`);
           });
         });
       });
@@ -2778,7 +2780,7 @@ app.post("/forgot-password", (req, res) => {
     );
 
     // Create reset link
-    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+    const resetLink = `${FRONT_END_URL}/reset-password/${resetToken}`;
     const templatePathReset = path.join(
       __dirname,
       "template",

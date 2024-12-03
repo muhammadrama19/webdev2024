@@ -1,10 +1,14 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const db = require('../config/db');
+const dotenv = require('dotenv');
+dotenv.config();
+const FRONTEND_URL = process.env.FRONTEND_URL;
+
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: 'http://localhost:8001/auth/google/callback'
+  callbackURL: `${FRONTEND_URL}/auth/google/callback`
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     // Existing user check by Google ID
