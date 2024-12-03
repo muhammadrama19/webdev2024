@@ -130,6 +130,8 @@ app.get("/movies/movie", (req, res) => {
     sort,
     awards,
   } = req.query;
+  //debugging the endpoint for prod
+  console.log("req.query", req.query);
   const offset = (page - 1) * limit;
 
   let filterConditions = [];
