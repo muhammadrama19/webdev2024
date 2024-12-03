@@ -117,7 +117,8 @@ useEffect(() => {
       const url = debouncedSearchQuery
         ? `${apiUrl}/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&awards=${awards}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}&search=${encodeURIComponent(debouncedSearchQuery)}${sortParam}`
         : `${apiUrl}/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&awards=${awards}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}${sortParam}`;
-
+      //debugging purpose for checking endpoint
+      console.log(url);
       const response = await fetch(url);
       const data = await response.json();
       setMovies(data.movies);
