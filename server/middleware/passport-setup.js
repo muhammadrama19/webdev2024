@@ -4,11 +4,12 @@ const db = require('../config/db');
 const dotenv = require('dotenv');
 dotenv.config();
 const FRONTEND_URL = process.env.FRONTEND_URL;
+const BACKEND_URL = process.env.BACKEND_URL;
 
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: `${FRONTEND_URL}/auth/google/callback`
+  callbackURL: `${BACKEND_URL}/auth/google/callback`
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     // Existing user check by Google ID

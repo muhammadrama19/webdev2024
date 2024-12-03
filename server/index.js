@@ -46,7 +46,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-const FRONT_END_URL = process.env.FRONT_END_URL;
+const FRONT_END_URL = process.env.FRONTEND_URL;
 
 // MySQL connection setup
 const dbConfig = {
@@ -2547,7 +2547,7 @@ app.get(
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "/login?error=google-auth-failed",
+    failureRedirect: `${FRONT_END_URL}/login?error=google-auth-failed`,
     failureMessage: true,
   }),
   (req, res) => {
