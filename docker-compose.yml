@@ -4,7 +4,7 @@ services:
       context: ./view
       dockerfile: Dockerfile-client
     ports:
-      - "3000:3000"
+      - "3000:80"
     networks:
       - app-network
   server:
@@ -24,6 +24,9 @@ services:
       DB_NAME: lalajoeuydb
     env_file:
       - ./server/.env
+    extra_hosts:
+      - "host.docker.internal:172.19.0.1"  # Mengarahkan host.docker.internal ke IP Docker host
+    
 
   db:
     image: mysql:8
@@ -31,7 +34,7 @@ services:
     volumes:
       - db-data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     networks:
       - app-network
     environment:

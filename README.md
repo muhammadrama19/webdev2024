@@ -140,3 +140,14 @@ M. Rama Nurimani 		(221524021)
 
 
 
+
+
+
+``` bash
+mysql -u root -proot lalajoeuydb < /tmp/lalajoeuydb.sql
+
+```
+USE lalajoeuydb;
+SHOW TABLES;
+SELECT * FROM genres;
+```
