@@ -61,14 +61,21 @@ app.use(express.static("public"));
 const FRONT_END_URL = process.env.FRONTEND_URL;
 
 // MySQL connection setup
-const dbConfig = {
-  host: process.env.DB_HOST,
+// const dbConfig = {
+//   host: process.env.DB_HOST,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   database: process.env.DB_NAME,
+// };
+
+const db = mysql.createConnection({
+  host: process.env.DB_HOST, // Sesuaikan dengan nama service di docker-compose
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-};
+});
 
-const db = mysql.createConnection(dbConfig);
+// const db = mysql.createConnection(dbConfig);
 
 const connectWithRetry = () => {
   db.connect((err) => {
@@ -188,8 +195,11 @@ app.get("/movies/movie", (req, res) => {
   // Main query to fetch movies and genres
   let query = ` 
     SELECT m.id, m.title, m.poster AS src, m.release_year AS year, 
-           GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS genres, 
-           m.imdb_score AS rating, m.view, c.country_name AS country, a.awards_name AS awards, s.name AS status, av.platform_name AS availability
+      GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS genres, 
+      m.imdb_score AS rating, m.view, 
+      GROUP_CONCAT(DISTINCT c.country_name SEPARATOR ', ') AS country, 
+      GROUP_CONCAT(DISTINCT a.awards_name SEPARATOR ', ') AS awards, 
+      s.name AS status, av.platform_name AS availability
     FROM movies m
     JOIN movie_genres mg ON m.id = mg.movie_id
     JOIN genres g ON mg.genre_id = g.id
@@ -200,6 +210,7 @@ app.get("/movies/movie", (req, res) => {
     JOIN status s ON m.status_id = s.id
     JOIN availability av ON m.availability_id = av.id
     WHERE m.deleted_at IS NULL AND status = 1
+
   `;
 
   // Apply filters
@@ -233,7 +244,7 @@ app.get("/movies/movie", (req, res) => {
   // Execute the main movie query
   db.query(query, queryParams, (err, results) => {
     if (err) {
-      res.status(500).json({ error: "Database query failed" });
+      res.status(500).json({ error: `Database query failed ${err}` });
       return;
     }
 

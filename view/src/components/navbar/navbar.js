@@ -11,7 +11,6 @@ import { Dropdown } from "react-bootstrap";
 
 const Navbar = ({ loggedInUsername }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [countries, setCountries] = useState(["Indonesia", "Japan"]);
   const [selectedCountry, setSelectedCountry] = useState("Indonesia");
   const [searchVisible, setSearchVisible] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -50,21 +49,6 @@ const Navbar = ({ loggedInUsername }) => {
   }, []);
   
 
-  // Mengambil data negara dari API
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const response = await fetch("/api/countries");
-        const data = await response.json();
-        setCountries(data);
-      } catch (error) {
-        console.error("Error fetching countries:", error);
-      }
-    };
-
-    fetchCountries();
-
-  }, []);
 
   const handleCountryChange = (country) => {
     setSelectedCountry(country);
@@ -216,15 +200,7 @@ const Navbar = ({ loggedInUsername }) => {
           </>
 
         )}
-        <div className="country">
-          <div className="options">
-            {countries.map((country, index) => (
-              <span key={index} onClick={() => handleCountryChange(country)}>
-                {country}
-              </span>
-            ))}
-          </div>
-        </div>
+        
       </div>
     </div>
   );
