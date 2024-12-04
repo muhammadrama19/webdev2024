@@ -11,6 +11,7 @@ import { useParams } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import ErrorPage from  '../error/errorPage'; 
 
+const  apiUrl = process.env.REACT_APP_API_URL;
 
 const Detailmovie = () => {
   const [movieData, setMovieData] = useState(null);
@@ -22,7 +23,7 @@ const Detailmovie = () => {
   useEffect(() => {
     const fetchMovie = async () => {
       try {
-        const response = await fetch(`http://localhost:8001/movies/detail/${id}`);
+        const response = await fetch(`${apiUrl}/movies/detail/${id}`);
         if (!response.ok) {
           if (response.status === 404) {
             setError(true); // Set error state if movie is not found

@@ -1,0 +1,63 @@
+services:
+  client:
+    build:
+      context: ./view
+      dockerfile: Dockerfile-client
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile-server
+    ports:
+      - "8001:8001"
+    networks:
+      - app-network
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: lalajoeuydb
+    env_file:
+      - ./server/.env
+
+  db:
+    image: mysql:8
+    container_name: container_mysql
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: lalajoeuydb
+      MYSQL_ROOT_HOST: "%"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-u",
+          "root",
+          "-p$MYSQL_ROOT_PASSWORD",
+        ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:

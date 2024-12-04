@@ -1,7 +1,6 @@
 
   // src/App.js
   import React from "react";
-  import { useState } from "react";
   import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
   import PublicLayout from "./layouts/publicLayout";
   import AdminLayout from "./layouts/adminLayout";
@@ -18,7 +17,6 @@
   import ValidateDrama from "./pages/admin/ValidateDrama/ValidateDrama";
   import ValidateHistory from "./pages/admin/ValidateHistory/validateHistory"; // Import ValidateHistory component
   import ReviewManager from "./pages/admin/ReviewManager/ReviewManager";
-  // import ActorManager from './InputActor/InputActors';
   import GenreManager from "./pages/admin/InputGenres/InputGenres";
   import CountryManager from "./pages/admin/InputCountry/InputCountry";
   import AwardsManager from "./pages/admin/InputAward/InputAward";

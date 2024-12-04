@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal, Pagination, Dropdown, Col, Spinner } from "react-bootstrap";
 import { FaPlus } from "react-icons/fa";
-import "./UserSetting.css";
+import "./UserSetting.scss";
 import Swal from "sweetalert2";
+
+const  apiUrl = process.env.REACT_APP_API_URL;
 
 const UserSetting = () => {
   const [users, setUsers] = useState([]);
@@ -20,7 +22,7 @@ const UserSetting = () => {
 
 
   useEffect(() => {
-    fetch('http://localhost:8001/users', {
+    fetch(`${apiUrl}/users`, {
       method: 'GET',
       credentials: 'include', // Add credentials include
     })
@@ -79,7 +81,7 @@ const UserSetting = () => {
 
     const { username, email, password, role } = newUser;
     if (username.trim() && email.trim() && password.trim() && role.trim()) {
-      fetch('http://localhost:8001/users', {
+      fetch(`${apiUrl}/users`, {
         method: 'POST',
         credentials: 'include', // Add credentials include
         headers: {
@@ -115,7 +117,7 @@ const UserSetting = () => {
       return;
     }
 
-    fetch(`http://localhost:8001/users/${selectedUser.id}`, {
+    fetch(`${apiUrl}/users/${selectedUser.id}`, {
       method: 'PUT',
       credentials: 'include', // Add credentials include
       headers: {
@@ -148,7 +150,7 @@ const UserSetting = () => {
 
   const handleDeleteUser = async () => {
     try {
-      const response = await fetch(`http://localhost:8001/users/delete/${selectedUser.id}`, {
+      const response = await fetch(`${apiUrl}/users/delete/${selectedUser.id}`, {
         method: 'PUT',
         credentials: 'include', // Add credentials include
       });
@@ -184,7 +186,7 @@ const UserSetting = () => {
   };
 
   const handleSuspendUser = () => {
-    fetch(`http://localhost:8001/users/suspend/${selectedUser.id}`, {
+    fetch(`${apiUrl}/users/suspend/${selectedUser.id}`, {
       method: 'PUT',
       credentials: 'include', // Add credentials include
     })
@@ -207,7 +209,7 @@ const UserSetting = () => {
   };
 
   const handleUnlockUser = () => {
-    fetch(`http://localhost:8001/users/unlock/${selectedUser.id}`, {
+    fetch(`${apiUrl}/users/unlock/${selectedUser.id}`, {
       method: 'PUT',
       credentials: 'include', // Add credentials include
     })

@@ -7,9 +7,9 @@ import { useNavigate } from "react-router-dom";
 const GoogleLogin = ({ label }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const  apiUrl = process.env.REACT_APP_API_URL;
   const handleGoogleLogin = () => {
-    // Redirect to Google login
-    window.location.href = "http://localhost:8001/auth/google"; 
+    window.location.href = `${apiUrl}/auth/google`; 
   };
 
   useEffect(() => {

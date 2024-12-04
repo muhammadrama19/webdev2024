@@ -2,14 +2,11 @@ import React, { useState, useEffect, useContext } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import DropdownFilterCustom from "../../../components/dropdownfilter/dropdownFilter";
 import Card from "../../../components/card/card";
-import PaginationCustom from "../../../components/pagination/pagination";
 import { useNavigate, useLocation } from 'react-router-dom';
 import "./searchResult.scss";
 
 const SearchResult = () => {
-  
-  const [movies, setMovies] = useState([]);
-  const limit = 10;
+
   const sortOptions = ["Ascending", "Descending"];
   const location = useLocation();
   const searchResults = location.state.results; 

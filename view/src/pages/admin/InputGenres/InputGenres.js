@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Container, Table, Form, Button, Modal, Pagination, Col, Row, InputGroup, FormControl, Spinner } from 'react-bootstrap';
 import { FaPlus, FaSearch } from "react-icons/fa";
 import axios from "axios";
-import "./InputGenres.css";
+import "./InputGenres.scss";
 import Swal from "sweetalert2";
+
+const  apiUrl = process.env.REACT_APP_API_URL;
 
 const GenreManager = () => {
     const [genres, setGenres] = useState([]);
@@ -27,7 +29,7 @@ const GenreManager = () => {
 
     const fetchGenres = async () => {
         try {
-            const response = await fetch("http://localhost:8001/genres");
+            const response = await fetch(`${apiUrl}/genres`);
             const data = await response.json();
             setGenres(data);
             setLoading(false);
@@ -62,7 +64,7 @@ const GenreManager = () => {
                 });
             } else {
                 try {
-                    const response = await axios.post('http://localhost:8001/genres',
+                    const response = await axios.post(`${apiUrl}/genres`,
                         { name: trimmedGenre },
                         {
                             withCredentials: true, // Enable cookies to be sent
@@ -90,7 +92,7 @@ const GenreManager = () => {
     };
 
     const handleDeleteGenre = async () => {
-        const url = `http://localhost:8001/genres/delete/${selectedGenre.id}`;
+        const url = `${apiUrl}/genres/delete/${selectedGenre.id}`;
 
         try {
             const response = await fetch(url, {
@@ -141,7 +143,7 @@ const GenreManager = () => {
 
             } else {
                 try {
-                    await fetch(`http://localhost:8001/genres/update/${editing}`, {
+                    await fetch(`${apiUrl}/genres/update/${editing}`, {
                         method: 'PUT',
                         credentials: 'include',
                         headers: {

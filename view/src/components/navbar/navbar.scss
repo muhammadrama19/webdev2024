@@ -1,12 +1,12 @@
-/* Custom styles for the dropdown item hover */
+// Custom styles for the dropdown item hover */
 .dropdown-item-custom {
   padding: 0.5rem 1rem;
   color: #333; /* Default text color */
-  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+  transition: background-color 0.3s ease, color 0.3s ease; // Smooth transition */
 
   &:hover {
-    background-color: var(--primary-on-hover); /* Change this to your preferred hover background color */
-    color: #fff; /* Change this to your preferred hover text color */
+    background-color: var(--primary-on-hover); // Change this to your preferred hover background color */
+    color: #fff; // Change this to your preferred hover text color */
   }
 }
 
@@ -73,7 +73,7 @@
       .user-info {
         display: flex;
         align-items: center;
-        margin-left: 10px; /* Margin between search icon and user */
+        margin-left: 10px; // Margin between search icon and user */
         color: white;
         font-size: 16px;
         max-width: 200px;
@@ -181,7 +181,7 @@
     top: 70px;
     right: 10px;
     width: 250px;
-    background-color: #304058; /* Sesuaikan warna */
+    background-color: #304058; 
     border-radius: 10px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 15px;
@@ -265,7 +265,7 @@
         }
 
         .user-info {
-          display: none; /* Hide user info on small screens */
+          display: none; 
         }
       }
     }

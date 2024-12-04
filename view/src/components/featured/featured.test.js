@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useNavigate } from 'react-router-dom';
-import Featured from './Featured';
+import Featured from './featured';
 
 jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn()

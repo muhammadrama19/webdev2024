@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Table, Button, Dropdown, Modal } from "react-bootstrap";
 import "./ValidateDrama.scss";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 function ValidateDrama() {
   const [dramas, setDramas] = useState([]);
   const [filteredDramas, setFilteredDramas] = useState([]); // Data yang sudah difilter
@@ -19,7 +21,7 @@ function ValidateDrama() {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await fetch("http://localhost:8001/movie-list?status=3", {
+        const response = await fetch(`${apiUrl}/movie-list?status=3`, {
           method: "GET",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -60,7 +62,7 @@ function ValidateDrama() {
   const confirmAction = async () => {
     try {
       if (actionType === "approve") {
-        await fetch(`http://localhost:8001/movie-restore/${selectedDrama}`, {
+        await fetch(`${apiUrl}/movie-restore/${selectedDrama}`, {
           method: "PUT",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -69,7 +71,7 @@ function ValidateDrama() {
         setDramas(dramas.filter((drama) => drama.id !== selectedDrama));
         setFilteredDramas(filteredDramas.filter((drama) => drama.id !== selectedDrama));
       } else if (actionType === "reject") {
-        await fetch(`http://localhost:8001/movie-rejected/${selectedDrama}`, {
+        await fetch(`${apiUrl}/movie-rejected/${selectedDrama}`, {
           method: "PUT",
           credentials: "include",
           headers: { "Content-Type": "application/json" },

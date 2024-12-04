@@ -2,15 +2,12 @@
     padding-top: 20px;
     background-color: var(--main-color);
     color: #fff;
-    // border-radius: 8px;
     width: 100%;
     justify-content: center;
     align-items: center;
     display: flex;
     border-radius: 0;
     border: none;
-    // z-index: 0;
-    // border-top: 1px solid var(--primary-color);
     
     .titleDetail{
       display: flex;
@@ -22,10 +19,6 @@
       margin-bottom: 15px;
     }
     
-
-    // &:hover{
-    //     border: 0.5px solid white;
-    // }
     .movie-image {
       width: 100%;
       max-width: 200px; // Limits the size of the image on larger screens
@@ -40,13 +33,9 @@
   
       .rating {
         font-size: 1.2rem;
-        // background-color:var(--tertary-color);
-        // border-radius: 5px solid var(--tertary-color); 
       }
       .availability{
         font-size: 1.2rem;
-        // background-color:var(--tertary-color);
-        // border-radius: 5px solid var(--tertary-color); 
       }
 
     }

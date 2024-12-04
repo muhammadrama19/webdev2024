@@ -7,6 +7,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { Row, Col, Button, Form, Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // Tambahkan movieId dan userId sebagai props
   const [rating, setRating] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -31,7 +33,7 @@ const ReviewInput = ({ movieImage, title, movieId, userId, onClose }) => {  // T
     };
 
     try {
-      const response = await fetch("http://localhost:8001/add-reviews", {
+      const response = await fetch(`${apiUrl}/add-reviews`, {
         method: "POST",
         credentials: "include",
         headers: {

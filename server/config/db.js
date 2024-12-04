@@ -1,15 +1,27 @@
+require("dotenv").config();
 const mysql = require('mysql2');
 
-const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "lalajoeuydb",
-});
+// MySQL connection setup
+const dbConfig = {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+};
 
-connection.connect((err) => {
-  if (err) throw err;
-  console.log('Connected to the MySQL database');
-});
+const db = mysql.createConnection(dbConfig);
 
-module.exports = connection;
+const connectWithRetry = () => {
+  db.connect((err) => {
+    if (err) {
+      console.error("Error connecting to MySQL:", err);
+      console.log("Retrying in 5 seconds...");
+      setTimeout(connectWithRetry, 5000); // Retry after 5 seconds
+    } else {
+      console.log("Connected to MySQL!");
+    }
+  });
+};
+
+connectWithRetry();
+module.exports = db;

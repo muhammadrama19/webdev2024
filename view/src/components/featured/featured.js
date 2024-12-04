@@ -4,6 +4,7 @@ import "./featured.scss";
 import Button from "../button/button";
 import { useNavigate } from "react-router-dom";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
 
 // Lazy load image function
 const preloadImage = (src) => {
@@ -27,7 +28,7 @@ const Featured = () => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await fetch("http://localhost:8001/featured");
+        const response = await fetch(`${apiUrl}/featured`);
         const data = await response.json();
         console.log("Fetched movie data:", data);
 

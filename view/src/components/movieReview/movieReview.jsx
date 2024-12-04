@@ -1,10 +1,10 @@
 import './movieReview.scss';
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Container, Button } from 'react-bootstrap';
+import { Card, Row, Col, Container } from 'react-bootstrap';
 import UserReview from '../userReview/userReview';
-import ReviewInput from '../reviewInput/reviewInput';
-import PersonIcon from '@mui/icons-material/Person';
 import imageIcon from '../../assets/Oval.svg'; // Correct path to the placeholder image
+
+const  apiUrl = process.env.REACT_APP_API_URL;
 
 const MovieReview = ({ id }) => {
   const [reviews, setReviews] = useState([]);
@@ -16,7 +16,7 @@ const MovieReview = ({ id }) => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`http://localhost:8001/movies/detail/review/${id}`); 
+        const response = await fetch(`${apiUrl}/movies/detail/review/${id}`); 
         const data = await response.json();
         console.log(data); // Inspect the API response
         setReviews(data || []); // Ensure `data` is an array

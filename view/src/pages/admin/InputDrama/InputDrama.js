@@ -11,11 +11,13 @@
     Modal,
   } from "react-bootstrap";
   import { useNavigate, useLocation } from "react-router-dom";
-  import "../InputDrama/InputDrama.css";
+  import "../InputDrama/InputDrama.scss";
   import Select from "react-select"; // Import react-select
   import Rating from "react-rating-stars-component"; // Import star rating component
   import Cookies from 'js-cookie';
   import Swal from 'sweetalert2';
+
+  const  apiUrl = process.env.REACT_APP_API_URL;
 
   const DramaInput = () => {
     const navigate = useNavigate();
@@ -57,7 +59,7 @@
     useEffect(() => {
       const fetchPlatformsAndCountries = async () => {
         try {
-          const platformResponse = await fetch("http://localhost:8001/platforms", {
+          const platformResponse = await fetch(`${apiUrl}/platforms`, {
             method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -65,7 +67,7 @@
           const platformData = await platformResponse.json();
           setPlatformList(platformData);
 
-          const countriesResponse = await fetch("http://localhost:8001/countries", {
+          const countriesResponse = await fetch(`${apiUrl}/countries`, {
             method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -73,7 +75,7 @@
           const countriesData = await countriesResponse.json();
           setCountriesList(countriesData);
 
-          const awardsResponse = await fetch("http://localhost:8001/awards", {
+          const awardsResponse = await fetch(`${apiUrl}/awards`, {
             method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -81,7 +83,7 @@
           const awardsData = await awardsResponse.json();
           setAwardsList(awardsData);
 
-          const statusResponse = await fetch("http://localhost:8001/status", {
+          const statusResponse = await fetch(`${apiUrl}/status`, {
             method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -89,11 +91,11 @@
           const statusData = await statusResponse.json();
           setStatusList(statusData);
 
-          const actorsResponse = await fetch("http://localhost:8001/actors");
+          const actorsResponse = await fetch(`${apiUrl}/actors`);
           const actorsData = await actorsResponse.json();
           setActorsList(actorsData);
 
-          const genresResponse = await fetch("http://localhost:8001/genres");
+          const genresResponse = await fetch(`${apiUrl}/genres`);
           const genresData = await genresResponse.json();
           setGenresList(genresData);  
         } catch (error) {
@@ -184,10 +186,6 @@
     if (!reviewRegex.test(value)) {
       alert("Value must be an integer");
       return;
-      // setReviewWarning("Total Views must be a valid integer."); // Set peringatan jika input salah
-      // return;
-    // } else {
-    //   setReviewWarning(""); // Hapus peringatan jika input benar
     }
   }
 
@@ -249,16 +247,6 @@
         setFilteredActors([]);
       }
     };
-
-    // const handleAwardsChange = (selectedOptions) => {
-    //   setFormData((prevState) => ({
-    //     ...prevState,
-    //     awards: selectedOptions
-    //       ? selectedOptions.map((option) => option.value)
-    //       : [],
-    //   }));
-    //   console.log()
-    // };
 
     const awardsOptions = awardsList.map((awards) => ({
       value: awards.awards_name,
@@ -361,7 +349,7 @@
           backgroundUrl: formData.backgroundUrl,
         };
     
-        const response = await fetch("http://localhost:8001/add-drama", {
+        const response = await fetch(`${apiUrl}/add-drama`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -421,7 +409,7 @@
       };
     
       try {
-        const response = await fetch("http://localhost:8001/update-drama", {
+        const response = await fetch(`${apiUrl}/update-drama`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(dataToSubmit),

@@ -6,6 +6,8 @@ import Icon from '../../../assets/Oval.svg';
 import axios from 'axios';
 import Swal from "sweetalert2";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const ActorManager = () => {
     const [actorData, setActorData] = useState({
         name: '',
@@ -29,7 +31,7 @@ const ActorManager = () => {
 
     const fetchActors = async () => {
         try {
-            const response = await axios.get('http://localhost:8001/actors');
+            const response = await axios.get(`${apiUrl}/actors`);
             setActors(response.data);
             setLoading(false);
         } catch (error) {
@@ -40,7 +42,7 @@ const ActorManager = () => {
 
     const checkCountryExists = async (countryName) => {
         try {
-            const response = await axios.get(`http://localhost:8001/countries/${countryName}`, {
+            const response = await axios.get(`${apiUrl}/countries/${countryName}`, {
                 withCredentials: true
             });
             //if exist return true
@@ -67,7 +69,7 @@ const ActorManager = () => {
 
         if (actorData.name.trim() && actorData.country_name.trim()) {
             try {
-                const response = await axios.post('http://localhost:8001/actors', actorData, {
+                const response = await axios.post(`${apiUrl}/actors`, actorData, {
                     withCredentials: true
                 });
                 const data = await response.data; // Axios automatically parses JSON
@@ -98,7 +100,7 @@ const ActorManager = () => {
 
     const handleDeleteActor = async () => {
         try {
-            await axios.put(`http://localhost:8001/actors/delete/${actorData.id}`, {}, {
+            await axios.put(`${apiUrl}/actors/delete/${actorData.id}`, {}, {
                 withCredentials: true
             });
             setActors(actors.filter(actor => actor.id !== actorData.id));
@@ -139,7 +141,7 @@ const ActorManager = () => {
         }
 
         try {
-            const response = await axios.put(`http://localhost:8001/actors/${actorData.id}`, actorData, {
+            const response = await axios.put(`${apiUrl}/actors/${actorData.id}`, actorData, {
                 withCredentials: true
             });
             const data = await response.data; // Axios automatically parses JSON

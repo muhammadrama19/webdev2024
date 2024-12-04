@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const MovieTrash = () => {
   const [trashDramas, setTrashDramas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +16,7 @@ const MovieTrash = () => {
   useEffect(() => {
     const fetchTrashMovies = async () => {
       try {
-        const response = await fetch("http://localhost:8001/movie-list?status=0", {
+        const response = await fetch(`${apiUrl}/movie-list?status=0`, {
           method: "GET",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -41,7 +43,7 @@ const MovieTrash = () => {
   const confirmAction = async () => {
     try {
       if (actionType === "restore") {
-        const response = await fetch(`http://localhost:8001/movie-restore/${selectedDrama}`, {
+        const response = await fetch(`${apiUrl}/movie-restore/${selectedDrama}`, {
           method: 'PUT',
           credentials: 'include',
           headers: {
@@ -64,7 +66,7 @@ const MovieTrash = () => {
           });
         } 
       } else if (actionType === "delete") {
-        const response = await fetch(`http://localhost:8001/movie-permanent-delete/${selectedDrama}`, {
+        const response = await fetch(`${apiUrl}/movie-permanent-delete/${selectedDrama}`, {
           method: 'PUT',
           credentials: 'include',
           headers: {

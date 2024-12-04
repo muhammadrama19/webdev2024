@@ -12,6 +12,8 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AddIcon from '@mui/icons-material/Add';
 import Cookies from 'js-cookie';
 
+const  apiUrl = process.env.REACT_APP_API_URL;
+
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState(""); 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
@@ -69,7 +71,7 @@ const Home = () => {
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const response = await fetch("http://localhost:8001/filters");
+        const response = await fetch(`${apiUrl}/filters`);
         const data = await response.json();
         const decadeOptions = data.years.map(yearRange => `${yearRange.start}-${yearRange.end - 1}`);
         setFilters({
@@ -93,7 +95,7 @@ const Home = () => {
   useEffect(() => {
     const fetchTopRated = async () => {
       try {
-        const response = await fetch("http://localhost:8001/top-rated");
+        const response = await fetch(`${apiUrl}/top-rated`);
         const data = await response.json();
         setTopRated(data);
       } catch (error) {
@@ -113,9 +115,10 @@ useEffect(() => {
 
       // Determine the API endpoint based on the search query
       const url = debouncedSearchQuery
-        ? `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&awards=${awards}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}&search=${encodeURIComponent(debouncedSearchQuery)}${sortParam}`
-        : `http://localhost:8001/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&awards=${awards}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}${sortParam}`;
-
+        ? `${apiUrl}/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&awards=${awards}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}&search=${encodeURIComponent(debouncedSearchQuery)}${sortParam}`
+        : `${apiUrl}/movies/movie?page=${currentPage}&limit=${limit}&yearRange=${year}&awards=${awards}&genre=${genre}&status=${status}&availability=${availability}&country_release=${country}${sortParam}`;
+      //debugging purpose for checking endpoint
+      console.log(url);
       const response = await fetch(url);
       const data = await response.json();
       setMovies(data.movies);
