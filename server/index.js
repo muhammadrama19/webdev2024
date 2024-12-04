@@ -15,16 +15,28 @@ const router = express.Router();
 const path = require("path");
 const fs = require("fs");
 const MemoryStore = require("memorystore")(session);
+const rateLimit = require("express-rate-limit");
 
 const { isAuthenticated, hasAdminRole } = require("./middleware/auth");
 const multer = require("multer");
 const app = express();
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  message: "Too many requests from this IP, please try again after 15 minutes",
+});
+
+app.use(limiter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
-const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://webdev2024-v75w.vercel.app"
+];
 
 app.use(
   cors({
@@ -45,6 +57,8 @@ app.use(
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static("public"));
+
+const FRONT_END_URL = process.env.FRONTEND_URL;
 
 // MySQL connection setup
 const dbConfig = {
@@ -128,6 +142,8 @@ app.get("/movies/movie", (req, res) => {
     sort,
     awards,
   } = req.query;
+  //debugging the endpoint for prod
+  console.log("req.query", req.query);
   const offset = (page - 1) * limit;
 
   let filterConditions = [];
@@ -2545,7 +2561,7 @@ app.get(
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:3000/login?error=google-auth-failed",
+    failureRedirect: `${FRONT_END_URL}/login?error=google-auth-failed`,
     failureMessage: true,
   }),
   (req, res) => {
@@ -2555,14 +2571,14 @@ app.get(
     if (user.Status_Account === 2) {
       // Redirect with a custom error message in query params
       return res.redirect(
-        `http://localhost:3000/login?error=Account_Suspended`
+        `${FRONT_END_URL}/login?error=Account_Suspended`
       );
     }
 
     // Check if user banned or not
     if (user.Status_Account === 3) {
       // Redirect with a custom error message in query params
-      return res.redirect(`http://localhost:3000/login?error=Account_Banned`);
+      return res.redirect(`${FRONT_END_URL}/login?error=Account_Banned`);
     }
 
     // Generate JWT token with user info, including role
@@ -2590,7 +2606,7 @@ app.get(
 
     // Redirect to frontend after successful login
     res.redirect(
-      `http://localhost:3000/?username=${user.username}&email=${user.email}&role=${user.role}`
+      `${FRONT_END_URL}/?username=${user.username}&email=${user.email}&role=${user.role}`
     );
   }
 );
@@ -2679,7 +2695,7 @@ app.post("/register", (req, res) => {
         });
 
         // Send confirmation email
-        const confirmationUrl = `http://localhost:8001/confirm-email/${emailToken}`;
+        const confirmationUrl = `${process.env.BACKEND_URL}/confirm-email/${emailToken}`;
         const templatePath = path.join(
           __dirname,
           "template",
@@ -2720,7 +2736,7 @@ app.post("/register", (req, res) => {
               success: true,
             });
             //redirect into login
-            res.redirect("http://localhost:3000/login");
+            res.redirect(`${FRONT_END_URL}/login`);
           });
         });
       });
@@ -2778,7 +2794,7 @@ app.post("/forgot-password", (req, res) => {
     );
 
     // Create reset link
-    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+    const resetLink = `${FRONT_END_URL}/reset-password/${resetToken}`;
     const templatePathReset = path.join(
       __dirname,
       "template",

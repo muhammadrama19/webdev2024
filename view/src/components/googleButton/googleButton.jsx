@@ -4,13 +4,11 @@ import Swal from "sweetalert2";
 import "./googleButton.scss";
 import { useNavigate } from "react-router-dom";
 
-const  apiUrl = process.env.REACT_APP_API_URL;
-
 const GoogleLogin = ({ label }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const  apiUrl = process.env.REACT_APP_API_URL;
   const handleGoogleLogin = () => {
-    // Redirect to Google login
     window.location.href = `${apiUrl}/auth/google`; 
   };
 
