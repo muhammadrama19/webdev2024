@@ -35,6 +35,7 @@ app.use(cookieParser());
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
+  "http://145.223.23.30:8000",
   "https://webdev2024-v75w.vercel.app"
 ];
 
