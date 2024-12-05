@@ -1,206 +1,121 @@
-:root{
-    --main-color: rgb(18, 24, 41);
-    --primary-color: #7B6EF6;
-    --secondary-color: #1EA5FC;
-    --tertary-color: #B66DFF;
-    --succes-color:#10d097;
-    --warning-color: #FF6161;
-    --primary-on-hover: #5A4AF4;
-    --primary-on-active: #7b6ef6;
-    --secondary-on-active: #4BB7FD;
-    --secondary-on-hover: #4BB7FD;
-    --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.1);
-    --elevation-2: 0 2px 4px rgba(0, 0, 0, 0.2);
-    --elevation-3: 0 4px 8px rgba(0, 0, 0, 0.1);
-    --elevation-4: 0 6px 12px rgba(0, 0, 0, 0.1);
-    --elevation-5: 0 8px 16px rgba(0, 0, 0, 0.1);
-    font-family: 'Poppins', sans-serif;
-
-    
+:root {
+  --main-color: rgb(18, 24, 41);
+  --primary-color: #7B6EF6;
+  --secondary-color: #1EA5FC;
+  --tertary-color: #B66DFF;
+  --succes-color: #10d097;
+  --warning-color: #FF6161;
+  --primary-on-hover: #5A4AF4;
+  --primary-on-active: #7b6ef6;
+  --secondary-on-active: #4BB7FD;
+  --secondary-on-hover: #4BB7FD;
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --elevation-2: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --elevation-3: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --elevation-4: 0 6px 12px rgba(0, 0, 0, 0.1);
+  --elevation-5: 0 8px 16px rgba(0, 0, 0, 0.1);
+  font-family: 'Poppins', sans-serif;
 }
 
 body {
-    margin: 0;
-    padding: 0;
-    background-color: #1d2634;
-    color: #9e9ea4;
-    font-family: 'Montserrat', sans-serif;
-  }
-  
-  .grid-container {
-    display: grid;
-    grid-template-columns: 250px 1fr 1fr 1fr;
-    grid-template-rows: 0.2fr 3fr;
-    grid-template-areas:
-      'sidebar header header header'
-      'sidebar main main main';
-    height: 100vh;
-    transition: all 0.3s ease;
-  }
-  
-  /* Kondisi saat sidebar ditutup di desktop */
-  .grid-container.sidebar-closed {
-    grid-template-columns: 0 1fr 1fr 1fr; /* Sidebar hidden */
-  }
-  
-  .main-container {
-    grid-area: main;
-  
-    padding: 20px;
-    color: rgba(255, 255, 255, 0.95);
-  }
-  
-  .main-title {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .App {
-    text-align: left;
-  }
-  .title {
-    color: #EBEEF5;
-    font-family: "Montserrat", sans-serif;
-    font-size: 50px;
-  }
-  .text {
-    font-size: 20px;
-  }
-  
-  .main-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 20px;
-    margin: 15px 0;
-  }
-  
-  .card {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    padding: 8px 15px;
-    border-radius: 5px;
-  }
+  margin: 0;
+  padding: 0;
+  background-color: #1d2634;
+  color: #9e9ea4;
+  font-family: 'Montserrat', sans-serif;
+}
 
+.grid-container {
+  display: grid;
+  grid-template-columns: 250px 1fr 1fr 1fr;
+  grid-template-rows: 0.2fr 3fr;
+  grid-template-areas:
+    'sidebar header header header'
+    'sidebar main main main';
+  height: 100vh;
+  transition: all 0.3s ease;
+}
 
-  .main-cards .card:first-child {
-    background-color: #2962ff;
-  }
-  
-  .main-cards .card:nth-child(2) {
-    background-color: #ff6d00;
-  }
-  
-  .main-cards .card:nth-child(3) {
-    background-color: #2e7d32;
-  }
-  
-  .main-cards .card:nth-child(4) {
-    background-color: #d50000;
-  }
-  
-  
-  .card-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .card-inner > .card_icon {
-    font-size: 25px;
-  }
-  
-  .charts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-top: 60px;
-    height: 300px;
-  }
+.grid-container.sidebar-closed {
+  grid-template-columns: 0 1fr 1fr 1fr;
+}
+
+.main-container {
+  grid-area: main;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.main-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 15px 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 8px 15px;
+  border-radius: 5px;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 60px;
+  height: auto;
+}
+
+/* Responsive Styles */
 
 /* Medium <= 992px */
 @media screen and (max-width: 992px) {
-  /* .grid-container {
-    grid-template-columns: 1fr;
-    grid-template-rows: 0.2fr 3fr;
-    grid-template-areas:
-      'header'
-      'main';
-  } */
-
   .grid-container {
-    grid-template-columns: 1fr; /* Pastikan konten tetap memenuhi lebar layar */
+    grid-template-columns: 1fr;
   }
-
   .grid-container.sidebar-closed {
-    grid-template-columns: 0% 1fr; /* Sidebar hidden */
+    grid-template-columns: 0% 1fr;
   }
-
-  #sidebar {
-    position: fixed; /* Fixed agar sidebar melayang */
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 250px;
-    z-index: 1000; /* Agar tampil di atas konten */
-    background-color: #263043;
-  }
-
-  .sidebar-open #sidebar {
-    display: block; /* Munculkan sidebar ketika tombol hamburger di klik */
-  }
-
 }
 
 /* Small <= 768px */
 @media screen and (max-width: 768px) {
-  /* Hanya modifikasi sidebar menjadi overlay pada mobile */
-  .grid-container {
-    grid-template-columns: 1fr; /* Pastikan konten tetap memenuhi lebar layar */
+  .main-cards {
+    grid-template-columns: 1fr;
   }
-
-  .grid-container.sidebar-closed {
-    grid-template-columns: 0% 1fr; /* Sidebar hidden */
+  .charts {
+    grid-template-columns: 1fr;
   }
-
-  #sidebar {
-    position: fixed; /* Fixed agar sidebar melayang */
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 250px;
-    z-index: 1000; /* Agar tampil di atas konten */
-    background-color: #263043;
-  }
-
-  .sidebar-open #sidebar {
-    display: block; /* Munculkan sidebar ketika tombol hamburger di klik */
-  }
-
 }
 
 /* Extra Small <= 576px */
 @media screen and (max-width: 576px) {
+  .main-cards {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .charts {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .card {
+    padding: 10px;
+  }
+}
+
+/* Ultra Small <= 425px */
+@media screen and (max-width: 425px) {
   .grid-container {
-    grid-template-columns: 1fr; /* Pastikan konten tetap memenuhi lebar layar */
-  }
-
-  .grid-container.sidebar-closed {
-    grid-template-columns: 0% 1fr; /* Sidebar hidden */
-  }
-
-  #sidebar {
-    position: fixed; /* Fixed agar sidebar melayang */
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 250px;
-    z-index: 1000; /* Agar tampil di atas konten */
-    background-color: #263043;
-  }
-
-  .sidebar-open #sidebar {
-    display: block; /* Munculkan sidebar ketika tombol hamburger di klik */
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      'header'
+      'main';
   }
 
   .main-cards {
@@ -210,5 +125,9 @@ body {
   .charts {
     grid-template-columns: 1fr;
   }
-}
 
+  .card {
+    font-size: 14px;
+    padding: 8px;
+  }
+}

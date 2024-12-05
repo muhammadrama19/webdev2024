@@ -1,4 +1,3 @@
-// userReview.js
 import React, { useState } from 'react';
 import { Card, Row, Col } from 'react-bootstrap';
 import './userReview.scss';
@@ -12,25 +11,20 @@ const UserReview = ({ userName, userImage, rating, reviewText, createdAt }) => {
 
   // Truncate text if it's too long
   const truncatedText = reviewText.length > 150 ? reviewText.substring(0, 150) + '...' : reviewText;
-  
 
   return (
     <Card className="user-review">
       <Card.Body>
         <Row>
-          <Col xs={2} md={1} className="user-image">
+          <Col xs={3} md={1} className="user-image">
             <img src={userImage} alt={userName} className="rounded-circle" />
           </Col>
-          <Col xs={10} md={11} className="review-content">
+          <Col xs={9} md={11} className="review-content">
             <Card.Title className="user-name">
-              Review by {userName} 
-              <span className="rating">
-                {'⭐'.repeat(rating)} {/* Replace this with actual rating stars */}
-              </span>
+              <div>{userName}</div>
+              <div className="rating">{'⭐'.repeat(rating)}</div>
             </Card.Title>
-            <Card.Subtitle className="review-date">
-              {createdAt}
-            </Card.Subtitle>
+            <Card.Subtitle className="review-date">{createdAt}</Card.Subtitle>
             <Card.Text className="review-text">
               {isExpanded ? reviewText : truncatedText}
               {reviewText.length > 150 && (
