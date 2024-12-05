@@ -514,7 +514,7 @@ app.get("/movies/detail/review/:id", (req, res) => {
 app.get("/filters", async (req, res) => {
   const queries = {
     years:
-      "SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies",
+      "SELECT MIN(release_year) AS minYear, MAX(release_year) AS maxYear FROM movies WHERE release_year IS NOT NULL",
     genres: "SELECT id, name FROM genres ORDER BY name ASC",
     awards: "SELECT id, awards_name FROM awards ORDER BY awards_name ASC",
     countries:
