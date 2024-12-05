@@ -144,6 +144,8 @@ M. Rama Nurimani 		(221524021)
 
 
 ``` bash
+docker cp database/lalajoeuydb.sql container_mysql:/tmp/lalajoeuydb.sql
+
 mysql -u root -proot lalajoeuydb < /tmp/lalajoeuydb.sql
 
 ```
