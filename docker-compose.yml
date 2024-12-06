@@ -23,7 +23,7 @@ services:
       DB_PASSWORD: root
       DB_NAME: lalajoeuydb
     env_file:
-      - ./server/.env-docker
+      - ./server/.env.docker
     extra_hosts:
       - "host.docker.internal:172.19.0.1"  # Mengarahkan host.docker.internal ke IP Docker host
     
