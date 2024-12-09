@@ -4,7 +4,7 @@ const db = require('../config/db');
 const dotenv = require('dotenv');
 dotenv.config();
 const FRONTEND_URL = process.env.FRONTEND_URL;
-const BACKEND_URL = "http://lalajoeuy.chickenkiller.com:8001";
+const BACKEND_URL = process.env.BACKEND_URL;
 
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
