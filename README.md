@@ -45,6 +45,8 @@ This project built for Web Development Course at JTK POLBAN.
      - **Actor Information**: Includes details about actors and their roles in the movie.  
 4. **Review Bar**  
    Users can add reviews and ratings for movies.
+4. **User Review**  
+   Other users review about the movie. 
 
 ### Admin-Side Features
 1. **Dashboard**  
@@ -71,6 +73,8 @@ This project built for Web Development Course at JTK POLBAN.
 ---
 
 ## Installation Guide
+
+### Local Installation
 
 ### Prerequisites
 - Node.js
@@ -101,7 +105,7 @@ This project built for Web Development Course at JTK POLBAN.
    ```
 
 ### Configure Environment Variables
-5. Create a `.env` file in the root of your project and configure it with the following variables:
+5. Create a `.env` file in the foler 'server' and configure it with the following variables:
    ```env
    JWT_SECRET=
    EMAIL=
@@ -110,20 +114,54 @@ This project built for Web Development Course at JTK POLBAN.
    GOOGLE_CLIENT_ID=
    GOOGLE_CLIENT_SECRET=
    SESSION_SECRET=
+   DB_HOST=
+   DB_USER=   
+   DB_PASSWORD=
+   DB_NAME=
+   PORT=
+   FRONTEND_URL=
+   BACKEND_URL=
+   ```
+6. Create a `.env` file in the foler 'view' and configure it with the following variables:
+   ```env
+   REACT_APP_API_URL=
    ```
 
 ### Running the Application  
-5. Start your sql database server  
-6. Start the backend server on 'server':
+6. Start your sql database server  
+7. Start the backend server on 'server':
    ```bash
    node index.js
    ```
-7. Open new terminal start the frontend application on folder 'view':
+8. Open new terminal start the frontend application on folder 'view':
    ```bash
    npm start
    ```
 
+### Docker Installation
+
+### Cloning the Repository
+1. Open a terminal (bash) and clone the repository:
+   ```bash
+   git clone https://github.com/muhammadrama19/webdev2024.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd webdev2024
+   ```
+### Build Command
+3. Open terminal and then build docker images:
+   ```bash
+   docker-compose build
+   ```
+4. Start the Docker container:
+   ```bash
+   docker-compose up -d
+   ```
+
 ---
+
+
 
 ## Author
 Akmal Goniyyu Hartono 	(221524002)  
@@ -137,19 +175,3 @@ M. Rama Nurimani 		(221524021)
 
  - [TMDB API for data source](https://developer.themoviedb.org/reference/intro/getting-started)
 
-
-
-
-
-
-
-``` bash
-docker cp database/lalajoeuydb.sql container_mysql:/tmp/lalajoeuydb.sql
-
-mysql -u root -proot lalajoeuydb < /tmp/lalajoeuydb.sql
-
-```
-USE lalajoeuydb;
-SHOW TABLES;
-SELECT * FROM genres;
-```
