@@ -92,19 +92,6 @@ const Home = () => {
   const [topRated, setTopRated] = useState([]);
 
   // Fetching top-rated movies from backend
-  useEffect(() => {
-    const fetchTopRated = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/top-rated`);
-        const data = await response.json();
-        setTopRated(data);
-      } catch (error) {
-        console.error("Error fetching top-rated movies:", error);
-      }
-    };
-    fetchTopRated();
-  }, []);
-
   // Fetching movies based on filters and search
 // Fetching movies based on filters and search
 useEffect(() => {

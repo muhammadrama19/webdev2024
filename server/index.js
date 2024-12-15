@@ -16,7 +16,6 @@ const path = require("path");
 const fs = require("fs");
 const MemoryStore = require("memorystore")(session);
 const rateLimit = require("express-rate-limit");
-const queue = require("express-queue");
 
 const { isAuthenticated, hasAdminRole } = require("./middleware/auth");
 const multer = require("multer");
@@ -28,15 +27,31 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-app.use(queue({ activeLimit: 1, queuedLimit: -1 }));
 
-app.use((req, res, next) => {
-  console.log(`Request received: ${req.method} ${req.url}`);
-  res.on('finish', () => {
-    console.log(`Request processed: ${req.method} ${req.url}`);
-  });
-  next();
-});
+let queue = Promise.resolve();
+let queueLength = 0;
+
+const queueMiddleware = (req, res, next) => {
+  queueLength++;
+  queue = queue
+    .then(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          next();
+          resolve();
+          queueLength--;
+        }, 100); // Adds a delay of 100ms between each request
+      });
+    })
+    .catch((err) => {
+      console.error("Queue Error:", err);
+      queueLength--;
+    });
+};
+
+app.use(queueMiddleware);
+
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -2970,6 +2985,11 @@ app.post("/add-reviews", isAuthenticated, (req, res) => {
     res.status(201).json({ message: "Review saved successfully!" });
   });
 });
+
+app.get('/queue-status', (req, res) => {
+  res.json({ queueLength });
+});
+
 
 // Starting the server
 let server;
