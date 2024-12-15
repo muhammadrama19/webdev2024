@@ -49,7 +49,10 @@ const queueMiddleware = (req, res, next) => {
     });
 };
 
-app.use(queueMiddleware);
+//use queuemiddleware only on env is not local
+if (process.env.NODE_ENV !== "local") {
+  app.use(queueMiddleware);
+}
 
 
 
