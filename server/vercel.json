@@ -4,7 +4,7 @@
     {
       "src": "/index.js",
       "use": "@vercel/node",
-      "config": { "maxDuration": 60 }
+      "config": { "maxDuration": 120 }
     }
   ],
   "routes": [
