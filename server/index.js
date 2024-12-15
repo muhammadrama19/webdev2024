@@ -16,6 +16,7 @@ const path = require("path");
 const fs = require("fs");
 const MemoryStore = require("memorystore")(session);
 const rateLimit = require("express-rate-limit");
+const queue = require("express-queue");
 
 const { isAuthenticated, hasAdminRole } = require("./middleware/auth");
 const multer = require("multer");
@@ -27,7 +28,7 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-
+app.use(queue({ activeLimit: 1, queuedLimit: -1 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
