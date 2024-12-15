@@ -152,13 +152,8 @@ This project built for Web Development Course at JTK POLBAN.
 ### Build Command
 3. Open terminal and then build docker images:
    ```bash
-   docker-compose build
+   docker-compose up --build -d
    ```
-4. Start the Docker container:
-   ```bash
-   docker-compose up -d
-   ```
-
 ---
 
 
