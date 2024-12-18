@@ -71,10 +71,10 @@ const FRONT_END_URL = process.env.FRONTEND_URL;
 // };
 
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || "localhost",  // Gunakan variabel lingkungan DB_HOST
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "lalajoeuydb",
+  host: process.env.DB_HOST,  
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
 
 const connectWithRetry = () => {
