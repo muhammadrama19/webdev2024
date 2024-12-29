@@ -84,8 +84,12 @@ const AdminLayout = () => {
               textAlign: "center",
             }}
           >
-            <h2>Unauthorized Access</h2>
-            <p>Please log in to access this page.</p>
+            <Row>
+              <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                <h2>Unauthorized Access</h2>
+                <p>Please log in to access this page.</p>
+              </Col>
+            </Row>
           </div>
         )}
       </div>

@@ -561,7 +561,7 @@ app.get("/filters", async (req, res) => {
     const [yearRows] = await db.promise().query(queries.years);
 
     if (yearRows.length) {
-      const minYear = yearRows[0].minYear;
+      const minYear =  1960;
       const maxYear = yearRows[0].maxYear;
 
       const different = minYear % 10;
